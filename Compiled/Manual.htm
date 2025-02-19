@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <title>Oszi Waveform Analyzer</title>
+    <meta name="description" content="The open source 'Oszi Waveform Analyzer' from ElmüSoft transfers oscilloscope analog and digital channel data over USB to the computer, displays the waveforms and has lots of decoders like SPI, I2C, UART, CAN Bus.">
+    <meta name="keywords" content="Oscilloscope, SCPI Transfer, SPI decoder, I2C decoder, UART decoder, CAN FD decoder, RS232 decoder, RS422 decoder, RS485 decoder, ISO7816 decoder, ISO14230 decoder, A/D Converter, Magnetic Stripe decoder, Noise suppression, logic analyzer, open source">
+    <link rel="SHORTCUT ICON" href="../favicon.ico">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="MSThemeCompatible" content="Yes">
+    <meta http-equiv="Language" content="en">
+    <meta name="Author" content="ElmüSoft">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="index, follow">
+    <style>
+    body          { font-family:Verdana; font-size:13px; background-color:#F9F8F1; }
+    h1            { font-size:25px; font-weight:bold; background-color:#007799; color:white; padding:8px 8px 8px 16px; margin-top:35px; border:solid 2px #77CCDD; border-radius: 10px; }
+    h3            { font-size:17px; font-weight:bold; text-decoration:underline; color:#007799; margin-top:22px; margin-bottom:5px; }
+    h4            { font-size:13px; font-weight:bold; text-decoration:underline; color:#007799; margin-top:12px; margin-bottom:2px; }
+    hr            { border: 3px solid #007799; border-radius: 5px; }
+    li            { padding-top:1px; padding-bottom:1px;}
+    code          { color:blue; }
+    a:hover       { color: #AA00FF; }
+    .Link:hover   { color: #AA00FF; }
+    .Link, a      { color: blue; cursor:pointer; font-family:Verdana; font-size:12px; font-weight:bold; text-decoration:none; }
+    .DivFullSize  { position:absolute; visibility:hidden; background-color:#DDDDDD; padding:0px 10px 10px 10px; border:1px solid black; box-shadow: 5px 5px 5px #777; }
+    .Warning      { border:2px solid red; padding:5px; font-weight:bold; }
+    .Pre          { border:1px solid #AAAAAA; padding:2px; font-family:Courier New; background-color:white; }
+    .Error        { color:red; font-weight:bold; }
+    .TblImage     { border:1px solid #CCCCCC; border-spacing: 0px; margin-top:15px; margin-bottom:15px; }
+    .TblImage td  { padding:0px; }
+    .TblImage th  { background-color:#777777; color:#FFFFFF; padding:1px 5px 2px 5px; font-weight:bold; }
+    .NoTopMargin  { margin-top:0px; }
+    .Highlight    { background-color:#FFFFAA; }
+    .Center       { text-align:center; }
+    .Right        { text-align:right; }
+    .Green        { color:green; }
+    .Red          { color:red; }
+    .Orange       { color:orange; }
+    .DarkRed      { color:#AA0000; }
+    .Blue         { color:blue; }
+    .Magenta      { color:magenta; }
+    .Gray         { color:#888888; }
+    .Time         { color:#775533; }
+    .Big          { font-size:15px; font-weight:bold; }
+    .Img          { border:1px solid #CCCCCC; }
+    .LineTop      { border-top:1px solid #CCCCCC; }
+    .LineBot      { border-bottom:1px solid #CCCCCC; }
+    .Translate    { background-color: #007799; border:2px solid #77CCDD; border-radius: 10px; }
+    .Translate td { color:white; padding:10px; }
+    .Assembler    { border:1px solid gray; padding:5px; }
+    .Assembler b  { color:blue; }
+    .Assembler code  { color:#DD8800; }
+    .Over         { text-decoration:overline; }
+    .DataTable    { background-color:#333333; margin-top:10px; margin-bottom:10px; }
+    .DataTable th { background-color:#777777; color:#FFFFFF; padding:1px 5px 2px 5px; font-weight:bold; }
+    .DataTable tr { background-color:#F8F8F8; }
+    .DataTable td { background-color:#FFFFF8; padding:3px; }
+    .DataTable h3 { font-size:17px; font-weight:bold; text-decoration:underline; color:#007799; margin-top:8px; margin-bottom:0px; }
+    .PopupMenu { position:fixed; top:0px; right:0px; border:2px solid #77CCDD; z-index: 999; padding:5px; background-color:#007799; color:white; font-weight:bold; font-family:Arial,Helvetica,Sans-serif; font-size:13px; cursor:default; }
+    .MenuLink { color:white; text-decoration:none; }
+    .MenuLink:hover { color:#CCCCFF; }
+    </style>
+    <script>
+    var LastLink = null;
+    var LastDiv  = null;
+	var LastTop  = 0;
+    var LastUrl  = null;
+    function ShowFullSize(Link, ImgFile)
+    {
+        if (Link == LastLink)
+        {
+            HideFullSize(); // sets LastLink = null
+            return;
+        }
+
+        HideFullSize();
+
+        var Div = document.getElementById("DivFullSize");
+        var Img = document.getElementById("ImgFullSize");
+        var Scr = document.getElementById("DivScrollable");
+
+        Scr.style.overflow = "auto";
+        Scr.scrollLeft = 0;
+        Scr.scrollTop  = 0;
+
+        var Top = Math.max(document.body.scrollTop, document.documentElement.scrollTop) + 15;
+        Div.style.top  = Top + "px";
+        Div.style.left = "20px";
+        Div.style.visibility = "visible";
+
+        Link.innerHTML = "Hide Full Size";
+        LastLink = Link;
+        LastDiv  = Div;
+
+        Img.onload = function()
+        {
+            var MaxWidth  = window.innerWidth  - 80;
+            var MaxHeight = window.innerHeight - 80;
+
+            var ImgWidth  = Img.width  + 4;
+            var ImgHeight = Img.height + 4;
+
+            var HScroll = (ImgWidth  > MaxWidth);
+            var VScroll = (ImgHeight > MaxHeight);
+
+            if (VScroll) ImgWidth  += 18;
+            if (HScroll) ImgHeight += 18;
+
+            if (HScroll) Scr.style.width  = MaxWidth  + "px";
+            else         Scr.style.width  = ImgWidth  + "px";
+            if (VScroll) Scr.style.height = MaxHeight + "px";
+            else         Scr.style.height = ImgHeight + "px";
+        }
+
+        Img.src = ImgFile;
+    }
+    function HideFullSize()
+    {
+        if (LastLink != null)
+        {
+            LastDiv.style.visibility = "hidden";
+            LastLink.innerHTML = "Show Full Size";
+            LastDiv  = null;
+            LastLink = null;
+        }
+        ShowMenu(false);
+    }
+
+    function ShowMenu(bShow)
+    {
+        MenuHead = document.getElementById("MenuHead");
+        MenuCont = document.getElementById("MenuContent");
+        MenuHead.style.display = bShow ? "none"  : "block";
+        MenuCont.style.display = bShow ? "block" : "none";
+    }
+
+    try
+    {
+        window.addEventListener('scroll', function(e)
+        {
+			var Top = Math.max(document.body.scrollTop, document.documentElement.scrollTop)
+			if (Math.abs(LastTop - Top) > 50) // Workaround for buggy Firefox 79
+			{
+                if (LastUrl == window.location.href)
+                    HideFullSize(); // also hide menu
+
+				LastTop = Top;
+                LastUrl = window.location.href;
+			}
+        } );
+    }
+    catch (ex)
+    {}
+    </script>
+</head>
+<body>
+<div id="DivFullSize" class="DivFullSize" OnClick="ShowMenu(false)">
+    <table>
+        <tr><td class="Right"><span class="Link" onClick="HideFullSize()">Close</span></td></tr>
+        <tr><td><div id="DivScrollable"><img id="ImgFullSize" src=""></div></td></tr>
+    </table>
+</div>
+<div id="MenuTop" class="PopupMenu" >
+    <div id="MenuHead" style="display:none;" onMouseover="ShowMenu(true)">Menu</div>
+    <div id="MenuContent">
+        <div><a href="#Features"         class="MenuLink" onClick="ShowMenu(false)">Features</a></div>
+        <div><a href="#Decoders"         class="MenuLink" onClick="ShowMenu(false)">Implemented Decoders</a></div>
+        <div><a href="#DemoFiles"        class="MenuLink" onClick="ShowMenu(false)">Demo Files</a></div>
+        <div><a href="#Menu"             class="MenuLink" onClick="ShowMenu(false)">Right-Click Menu</a></div>
+        <div><a href="#MeasureTime"      class="MenuLink" onClick="ShowMenu(false)">Measure Timing</a></div>
+        <div><a href="#AD_Conversion"    class="MenuLink" onClick="ShowMenu(false)">A/D Conversion</a></div>
+        <div><a href="#NoiseSuppression" class="MenuLink" onClick="ShowMenu(false)">Noise Suppression</a></div>
+        <div><a href="#SplitHalfDuplex"  class="MenuLink" onClick="ShowMenu(false)">Split Half Duplex Communication</a></div>
+        <div><a href="#DecodeAsync"      class="MenuLink" onClick="ShowMenu(false)">Decode Asynchronous Data</a></div>
+        <div>— &nbsp; <a href="#PostISO7816"      class="MenuLink" onClick="ShowMenu(false)">Post Decoder ISO 7816</a></div>
+        <div>— &nbsp; <a href="#PostISO14230"     class="MenuLink" onClick="ShowMenu(false)">Post Decoder ISO 14230</a></div>
+        <div><a href="#DecodeSync"       class="MenuLink" onClick="ShowMenu(false)">Decode Synchronous Data</a></div>
+        <div>— &nbsp; <a href="#PostPN532_SPI"    class="MenuLink" onClick="ShowMenu(false)">Post Decoder PN532</a></div>
+        <div><a href="#DecodeI2C"        class="MenuLink" onClick="ShowMenu(false)">Decode I²C Bus</a></div>
+        <div>— &nbsp; <a href="#PostPN532_I2C"    class="MenuLink" onClick="ShowMenu(false)">Post Decoder PN532</a></div>
+        <div><a href="#DecodeCAN"        class="MenuLink" onClick="ShowMenu(false)">Decode CAN Bus</a></div>
+        <div><a href="#DecodeMagStripe"  class="MenuLink" onClick="ShowMenu(false)">Decode Magnetic Stripe Tracks</a></div>
+        <div><a href="#DecodeIR"         class="MenuLink" onClick="ShowMenu(false)">Decode Infrared Remote Control</a></div>
+        <div><a href="#WaveformTransfer" class="MenuLink" onClick="ShowMenu(false)">Waveform Transfer over USB</a></div>
+        <div>— &nbsp; <a href="#Ultrascope"       class="MenuLink" onClick="ShowMenu(false)">Rigol UltraScope</a></div>
+        <div>— &nbsp; <a href="#SCPI"             class="MenuLink" onClick="ShowMenu(false)">SCPI</a></div>
+        <div>— &nbsp; <a href="#Prerequisites"    class="MenuLink" onClick="ShowMenu(false)">Prerequisites</a></div>
+        <div>— &nbsp; <a href="#TransferSpeed"    class="MenuLink" onClick="ShowMenu(false)">Transfer Speed</a></div>
+        <div>— &nbsp; <a href="#ImplementOszi"    class="MenuLink" onClick="ShowMenu(false)">Implemented Oscilloscopes</a></div>
+        <div><a href="#StoreDisk"        class="MenuLink" onClick="ShowMenu(false)">Storing Waveforms on Disk</a></div>
+        <div>— &nbsp; <a href="#CsvFiles"         class="MenuLink" onClick="ShowMenu(false)">CSV Files</a></div>
+        <div>— &nbsp; <a href="#WfmFiles"         class="MenuLink" onClick="ShowMenu(false)">WFM Files</a></div>
+        <div>— &nbsp; <a href="#OsziFiles"        class="MenuLink" onClick="ShowMenu(false)">OSZI Files</a></div>
+        <div>— &nbsp; <a href="#OtherFiles"       class="MenuLink" onClick="ShowMenu(false)">Other File Formats</a></div>
+        <div>— &nbsp; <a href="#SaveOptions"      class="MenuLink" onClick="ShowMenu(false)">Save File Options</a></div>                
+        <div><a href="#Download"         class="MenuLink" onClick="ShowMenu(false)">Download &amp; New Versions</a></div>
+        <div><a href="#BuyRigol"         class="MenuLink" onClick="ShowMenu(false)">Should I buy a Rigol Oscilloscope?</a></div>
+        <div>— &nbsp; <a href="#LackQuality"      class="MenuLink" onClick="ShowMenu(false)">Lack of Quality</a></div>
+        <div>— &nbsp; <a href="#RigolFirmware"    class="MenuLink" onClick="ShowMenu(false)">Update the Rigol Firmware?</a></div>
+    </div>
+</div>
+
+<h1>ElmüSoft Oszi Waveform Analyzer &nbsp; (Open Source)</h1>
+
+<noscript>
+    <div class="Error">You have Java script turned off.</div>
+    <div class="Error">You cannot view the images in full size and the menu does not work correctly.</div>
+    <div>&nbsp;</div>
+</noscript>
+
+<div>Oszi Waveform Analyzer is a masterpiece that converts your oscilloscope into a powerful analysis instrument with logic analyzer.</div>
+<p>
+<img src="Images/OsziWaveformAnalyzer.png" width="895" height="733" alt="Oszi Waveform Analyzer - Main window">
+
+<a name="Features"></a>
+<h3>Features</h3>
+<ul>
+<li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB using the <b>SCPI</b> protocol.</div>
+<li><div>Oszi Waveform Analyzer does <span class="Error">NOT</span> require any huge installations like NI-VISA (1 GB), TekVISA (100 MB), IVI, UltraSigma (500 MB).</div>
+<li><div>Oszi Waveform Analyzer requires only the .NET framework 4.0 or higher.</div>
+<li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>.</div>
+<li><div>Oszi Waveform Analyzer includes the installer for the small 64 bit <b>USB TMC driver</b> (24 kB).</div>
+<li><div>Oszi Waveform Analyzer supports up to 255 channels that may have analog or digital data or both.</div>
+<li><div>Oszi Waveform Analyzer can <b>zoom</b> the signal horizontally and vertically.</div>
+<li><div>Oszi Waveform Analyzer shows <b>signal details</b> in a tooltip, can measure voltages and precise timing and show a measure raster.</div>
+<li><div>Oszi Waveform Analyzer has multiple A/D converters, noise suppression, can apply math operations on signal data, etc.</div>
+<li><div>Oszi Waveform Analyzer has a <b>logic analyzer</b> for SPI bus, I²C bus, CAN Bus, UART (RS232), and more with full decoding.</div>
+<li><div>Oszi Waveform Analyzer can split bidirectional <b>half-duplex</b> traffic on the Data wire into separate Rx and Tx channels.</div>
+<li><div>Oszi Waveform Analyzer allows to decode <b>chip-specific</b> SPI and I²C packets and <b>protocol specific</b> UART packets.</div>
+<li><div>Oszi Waveform Analyzer can edit analog and digital signals with copy and paste.</div>
+<li><div>Oszi Waveform Analyzer stores waveforms in the open-source <b>OSZI</b> file format which applies the highest compression to waveform data.</div>
+<li><div>Oszi Waveform Analyzer can load CSV files created by the oscilloscope.</div>
+<li><div>Oszi Waveform Analyzer is <b>open source</b> and YOU can add new decoders, file formats and oscilloscope models.</div>
+<li><div>Oszi Waveform Analyzer allows you to analyze very specific signals that you cannot even analyze with most expensive commercial products.</div>
+<li><div>Oszi Waveform Analyzer is <b>high quality</b> software, written by a software and hardware developer with 40 years of programming and electronic experience.</div>
+<li><div>Oszi Waveform Analyzer is optimized for <b>maximum speed</b> in every line of it's very clean source code.</div>
+</ul>
+
+<a name="Decoders"></a>
+<h3>Currently Implemented Decoders</h3>
+<table class="DataTable">
+<tr><th>Decoder</th><th>Comment</th></tr>
+<tr><td>UART</td><td>Async Serial (RS232, RS422, RS485, Smartcard, K-Line, ...)</td></tr>
+<tr><td>CAN bus</td><td>CAN classic and CAN FD with 2 baudrates with full error detection</td></tr>
+<tr><td>SPI bus</td><td>Bidirectional MISO / MOSI or one directional with Chip Select</td></tr>
+<tr><td>I²C bus</td><td>Decoding of Start / Stop condition, Address, R/W, Data, ACK</td></tr>
+<tr><td>IR Remote</td><td>Decoding of any InfraRed Remote Control</td></tr>
+<tr><td>MagStripe</td><td>Decoding of analog magnetic stripe tracks on  ISO 7813 cards</td></tr>
+<tr><th>Post Decoder</th><th>Comment</th></tr>
+<tr><td>PN 532</td><td>SPI + I²C traffic of Philips RFID + NFC transmission chip</td></tr>
+<tr><td>ISO 7816</td><td>UART traffic of pinpad with smartcard</td></tr>
+<tr><td>ISO 14230</td><td>K-Line traffic with vehicle ECU (Engine Control Unit)</td></tr>
+<tr><td>and more...</td><td>You can implement your own decoders + post decoders</td></tr>
+</table>
+
+<a name="DemoFiles"></a>
+<h1>Demo Files</h1>
+
+<p>
+<img src="Images/DemoFiles.png" width="460" height="344" alt="Oszi Waveform Analyzer - The demo files">
+<p>
+<div>Oszi Waveform Analyzer comes with several pre-installed demo files that you should open one by one to discover all features.</div>
+<div>These files are real-world oscilloscope captures that can show you how to use this program.</div>
+
+
+
+<a name="Menu"></a>
+<h1>Right-Click Menu</h1>
+
+<img src="Images/RightClickMenu.png" width="741" height="468" alt="Oszi Waveform Analyzer - The right-click menu">
+<p>
+<div>When you right-click on a channel you get a dynamic menu, which means that the menu items depend on what you click.</div>
+<div>The <b>logic analyzer</b> functions require a digital channel, so you get less menu items when you click an analog channel.</div>
+<div>On the other hand there are menu items like the <b>Noise Suppression</b> which are only available for analog channels.</div>
+<div>You can easily create a digital channel from an analog channel with menu item <b>A/D Converter</b>.</div>
+<div><span class="Error">ATTENTION:</span> When the checkbox <b>Separate Analog Channels</b> is turned off, some menu items are not available.</div>
+<p>
+<div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
+<div>You can expand this menu by writing a new class and registering it in the <b>OperationManager</b>.</div>
+
+
+<a name="MeasureTime"></a>
+<h1>Measure Timing</h1>
+
+<img src="Images/TimeMeasurement.png" width="741" height="351" alt="Oszi Waveform Analyzer - Timing Measurement">
+<p>
+<div>Oszi Waveform Analyzer allows a precise measurement of timing.</div>
+<div>In the menu you select option <b>Set Cursor</b> and set the vertical cursor to the start point of the measurement.</div>
+<div>Then move the mouse to the end point and the <b>tooltip</b> will show the distance from the cursor.</div>
+<div>Above you see the interval of 64 µs and the calculated frequency of 15.625 kHz which is exactly the PAL television sweep frequency.</div>
+<div>Oszi Waveform Analyzer internally calculates with a timing of <b>Pico seconds</b> which allows to analyze signals of several Gigahertz.</div>
+<p>
+<img src="Images/CanBusRaster.png" width="741" height="392" alt="Oszi Waveform Analyzer - CAN Bus with raster">
+<p>
+<div>You can also select the menu option <b>Set cursor and show raster lines</b>.</div>
+<div>Here you see a 2 µs raster which corresponds to the CAN bus baudrate of 500 kBaud.</div>
+<div>You can move the raster with keys 'Arrow Left' and 'Arrow Right'.</div>
+<p>
+<div>If you want to <b>remove</b> the cursor and the raster right-click the black background outside the channels.</div>
+<p>
+<div>In the <b>vertical</b> direction a raster is not required because the tooltip shows anywhere the exact voltage under the mouse pointer.</div>
+<div>And you always see the <b>peak voltages</b> of the signal in the legend (here: CAN High from 1.98V to 3.48V)</div>
+
+
+<a name="AD_Conversion"></a>
+<h1>A/D Conversion</h1>
+
+<div>Oszi Waveform Analyzer implements multiple algorithms for Analog / Digital conversion:</div>
+<p>
+<img src="Images/ThresholdConvertAD.png" width="611" height="270" alt="Oszi Waveform Analyzer - Threshold A/D Conversion">
+<p>
+<div>The standard method is the conversion at two threshold levels.</div>
+<div>Digital High where the analog signal rises above the upper threshold and digital low where it falls below the lower threshold.</div>
+<div>This is very simple and recommended for square analog signals, but not usefull for all signals.</div>
+<p>
+<img src="Images/AdaptiveConvertAD.png" width="611" height="310" alt="Oszi Waveform Analyzer - Adaptive A/D Conversion">
+<p>
+<div>This is the signal of a magnetic stripe track which is extremely dancing up and down.</div>
+<div>It is impossible to digitze this signal at a fix threshold voltage.</div>
+<div>For the magnetic stripe decoder it is very important that the digital signal has 50% duty cycle.</div>
+<div>This can be achieved by adaptive A/D conversion where the threshold adapts to the Min/Max values of each half period.</div>
+<p>
+<img src="Images/MinMaxConvertAD.png" width="611" height="304" alt="Oszi Waveform Analyzer - Min/Max A/D Conversion">
+<p>
+<div>This is the most complicated signal because it is distorted and not symmetrical.</div>
+<div>The threshold and adaptive methods will not work with this signal.</div>
+<div>The only A/D method that results in a 50% duty cycle is Min/Max conversion where only the highest and lowest voltage are used.</div>
+<div>This conversion also uses two thresholds to exclude noise on the analog signal.</div>
+<div>To detect the maximum the voltage must be above the upper threshold and for the minimum below the lower threshold.</div>
+<div><span class="Error">ATTENTION:</span> The Min/Max conversion does not work with square analog signals!</div>
+<p>
+<img src="Images/DifferentialAD.png" width="611" height="458" alt="Oszi Waveform Analyzer - Differential Signal A/D Conversion">
+<p>
+<div>If you have differential signals like CAN bus, RS422 or RS485 it is recommended to first calculate the difference</div>
+<div>before doing the A/D conversion. Use menu option <b>Math Operations</b> and create a new channel as CAN Low - CAN High</div>
+<div>Then use Threshold A/D to create the digital channel.</div>
+<div>The CAN Bus driver chips internally have a differential amplifier which does the same with the input signals.</div>
+
+
+
+<a name="NoiseSuppression"></a>
+<h1>Noise Suppression</h1>
+
+<img src="Images/NoiseSuppression.png" width="529" height="309" alt="Oszi Waveform Analyzer - Noise Suppression">
+<p>
+<div>Oszi Waveform Analyzer implements a noise filter (basically a low pass filter).</div>
+<div>There are two settings that affect the signal in different ways.</div>
+<div>The upper trackbar regulates the filter and the lower trackbar how often the filter is applied.</div>
+<div>When you apply too much filtering the signal flanks are affected.</div>
+<div><span class="Error">ATTENTION:</span> If you apply the noise filter to multiple channels of the same capture make sure</div>
+<div>that you use the <b>same filter settings</b> for all channels otherwise you get phase shifts between the channels.</div>
+
+
+<a name="SplitHalfDuplex"></a>
+<h1>Splitting a Half Duplex Communication</h1>
+
+<div>If you have a half duplex UART communication like for example a pinpad with a chipcard,</div>
+<div>you see on the oscilloscope the Rx and the Tx data alternatingly but you will not be able to see</div>
+<div>which bytes were sent by the pinpad and which bytes were sent by the smartcard.</div>
+<p>
+<div>How is it possible to separate a half duplex data transfer on one wire into Rx and Tx channels?</div>
+<div>It is possible with 2 additional diodes and a resistor and Oszi Waveform Analyzer.</div>
+<p>
+<img src="Images/DiagramAnalyzeHalfduplex.png" class="Img" width="736" height="370" alt="Oszi Waveform Analyzer - Separate half duplex transfer">
+<p>
+<div>Open the UART demo file <b>ISO 7816 Halfduplex Signal with Noise 51182 Baud.oszi</b></div>
+<div>It contains the data transfer of an Ingenico pinpad reading a VISA credit card over diodes.</div>
+<div>There is a lot of noise on the signal that comes from the 4.76 MHz clock which the pinpad sends to the card.</div>
+<div>Apply a <b>noise suppression</b> of 22% and 13 repetitions to both channels and you get this:</div>
+<p>
+<img src="Images/HalfduplexWithDiodes.png" width="606" height="223" alt="Oszi Waveform Analyzer - Half Duplex with diodes">
+<p>
+<div>While one side pulls the data line to 0 Volt, the other side sees a voltage of 0.6 Volt.</div>
+<div>The 0.6 Volt difference is the forward voltage of the 1N4148.</div>
+<p>
+<img src="Images/HalfduplexSubtraction.png" width="606" height="223" alt="Oszi Waveform Analyzer - Half Duplex Difference">
+<p>
+<div>Create a new channel using Math Operation <b>Subtract Channel A - B</b>.</div>
+<div>Now you get a 0.6 Volt negative signal for the pinpad and positive for the smartcard.</div>
+<p>
+<img src="Images/HalfduplexAD.png" width="606" height="277" alt="Oszi Waveform Analyzer - Half Duplex A/D">
+<p>
+<div>Then apply an A/D conversion once at +0.26 Volt and once at -0.28 Volt threshold</b>.</div>
+<p>
+<img src="Images/HalfduplexDecoded.png" width="606" height="177" alt="Oszi Waveform Analyzer - Half Duplex decoded">
+<p>
+<div>Use menu option <b>Invert channel</b> to invert the smartcard channel.</div>
+<div>Finally select menu option <b>Decode asynchronous data</b>, then enable <b>Decode two halfduplex channels</b>.
+<div>Set Baudrate: 51182 baud, Startbit: Low, Parity: Even, Stopbits: Two.</div>
+<div>Mission accomplished: Now you see the bytes from the pinpad and the smartcard separated.</div>
+
+
+
+<a name="DecodeAsync"></a>
+<h1>Decode Asynchronous Data</h1>
+
+<div>UART communication in all it's derivates like RS232, RS422, RS485, Smartcard,... either half duplex or full duplex</div>
+<div>can be decoded after A/D conversion. The result is printed as coloured richtext output.</div>
+<p>
+<div>Additionally to decoding the bytes you can implement <b>Post Decoders</b> for specific UART traffic that show the meaning of the bytes.</div>
+<div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
+<div>You can write your own Post Decoder class for UART, I²C Bus and SPI Bus and register it in the <b>PostDecoderManager</b>.</div>
+
+<a name="PostISO7816"></a>
+<h3>Post Decoder ISO 7816</h3>
+<div>The next screenshot shows the UART demo file <b>ISO 7816 Smartcard 12795 + 51182 Baud - Clk 4,76 MHz.oszi</b></div>
+<div>It is a capture of a pinpad reading a VISA credit card.</div>
+<p>
+<img src="Images/PinpadSmartcardDecoded.png" width="751" height="394" alt="Oszi Waveform Analyzer - Pinpad Smartcard decoded">
+<p>
+<div>After the pinpad has pulled the Reset line the card sends autonomously the ATR (Answer to Reset) packet.</div>
+<div>The pinpad sends a clock of 4.76 MHz and both start communication with a baudrate of 1/372 of the clock = 12795 baud.</div>
+<div>Then pinpad and card switch to a baudrate of 4/372 of the clock = 51182 Baud which the card requests in it's ATR packet.</div>
+<div>See <b>ISO 7816-03.pdf</b> in subfolder 'Documentation' in the source code.</div>
+<div>You must enable the post decoder ISO7618 which calculates and switches the baudrate otherwise you will see a lot of errors.</div>
+
+<a name="PostISO14230"></a>
+<h3>Post Decoder ISO 14230</h3>
+<div>The next screenshot shows the UART demo file <b>ISO 14230 K-Line Bus-Init 10400 Baud.oszi</b>.</div>
+<div>It is captured from a motorbike ECU (Engine Control Unit). For more info read the help file of my software</div>
+<div> <a href="https://netcult.ch/elmue/Hud%20Ecu%20Hacker/#ISO_14230" target="_blank">HUD ECU Hacker</a> which communicates over K-Line and CAN bus with ECU's from motorbikes, cars, trucks and vessels.</div>
+<div>The white lines have been added by the Post Decoder.</div>
+<p>
+<img src="Images/PostDecoderIso14230.png" width="731" height="393" alt="Oszi Waveform Analyzer - ISO 14230 decoder">
+<p>
+<p>
+<div>Finally the UART demo files <b>RS232 Pinpad 115200 Mark 2 Stop.oszi</b> and <b>RS232 Pinpad 19200 Odd 1 Stop.oszi</b></div>
+<div>contain a capture of a command send from a POS (Point of Sale) to a pinpad over RS232.</div>
+
+
+<a name="DecodeSync"></a>
+<h1>Decode Synchronous Data</h1>
+
+<div>Synchronous data refers to anything that has a Clock and a Data line.</div>
+<div>This may be a half-duplex or full-duplex <b>SPI bus</b> or a chip with a simple shift register.</div>
+<div>For example the Sanyo LC75821 is an LCD display driver with a 56 bit shift register:</div>
+<div>Oszi Waveform Analyzer supports packets up to 64 bit. If you have longer data you must decode them as bytes.</div>
+
+<p>
+<img src="Images/SanyoLC75821.png" width="518" height="364" class="Img" alt="Oszi Waveform Analyzer - Sanyo LC75821">
+<p>
+<div>Open the SPI demo file <b>ISO 14443 RFID Mifare Card with PN532 over SPI Mode 0.oszi</b></div>
+<div>which shows the SPI bus communication between a Teensy processor and a Philips PN532 chip.</div>
+<div>The <b>PN532</b> is an RFID and NFC transmission chip that can read and write RFID cards at 13.56 MHz.</div>
+<div>I use this chip in my project <a href="https://netcult.ch/elmue/RFID-Secure-Doorlock" target="_blank">Electronic Doorlock</a>, a high-security door opener with RFID cards using DES or AES encryption.</div>
+<div>In this project you find the detailed project description and the programming manual of the PN532.</div>
+<p>
+<img src="Images/SpiDecoded.png" width="683" height="274" alt="Oszi Waveform Analyzer - SPI Bus decoder">
+
+<a name="PostPN532_SPI"></a>
+<h3>Post Decoder PN532 over SPI</h3>
+
+<div>You can implement <b>Post Decoders</b> for specific chips which process the SPI data and show the meaning of the bytes.</div>
+<div>I implemented this for the Philips PN532:</div>
+<p>
+<img src="Images/PostDecoderPn532Spi.png" width="683" height="447" alt="Oszi Waveform Analyzer - PN532 SPI decoder">
+<p>
+<div>Here you see the PN532 reading an RFID Mifare Classic card.</div>
+<div>The white lines have been added by the Post Decoder.</div>
+
+
+
+<a name="DecodeI2C"></a>
+<h1>Decode I²C Bus</h1>
+
+<div>The same Philips PN532 chip from the last chapter can also be configured to operate over I²C Bus.</div>
+<div>Open the I²C demo file <b>ISO 14443 RFID Mifare Card with PN532 over I2C.oszi</b></div>
+<p>
+<img src="Images/I2cDecoded.png" width="881" height="153" alt="Oszi Waveform Analyzer - I2C Bus decoder">
+
+
+<a name="PostPN532_I2C"></a>
+<h3>Post Decoder PN532 over I²C</h3>
+
+<div>You can implement <b>Post Decoders</b> for specific chips which process the I²C data and show the meaning of the bytes.</div>
+<div>I implemented this for the Philips PN532:</div>
+<p>
+<img src="Images/PostDecoderPn532I2c.png" width="683" height="446" alt="Oszi Waveform Analyzer - I2C Bus decoder">
+<p>
+<div>Here you see the PN532 reading an RFID Mifare Desfire card.</div>
+<div>The white lines have been added by the Post Decoder.</div>
+
+
+<a name="DecodeCAN"></a>
+<h1>Decode CAN Bus</h1>
+
+<div>The CAN bus decoder is the most complex of all decoders (1100 lines of code).</div>
+<div>It can also decode <b>CAN FD</b> (Flexible Datarate) with two different baudrates and up to 64 data bytes per packet.</div>
+<div>It has a fully implemented <b>error detection</b> (timing errors, bit stuffing errorrs, CRC errors,...)</div>
+<div>It is a great help if you have to analyze errors in a CAN network.</div>
+<p>
+<img src="Images/CanFdBaudrateSwitch.png" width="856" height="495" alt="Oszi Waveform Analyzer - CAN FD Packet BRS bit">
+<p>
+<div>When decoding CAN Classic you don't have to care about the samplepoint.</div>
+<div>But the CAN FD protocol switches the baudrate at the <b>samplepoint</b> of the BRS (Baud Rate Switch) bit.</div>
+<div>This makes the samplepoint crucial for a correct decoding.</div>
+<div>You cannot decode CAN FD packets if you don't know the samplepoint of the CAN network.</div>
+<div>The CAN network may even use a different samplepoint for each baudrate.</div>
+<p>
+<img src="Images/CanFdSamplepoint.png" width="625" height="158" class="Img" alt="Oszi Waveform Analyzer - CAN Bus Samplepoint">
+<p>
+<div>This image is from the file <b>Bosch CAN FD.pdf</b> that you find in subfolder 'Documentation' in the source code.</div>
+<div>In this example one bit of a CAN packet is divided into 15 time quantums.</div>
+<div>The samplepoint is after the eleventh quantum which results in a samplepoint at 11/15 = 73.33%</div>
+<div>The BRS bit uses the standard baudrate until the samplepoint and the rest of the bit uses the CAN FD baudrate.</div>
+<p>
+<div><b><u>Example:</u></b></div>
+<div>Standard baudrate = 500 kBaud = 2 µs / bit</div>
+<div>CAN FD baudrate = 2 MBaud = 500 ns / bit</div>
+<div>Both samplepoints = 50.0% &rarr; BRS bit = 50.0% of 2 µs + 50.0% of 500 ns = 1000 + 250 &nbsp;= 1250 ns</div>
+<div>Both samplepoints = 87.5% &rarr; BRS bit = 87.5% of 2 µs + 12.5% of 500 ns = 1750 + 62.5 = 1812.5 ns</div>
+<div>As you see the difference is 562.5 ns which is more than the length of one entire bit.</div>
+<div>If you enter an invalid samplepoint, all bits after the BRS bit will be decoded wrongly.</div>
+<p>
+<img src="Images/CorrectingSamplepoint.png" width="512" height="167" alt="Oszi Waveform Analyzer - CAN Bus Samplepoint">
+<p>
+<div>If you don't know the samplepoint of your CAN network, Oszi Waveform Analzyer helps you to find it.</div>
+<div>When you enter the wrong samplepoint you will see a lot of decoding errors.</div>
+<div>Adjust the samplepoint until the <b>real</b> end and the <b>calculated</b> end of the BRS bit match.</div>
+<div>The calculated end of the BRS and the DL1 bits, where baudrate is switched, are displayed with a <b>magenta line</b>.</div>
+<div>If the samplepoint is correct the magenta line will be covered by the <b>white line</b> of the start of the next bit.</div>
+<div>The <b>ESI</b> (Error State Indicator) bit after the BRS bit is normally low, except the CAN controller reports errors.</div>
+<div>CAN nodes and Oszi Waveform Analyzer <b>re-synchronize</b> on received edges from recessive to dominant.</div>
+<p>
+<img src="Images/CanDecoderResult.png" width="529" height="431" alt="Oszi Waveform Analyzer - CAN Bus Samplepoint">
+<p>
+<div>This is the decoder result of the J1939 CAN bus traffic of a <a href="https://kenworth.com" target="_blank">Kenworth truck</a>.</div>
+<p>
+<div>If you work with CAN bus I highly recommend that you download my software <a href="https://netcult.ch/elmue/Hud%20Ecu%20Hacker" target="_blank">HUD ECU Hacker</a></div>
+<div>which also decodes <b>ISO15765</b> and <b>J1939</b> and has a <b>CAN bus debugger</b> where you can send packets manually.</div>
+<div>It supports multiple cheap CAN bus adapters ($20 USD).</div>
+<div>You can even write <b>macro scripts</b> to transmit / receive and decode CAN bus traffic.</div>
+
+
+<a name="DecodeMagStripe"></a>
+<h1>Decode Magnetic Stripe Tracks</h1>
+
+<div>You think the magnetic stripe on cards is from the past and obsolete?</div>
+<div>It may be in your country, but I can assure you that still in the year 2025 it is used in other parts of the world.</div>
+<p>
+<div>Who needs this if there are magnetic stripe readers ready to buy?</div>
+<div>I work in automation of QA of POS (Point of Sale) and have to simulate a user sliding a card through a pinpad.</div>
+<div>A special hardware creates a magnetic field for each track with tiny coils inside the card slot.</div>
+<p>
+<div>This decoder was a challenge, not because of the decoding, but because the A/D conversion of the analog signals is difficult.</div>
+<div>The analog sine wave must be converted into a square wave of 50% duty cycle otherwise the decoder will not work.</div>
+<div>The data is encoded using 2 frequencies, one beeing the double of the other.</div>
+<div>One half period of the slow frequency encodes a binay 'zero' and an entire period of the high frequency encodes a binay 'one'.</div>
+<div>The <a href="#AD_Conversion">A/D conversion</a> must be very precise because a half period already encodes one bit.</div>
+<div>The analog signal is dancing up and down. A fix threshold does not work.</div>
+<div>Track 2 is the most difficult track. Oszi Waveform Analzyer tries Min/Max A/D conversion if Adaptive A/D does not work.</div>
+<div>The baudrate is varying. It depends on the manual sliding speed. The decoder must permanently re-synchronize to the signal.</div>
+<div>The entire data may come reverse, depending on the sliding direction of the card.</div>
+<p>
+<div>The demo file <b>ISO 7813 Magnetic Stripe Bank Card.oszi</b> has been captured from a VISA debit card with this amplifier:</div>
+<p>
+<img src="Images/DiagramMagneticTrackAmplifier.png" width="443" height="336" class="Img" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Amplifier">
+<p>
+<img src="Images/MagStripeDecoder.png" width="582" height="241" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Decoder">
+<p>
+<div>A perfect conversion with adaptive A/D.</div>
+<p>
+<img src="Images/MagStripeData.png" width="477" height="290" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Data">
+<p>
+<div>The decoded tracks. Track 3 is empty on bank cards.</div>
+
+<a name="DecodeIR"></a>
+<h1>Decode Infrared Remote Control</h1>
+
+<div>I impemented this decoder because I already had the code ready in my project <a href="https://netcult.ch/elmue/IR-Computer-Remote-Control" target="_blank">Infrared Remote Control for the Computer</a></div>
+<div>which can control the MP3 player on the computer with the IR remote control of a TV, amplifier, DVD player, SAT tuner or whatever. </div>
+<div>It connects over USB to the computer and injects keystrokes which control any music player that can be controlled by the keyboard.</div>
+<p>
+<div>It uses a universal decoder which first detects the length of one bit and then measures how many bits are High or Low.</div>
+<div>The bit lengths are converted into characters ("A" for 1 bit, "B" for 2 bit,...) and then a CRC is calculated for each button.</div>
+<div>This works with ANY remote control, no matter what baudrate or data format.</div>
+<p>
+<img src="Images/InfraredDecoder.png" width="739" height="65" alt="Oszi Waveform Analyzer - Infrared Remote Control Decoder">
+<p>
+<img src="Images/GrundigRemoteControl.png" width="422" height="229" alt="Oszi Waveform Analyzer - Grundig Remote Control decoded">
+
+
+<a name="WaveformTransfer"></a>
+<h1>Waveform Transfer over USB</h1>
+
+<a name="Ultrascope"></a>
+<h3>Rigol UltraScope</h3>
+
+<div>Once upon a time I used <b>Rigol UltraScope</b> to transfer captures to the computer.</div>
+<p>
+<table class="TblImage">
+    <tr><td><img src="Images/RigolUltraScope.png" alt="Rigol UltraScope" width="335" height="210"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'RigolUltraScope.png')">Show Full Size</span></td></tr>
+</table>
+<ul>
+    <li><div><b>UltraScope</b> requires that you first install the huge <b>UltraSigma</b> (<b>530 Megabyte</b> installer).</div>
+    <li><div>The user interface of UltraSigma is a <b>shame</b>.</div>
+    <li><div>And UltraScope is nothing more than a remote control of the oscillosope.</div>
+    <li><div>It shows nothing more than you see on the oscilloscope.</div>
+    <li><div>It has absolutely no analysis or decoder functionality.</div>
+    <li><div>It is not able to transfer the capture that your oscilloscope has currently in memory.</div>
+    <li><div>It captures each time anew before transferring over USB. You have no control what you get.</div>
+    <li><div>If you know the trick how to save a signal to disk, the only option is to save a <b>CSV file</b>.</div>
+    <li><div>A 24 Megasample capture is stored in a CSV file of <b>300 Megabyte</b>.</div>
+    <li><div>This software is useless.</div>
+</ul>
+
+<a name="SCPI"></a>
+<h3>SCPI</h3>
+
+<div>Most oscilloscopes implement the <b>SCPI</b> protocol (Standard Command for Programmable Instruments).</div>
+<div>It is a <b>very primitive</b> text based protocol that can remote control a device and also transfer waveforms to a computer.</div>
+<div>If an invalid command is sent to the device, the protocol defines that the device should not respond.</div>
+<div>This results in a timeout without knowing what went wrong. (SCPI was designed by very intelligent people)</div>
+<div>The text based commands are not standardized at all. Each manufacturer uses his own commands and parameters.</div>
+<div>It is <b>impossible</b> to write a universal class that communicates with all oscilloscopes.</div>
+<div>Additionally many SCPI devices have ugly bugs that require specific workarounds.</div>
+<p>
+<div>I have implemented the SCPI commands for the <b>Rigol</b> series DS1000Z and DS1000DE.</div>
+<div>Rigol is such an inconsistent company that not even for their own products they have any standard.</div>
+<div>Each serie requires different commands with completely different parameters and responses.</div>
+
+<a name="Prerequisites"></a>
+<h3>Prerequisites</h3>
+
+<div>To use the SCPI protocol the oscilloscope companies tell you to install a <b>huge runtime</b> that communicates with their device.</div>
+<ul>
+    <li><div>Rigol and Siglent tell you to install the <b>NI-VISA runtime</b>. Alone the installer is <b>1 Gigabyte</b>!</div>
+    <li><div>Tektronix tells you to install <b>TekVISA</b>. Alone the installer is 100 MB.</div>
+</ul>
+<div>Really? Fill your harddisk with hundreds of Megabytes and lots of <b>services</b> that run permanently</div>
+<div>in the background, just to send simple text commands over a USB cable?</div>
+<div>That is <b>ridiculous</b>!</div>
+<p>
+<div>You need <span class="Error">NOTHING</span> of this when you use Oszi Waveform Analyzer.</div>
+<div>The only required installation is a tiny <b>TMC</b> (Test and Measurement Class) <b>USB driver</b> of 24 kilobyte.</div>
+<div>You can install it in this window:</div>
+<p>
+<img src="Images/ScpiTransferWindow.png" width="582" height="408" alt="Oszi Waveform Analyzer - SCPI USB Transfer">
+<p>
+<div>This window has two parts:</div>
+<ol>
+<li><div>The <b>upper part</b> sends Rigol-specific commands and will only work if you have selected the correct Rigol serie.</div>
+    <div>With the buttons Run, Stop, Single, etc you can remote control the oscilloscope from the computer.</div>
+    <div>Also the display of samplerate, samplepoints, etc requires Rigol-specific commands.</div>
+    <div>With the button <b>Transfer</b> you can transfer the stored signals of all enabled channels to the computer over USB.</div>
+    <div>You can chose to copy only the visible screen of 1200 samples or the entire memory of 24 Mega samples.</div>
+    <div>The Rigol serie DS1000DE has only memory for 1 Mega samples, so you will see other values here.</div>    
+<li><div>The <b>lower part</b> works with <b>any</b> SCPI device (oscilloscopes, function generators, multimeters, spectrum analyzers,...)</div>
+    <div>The button <b>Send</b> sends any SCPI command to any SCPI device and shows the response.</div>
+    <div>For example <b>:CHANNEL1:SCALE?</b> asks the vertical scale of analog channel 1. The response is: 2 Volt/raster unit.</div>
+</ol>
+
+<a name="TransferSpeed"></a>
+<h3>Transfer Speed</h3>
+
+<div>The transfer is relatively fast because High Speed USB runs at 480 MBit/sec.</div>
+<div>Although SCPI is an entirely text based protocol, the command <b>:WAVEFORM:DATA</b> is an exception: It sends binary data.</div>
+<div>My oscilloscope has an 8 bit A/D converter, so one analog sample is transferred in one byte.</div>
+<div>For digital channels the oscilloscope packs 1 to 8 channels into one byte.</div>
+<p>
+<div>However, you will only transfer captures, but not a live stream. This is impossible over USB and would require a PCIe digitizer card.</div>
+<div>And the processor in the oscilloscope is not fast enough to capture and display signals and at the same time stream them over USB.</div>
+<div>By the way, live streaming was never the purpose of Oszi Waveform Analyzer.</div>
+
+<a name="ImplementOszi"></a>
+<h3>Currently Implemented Oszilloscopes</h3>
+
+<table class="DataTable">
+<tr><th>Oscilloscope Brand</th><th>Serie</th><th>Status</th></tr>
+<tr><td class="Green">Rigol</td><td>DS1000Z</td> <td>Implemented and tested</td></tr>
+<tr><td class="Green">Rigol</td><td>MSO1000Z</td><td>Implemented and tested</td></tr>
+<tr><td class="Green">Rigol</td><td>DS1000D</td> <td>Implemented and tested</td></tr>
+<tr><td class="Green">Rigol</td><td>DS1000E</td> <td>Implemented and tested</td></tr>
+<tr><td class="Red">Tektronix</td>           <td>TODO</td><td>Download <a href="https://download.tek.com/manual/MSO-DPO5000-B-DPO7000-C-DPO70000-B-C-D-DX-SX-DSA70000-B-C-D-and-MSO70000-C-DX-077001019.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Rhode &amp; Schwarz</td> <td>TODO</td><td>Download <a href="https://www.batronix.com/files/Rohde-&-Schwarz/Oscilloscope/HMO1xx2/HMO1002_1202_ProgrammingManual_en.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Siglent</td>             <td>TODO</td><td>Download <a href="https://www.siglent.com/upload_file/document/SDS1000%20Series&SDS2000X&SDS2000X-E_ProgrammingGuide_PG01-E02D.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Keysight</td>            <td>TODO</td><td>Download <a href="https://www.keysight.com/us/en/assets/9018-07141/programming-guides/9018-07141.pdf?success=true" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Hantek</td>              <td>TODO</td><td>Download <a href="https://www.hantek.com/Product/DSO4000BC/DSO4000BC_SCPI_EN.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Other Brands</td>        <td>TODO</td><td>Use Google ...</td></tr>
+</table>
+<p>
+<div>Now it is up to you to implement further oscilloscope models.</div>
+<div>Download the programming manual that explains the SCPI commands.</div>
+<div>Open the above Transfer window and send the SCPI commands manually to see what your scope responds.</div>
+<div>Then clone the Rigol classes, modify them and register the new oscilloscope serie in the <b>TransferManager</b>.</div>
+<div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
+<div>In the subfolder 'Documentation' in the source code you find a <b>logfile</b> of the SCPI commands and responses of my scope.</div>
+<div>In the class SCPI you can enable <code>TRACE_OUTPUT</code> to see the communication over USB.</div>
+
+
+<a name="StoreDisk"></a>
+<h1>Storing Waveforms on Disk</h1>
+
+<a name="CsvFiles"></a>
+<h3>CSV Files</h3>
+
+<div>Most oscilloscopes offer the option to store the capture in a CSV file.</div>
+<div>The rows of the CSV file contain the analog voltages as floating point values, each channel in it's own column.</div>
+<div>The problem is how to transfer the X axis settings, like timestamp and samplerate in a CSV file?</div>
+<div>Here each manufacturer cooks his own soup.</div>
+<div>And Rigol, the most inconsistent company under the sun, does not even use the same CSV format in their own products.</div>
+<div>I implemented a <b>CSV parser</b> into Oszi Waveform Analyer. And I had to write a different code for each Rigol serie.</div>
+<p>
+<div>The <b>Rigol DS1000DE serie</b> stores the <span class="Blue">timestamp</span> in the first column (with rounding errors):</div>
+<p>
+<table class="Pre">
+<tr><td><span class="Red">Time,X(CH2),</span><br>
+<span class="Red">Second,Volt,</span><br>
+<span class="Blue">-2.4000157e-04</span>,<span class="Green">-0.00000e+00</span>,<br>
+<span class="Blue">-2.3600156e-04</span>,<span class="Green">-4.00000e-02</span>,<br>
+<span class="Blue">-2.3200156e-04</span>,<span class="Green">-0.00000e+00</span>,<br>
+<span class="Blue">-2.2800156e-04</span>,<span class="Green">-4.00000e-02</span>,<br>
+<span class="Blue">-2.2400156e-04</span>,<span class="Green">-4.00000e-02</span>,<br>
+<span class="Blue">-2.2000156e-04</span>,<span class="Green">4.00000e-02</span>,<br>
+etc....</td></tr>
+</table>
+<p>
+<div>This is a very stupid format because in each sample they need 15 ASCII characters for the timestamp.</div>
+<div>With 1 Megasamples they store <b>15 Megabyte</b> only for the useless timestamps.</div>
+<div>In the first 2 rows they send the channel names and other stuff which is undocumented.</div>
+<div>The <span class="Green">long floating point voltages</span> are a waste of disk space because the A/D converter in the scope has only 8 bit resolution.</div>
+<div>Rigol developers are so stupid that they don't even remove the useless trailing zeroes.</div>
+<div>Instead of "<span class="Green">-0.00000e+00</span>" they could easily send "<span class="Green">0</span>" and reduce the file size significantly.</div>
+<p>
+<div>And the <b>Rigol DS1000Z serie</b> stores a completely <b>useless</b> <span class="Blue"> counter</span> in the first column:</div>
+<p>
+<table class="Pre">
+<tr><td><span class="Red">X,CH1,Start,Increment,</span><br>
+<span class="Red">Sequence,Volt,-1.144000e-03,2.000000e-06</span><br>
+<span class="Blue">0</span>,<span class="Green">4.00e-02</span>,<br>
+<span class="Blue">1</span>,<span class="Green">-1.20e-01</span>,<br>
+<span class="Blue">2</span>,<span class="Green">-1.20e-01</span>,<br>
+<span class="Blue">3</span>,<span class="Green">4.00e-02</span>,<br>
+<span class="Blue">4</span>,<span class="Green">4.00e-02</span>,<br>
+<span class="Blue">5</span>,<span class="Green">-1.20e-01</span>,<br>
+etc....</td></tr>
+</table>
+<p>
+<div>The format of the first two rows is completely different than in the DS1000DE and - obviously - undocumented.</div>
+<div>I found that the last value in the second row is the time distance between two samples in seconds.</div>
+<p>
+<div>Both formats are among multiple examples for the lack of intelligence of Chinese Rigol developers.</div>
+<div>I'am sure that other oscilloscopes use completely different CSV formats, so each serie requires it's own CSV parser.</div>
+<p>
+<div>A full 24 Megsample capture of my scope occupies 300 Megabyte in a CSV file.</div>
+<div>If I store only 3 captures on disk they already occupy <b>1 Gigabyte</b>!</div>
+<div>The CSV format is <b>totally obsolete</b>.</div>
+
+<a name="WfmFiles"></a>
+<h3>WFM Files</h3>
+
+<div>Rigol also offers to store a capture in a WFM (<b>W</b>ave<b>F</b>or<b>M</b>) file.</div>
+<div>This occupies less disk space because it is a binary format.</div>
+<div>The problem is that this format is undocumented, and guess what?</div>
+<div>Each Rigol serie uses a <b>completely different</b> file header and content.</div>
+<p>
+<div>I found a WFM file format description from Tektronix, but they say it was developed for internal use.</div>
+<div>Apart from the waveform data it stores all the hundreds of oscilloscope settings, that you will never need.</div>
+<div>They store for example the trigger voltage, trigger mode, AC/DC coupling, probe ratio, etc...</div>
+<div>All this useless information makes a WFM file parser extremely complex.</div>
+<div>I will not implement a dozen of complicated parsers for undocumented WFM file formats into Oszi Waveform Analyzer.</div>
+<div>And tomorrow Rigol will sell a new serie which uses just another different WFM format.</div>
+<div>The WFM format is <b>obsolete</b>.</div>
+
+<a name="OsziFiles"></a>
+<h3>OSZI Files</h3>
+
+<div>So, how to save signals using few disk space and using a simple file format?</div>
+<div>As this file format does not exist, I created it.</div>
+<div>When you start Oszi Waveform Analyzer it registers the <b>file extension *.oszi</b></div>
+<div>What does OSZI stand for? "Oscilloscope" is in German "Oszilloskop" and the abbreviation is "Oszi".</div>
+<p>
+<div>The OSZI file format is <b>open-source</b> and free of any license.</div>
+<div>An OSZI file uses the <b>maximum compression</b> that is possible, but it is still a <b>lossless</b> format:</div>
+<ul>
+<li><div>How much disk space an <b><u>Analog Channel</u></b> requires depends on the analog resolution of the A/D converter in the oscilloscope.</div>
+    <div>My Rigol has an analog resolution of <b>8 bit</b>, so each sample can be stored lossless in <b>one byte</b>.</div>
+    <div>But an OSZI file can also store any other A/D resolution, like for example 10 bit.</div>
+    <div>In this case exactly 10 bits are stuffed together until a byte is full and written to disk.</div>
+    <div>If 10 bits would be stored as two bytes, 6 bits would be wasted.</div>
+    <div>More resolution than 12 bit does not make sense because your monitor cannot even display the 4096 vertical pixels of 12 bits.</div>
+    <div>And if you want to save disk space you can even reduce the bit resolution in the OSZI file as you like.</div>
+    <div>A 12 bit resolution can be reduced to 8 bit and the file is 50% smaller.</div>
+<li><div>For <b><u>Digital Channels</u></b> Oszi Waveform Analyzer choses automatically the best compression algortithm:</div>
+    <ul>
+    <li><div>The <b>Mask compression</b> stores one bit per sample and channel and stuffs the bits together until a byte is full.</div>
+        <div>For example for 3 digital channels A,B,C the first byte stuffs the bits like: ABCABCAB, the next byte CABCABCA, ...</div>
+    <li><div>But mostly <b>RLE compression</b> (Run Length Encoding) is more efficient because digital data has long periods of the same status.</div>
+        <div>It only stores the count of samples util the next change of the digital status.</div>
+        <div>For example 119 consecutive samples that are all High or Low are compressed into in only <b>one byte</b>.</div>
+        <div>For example 15894 consecutive samples that are all High or Low are comrpessed into only <b>two bytes</b>.</div>
+    </ul>
+<li><div>Although this is already a very good compression, you can additionaly apply a <b><u>ZIP Compression</u></b>.</div>
+    <div>This decreases the file size even more.</div>
+    <div>Look at the demo OSZI files which are installed with the program and study their file size.</div>
+    <div>The file <b>ISO 7816 Smartcard 12795 + 51182 Baud - Clk 4,76 MHz.oszi</b> has 3 channels with 2 million samples and occupies 5 kB.</div>
+</ul>
+<div>The OSZI file can store up to <b>255 cannels</b>. Each channel can have analog data or digital data or both.</div>
+<div>Also the <b>names</b> are stored that you have assigned to the channels.</div>
+<div>The entire OSZI file is secured by a <b>CRC</b> check, so corrupt files will always be rejected.</div>
+<div>I implemented a <b>version number</b> into the file so future extensions are possible.</div>
+
+<a name="OtherFiles"></a>
+<h3>Other File Formats</h3>
+
+<div>If you want to <b>import</b> or <b>export</b> other file formats you can write an extension.</div>
+<div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
+<div>Write a new file parser class and register it the <b>ExImportManager</b>.</div>
+<div>The new file export will be added to the list of "Save as" options:</div>
+
+<a name="SaveOptions"></a>
+<h3>Save File Options</h3>
+<p>
+<img src="Images/SaveOptions.png" width="386" height="123" alt="Oszi Waveform Analyzer - Save File Options">
+<ul>
+<li><div><b>Oszi File Zip</b>: Save the capture as <b>OSZI</b> file with additional ZIP compression.</div>
+<li><div><b>Oszi File Plain</b>: Save the capture as <b>OSZI</b> file without ZIP compression.</div>
+<li><div><b>Decoder Result</b>: Save the text output of the decoder and post decoder into a <b>RTF</b> file.</div>
+<li><div><b>Screenshot</b>: Save a screenshot of the currently visible signals as <b>PNG</b> file.</div>
+<li><div><b>Full Image</b>: Save a <b>PNG</b> image of the entire signal, also the part that is not visible on the screen.</div>
+</ul>
+<div>If the checkbox <b>Apply Factor</b> is NOT checked the capture is stored in full resolution (e.g. 24 Mega samples) into the OSZI file.</div>
+<div>If Apply Factor is checked the factor is applied to the display and also to the OSZI file.</div>
+<div>If you select for example a display factor of "/ 5" the OSZI file stores every fifth sample reducing resolution and file size.</div>
+<div>Below the combobox "Display Factor" you see the samples (37156) that the OSZI file will contain.</div>
+<div><span class="Error">ATTENTION:</span> If you reduce the resolution too much, some decoders will not work anymore.</div>
+<div>For example the UART and CAN bus decoders need at least 12 samples per bit for a reliable detection.</div>
+
+
+
+<a name="Download"></a>
+<h1>Download &amp; New Versions</h1>
+
+<div>If you have experience in C# programming you can add new features to the next version.</div>
+<ul>
+<li><div>Transfer from new <b>oscilloscope models</b> can be added to the class TransferManager.</div>
+<li><div>New operations in the right-click menu (e.g. <b>decoders</b>) can be added to the class OperationManager.</div>
+<li><div>New <b>file formats</b> for export and import can be added to the class ExImportManager.</div>
+<li><div>New <b>post decoders</b> for UART, SPI, I²C data can be added to the class PostDecoderManager.</div>
+</ul>
+<div>If you have problems with the communication over USB you can enable debugging with <code>TRACE_OUTPUT</code> in the class SCPI.</div>
+<div>When you add new features I recommend to clone an existing class and make all the required adaptions.</div>
+<p>
+<div>Please study the <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer" target="_blank">source code</a> <b>thoroughly</b> until you understand it before you write any new code.</div>
+<div>If you write a new <b>decoder</b> it is mandatory that you provide a good quality OSZI file for testing it.</div>
+<div>Please send me an <b>email</b> if you want to support this project. May be someone is already working on your task.</div>
+<p>
+<div><span class="Error">NOTE:</span> This project has been designed <b>by purpose</b> to run also on .NET framework 4.0</div>
+<div>Windows 7 was the best operating system that Microsoft has ever released. Many people are still using it (like me).</div>
+<div>Framework 4.0 supports also Windows 7 users. Please compile targeting to framework 4.0</div>
+
+
+<p>
+<form action="https://netcult.ch/elmue/Download.php" method="get" target="_blank">
+<input type="hidden" name="Action"  value="Download">
+<input type="hidden" name="Program" value="Oszi-Waveform-Analyzer">
+<table>
+<tr><td><input type="submit" value="Download"></td><td>the latest version
+</td></tr>
+</table>
+</form>
+
+
+<a name="BuyRigol"></a>
+<h1>Should I buy a Rigol Oscilloscope?</h1>
+
+<div>Rigol is a Chinese company that has absolutely <b>no Quality Control</b>.</div>
+<div>They sell their products as they are: Full of <b>ugly bugs</b>.</div>
+<div>I did not find only 1 or 2 or 3 bugs in my scope. The bugs are <b>uncountable</b>.</div>
+<div>I still find <b>new bugs</b> as soon as I use a feature that I did not use before.</div>
+<div>As many other Chinese companies, Rigol sells products that are cheaper, but of worst quality.</div>
+<div>I'am working with electronics since 40 years, but I have never seen such a plentitude of bugs.</div>
+<div>If you write to the <b>Rigol support</b> they will tell you that the bug is confirmed and they are working on it.</div>
+<div>But they will not fix their bugs. They don't care about you.</div>
+<div>If they would care about their customers they would fix their bugs <b><u>before</u></b> bringing a new serie on the market.</div>
+<div>Why should Rigol fix the bugs in your oscilloscope? This is not profitable. You <b>already have paid</b>.</div>
+
+
+<h3>Bug in DS1074Z</h3>
+<div>Once I tried to store the current signal on the screen into a CSV file.</div>
+<div>I put my USB stick into the front plug of the oscilloscope and selected: Save as CSV.</div>
+<div>After that my USB stick was not readable anymore. The oscilloscope <b>killed my USB stick</b>!</div>
+<div>I had to format the USB stick to make it usable again.</div>
+<div>All the several files and folders that I had before were gone forever.</div>
+
+<h3>Bug in DS1074Z</h3>
+<div>It also happened that I plugged in a USB stick and the oscilloscope was completely <b>frozen</b>. All buttons were dead.</div>
+
+<h3>Bug in DS1074Z</h3>
+<div>My oscilloscope can save the <b>current screen</b> into a CSV file.</div>
+<div>But when I chose to store the <b>entire memory</b> of 24 Megapixels to CSV, I get this:</div>
+<p>
+<img src="Images/RigolBugHangingEternally.jpg" width="566" height="318" alt="Rigol Bug: Oscilloscope hanging forever">
+<p>
+<div>The progressbar runs to the middle and stays there <b>forever</b>.</div>
+<div>The file is never written. You can wait 3 hours with no advance.</div>
+<div>The same happens when I save a WFM file. This is 100% reproducable.</div>
+<div>But the oscilloscope is not crashed. After pulling out the USB stick it shows an error and works again.</div>
+<div>A sloppy Chinese developer has programmed an endless loop.</div>
+
+<h3>Bug in DS1074Z</h3>
+
+<div>A very severe bug is that you switch the scope into <b>SINGLE trigger mode</b> where it waits for a signal.</div>
+<div>Then comes the signal and the scope triggers, but on the screen there is only a zero line!</div>
+<div>Even if you reduce the horizontal resolution to see the entire capture memory: There is absolutely <b>no signal</b>.</div>
+<div>Not even the <b>most basic</b> things are functioning. What an incredible <b>garbage</b>!</div>
+
+<h3>Bug in DS1074Z</h3>
+
+<div>When I move the knob that shifts the signal horizontally on the screen too fast I may get this:</div>
+<p>
+<img src="Images/RigolBugArtifacts.png" width="601" height="400" alt="Rigol Bug Bug Artifacts">
+<p>
+<div>The square signal suddenly has ugly artifacts.</div>
+<div>These artifacts are not temporary. They stay. If I contiue to move the knob too quickly I even get more of them.</div>
+<div>What a Chinese <b>garbage</b>!</div>
+
+<h3>Bug in DS1074Z</h3>
+
+<div>When I select the horizontal resolution of 500 ms per raster unit I get a <b>wrong timing</b> of all signals.</div>
+<div>I capture the same signal with 200 ms per raster unit or any other setting and the timing is correct.</div>
+<div>I posted this bug on <a href="https://electronics.stackexchange.com/questions/517690/rigol-ds1074-oscilloscope-shows-very-wrong-timing" target="_blank">StackExchange</a>.
+Others have confirmed to observe the same even on other oscilloscope models.</div>
+<div>On this page you also find the experience of others with the Rigol support.</div>
+
+
+<h3>Bug in DS1074Z</h3>
+
+<div>The RS232 decoder does not work at all if you switch the screen resolution to see more than 2 or 3 bytes at once.</div>
+<p>
+<img src="Images/RigolBugRS232Decoder.png" width="601" height="400" alt="Rigol Bug Wrong RS232 decoder">
+<p>
+<div>There is not even one single byte "FF" in the real data.</div>
+<div>How is it possible that the RS232 decoder depends on the screen resolution?</div>
+<div>I would understand that the decoder turns off when the space on screen is too small. But it displays wrong values.</div>
+<div>And Rigol wants you to pay extra money for a <b>license</b> to "unlock" their primitive decoders!<div>
+<div>What a luck that you don't need this crap anymore, now that you have Oszi Waveform Analyzer.</div>
+
+<h3>Bug in RPL1116</h3>
+<p>
+<div>I bought my scope with an extension for 16 digital inputs: The RPL1116 <b>Active Logic Probe</b>.</div>
+<div>I connected one analog input and two digital inputs to the same 1 kHz test output and got this:</div>
+<p>
+<img src="Images/RigolActiveProbe.png" width="307" height="260" alt="Rigol Bad Quality Active Logic Probe">
+<p>
+<div>How is it possible that the digital channels have a tremendous phase shift?</div>
+<div>This is not a high frequency. It is only 1 kHz. This Chinese toy is useless for any serious work.</div>
+
+
+<h3>Bug in DS1102E</h3>
+<p>
+<div>If the SCPI protocol would be intelligently designed it would demand a respone to every command.</div>
+<ol>
+    <li>If the command returns a value, the value is sent.
+    <li>If the command has no return value, a simple "OK" is sent after the execution has finished.
+    <li>If the command is invalid an error message is sent.
+</ol>
+<div>It could be so simple!</div>
+<div>But the <b>stupidly designed</b> SCPI protocol demands to respond <b>nothing</b> on error.</div>
+<div>If a slow command is executed (for example :AUTO which takes 7 seconds) the oscilloscope never returns anything.</div>
+<div>The only way for Oszi Waveform Analyzer to know if a command has finished is to send the *OPC? command (<b>OP</b>eration <b>C</b>omplete?).</div>
+<div>But this <b>important</b> command is buggy in the DS1102E. A reliable communication with the oscilloscope is impossible.</div>
+<div>When sending a sequence of commands, how can Oszi Waveform Analyzer know if the next command can be sent or the scope is still busy?</div>
+<div>And how can Oszi Waveform Analyzer detect an error if there is no feedback at all?</div>
+
+<h3>Misdesign in DS1102E</h3>
+<p>
+<div>When the computer is connected, the oscilloscope goes into Remote Control mode and the physical user interface is locked.</div>
+<div>All buttons are dead.</div>
+
+<h3>Bugs, Bugs and more Bugs</h3>
+
+<div>I have listed only a few bugs here. I stop now because the list would be endless.</div>
+<div>Study the file <b>Rigol.cs</b> and read all my comments which describe the several bugs and misdesigns and my workarounds for them.</div>
+
+
+<a name="LackQuality"></a>
+<h3>Lack of Quality</h3>
+
+<p>
+<img src="Images/RigolAnalogResolution.png" width="580" height="178" alt="Rigol Low analog resolution">
+<p>
+<div>The oscilloscope has a bad analog <b>resolution</b> and there is a lot of <b>noise</b> on the signal.</div>
+<div>Moving the signal on the screen with the small knobs is annoyingly <b>laggy</b>.</div>
+<div>If your USB stick if formatted with <b>NTFS</b> it is not accepted.</div>
+<div>To enter a filename or a baudrate in the oscilloscope you must turn a knob to select characters. This works like shit.</div>
+<div>The <b>ventilator</b> is unnecessarily noisy.</div>
+
+
+<a name="RigolFirmware"></a>
+<h3>Should I Update the Rigol Firmware?</h3>
+
+<h4>First:</h4>
+<div>How can you trust an oscilloscope which hangs forever while writing a CSV file?</div>
+<div>A firmware update is a far more complex task. What if the firmware update has a bug and it hangs forever?</div>
+<div>If the flash memory has been erased and writing the new firmware fails, you have a scope that will not start anymore.</div>
+<div>Then your oscilloscope is ready for the dust bin. You wasted your money.</div>
+
+<h4>Second:</h4>
+<div>I know from a user who made a firmware update and that introduced a new severe bug.</div>
+<div>The new bug does not allow him anymore to copy waveforms from the oscilloscope to the computer. This worked before.</div>
+<div>He wrote to the Rigol support and they told they will fix it, which they never did.</div>
+
+<h4>Recommendation:</h4>
+<div>If you are brave, try a firmware update. I hope you will not regret it.</div>
+<div>But if you have many minor bugs with which you can live or you have a workaround, I <b>strongly</b> recommend to leave the scope alone.</div>
+<div>Probably the new firmware will not fix your bug. And if it really fixes 1 or 2 bugs there will still be hundreds remaining.</div>
+<div>If you read the <a href="https://beyondmeasure.rigoltech.com/acton/attachment/1579/f-6083f83b-23d2-4a1a-abe7-c220a44490e5/1/-/-/-/-/DS1000Z-E%20Release%20Notes.txt" target="_blank">release notes</a>
+of the firmware updates you see that they released one version in 2019, 2020, 2021, each fixing 3 bugs and that's it.</div>
+<div>And in 2022, 2023, 2024 no more updates.</div>
+<div>Three small firmware updates in three years shows the motivation of Rigol to fix hundreds of bugs.</div>
+<p>
+<div>Sadly I cannot recommend you another oscilloscope brand, because I don't know them.</div>
+<div>Rigol overbloats their scopes with countless features that nobody needs making the firmware extremely complex.</div>
+<div>I recommend to buy a simpler scope from Tektronix for the same price with less features but these working reliably.</div>
+
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+
+</body>
+</html>
