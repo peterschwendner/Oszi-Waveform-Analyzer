@@ -1,0 +1,93 @@
+﻿/*
+------------------------------------------------------------
+Oscilloscope Waveform Analyzer by ElmüSoft (www.netcult.ch/elmue)
+This code is released under the terms of the GNU General Public License.
+------------------------------------------------------------
+
+NAMING CONVENTIONS which allow to see the type of a variable immediately without having to jump to the variable declaration:
+ 
+     cName  for class    definitions
+     tName  for type     definitions
+     eName  for enum     definitions
+     kName  for "konstruct" (struct) definitions (letter 's' already used for string)
+   delName  for delegate definitions
+
+    b_Name  for bool
+    c_Name  for Char, also Color
+    d_Name  for double
+    e_Name  for enum variables
+    f_Name  for function delegates, also float
+    i_Name  for instances of classes
+    k_Name  for "konstructs" (struct) (letter 's' already used for string)
+	r_Name  for Rectangle
+    s_Name  for strings
+    o_Name  for objects
+ 
+   s8_Name  for   signed  8 Bit (sbyte)
+  s16_Name  for   signed 16 Bit (short)
+  s32_Name  for   signed 32 Bit (int)
+  s64_Name  for   signed 64 Bit (long)
+   u8_Name  for unsigned  8 Bit (byte)
+  u16_Name  for unsigned 16 bit (ushort)
+  u32_Name  for unsigned 32 Bit (uint)
+  u64_Name  for unsigned 64 Bit (ulong)
+
+  An additional "m" is prefixed for all member variables (e.g. ms_String)
+*/ 
+
+
+#if DEBUG
+//    #define PRINT_RAW_SAMPLES
+#endif
+
+using System;
+using System.Diagnostics;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.IO;
+using System.Text;
+using System.Windows.Forms;
+
+using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
+using Utils             = OsziWaveformAnalyzer.Utils;
+using OperationManager  = Operations.OperationManager;
+using IOperation        = Operations.OperationManager.IOperation;
+using Capture           = OsziWaveformAnalyzer.Utils.Capture;
+using Channel           = OsziWaveformAnalyzer.Utils.Channel;
+using SmplMark          = OsziWaveformAnalyzer.Utils.SmplMark;
+using eMark             = OsziWaveformAnalyzer.Utils.eMark;
+using GraphMenuItem     = Operations.OperationManager.GraphMenuItem;
+
+namespace Operations
+{
+    public partial class MoreDecoders : IOperation
+    {
+        /// <summary>
+        /// Implementation of interface IOperation
+        /// </summary>
+        public void GetMenuItems(Channel i_Channel, bool b_Analog, List<GraphMenuItem> i_Items)
+        {
+            if (i_Channel == null)
+                return; 
+
+            GraphMenuItem i_Item = new GraphMenuItem();
+            i_Item.ms_MenuText  = "Decode more data types";
+            i_Item.ms_ImageFile = "Lock.ico";
+            i_Items.Add(i_Item);
+        }
+
+        /// <summary>
+        /// Implementation of interface IOperation
+        /// </summary>
+        public String Execute(Channel i_Channel, int s32_Sample, bool b_Analog, Object o_Tag)
+        {
+            MessageBox.Show(Utils.FormMain, "This is an open-source project.\n"
+                                          + "You can add your own decoders here.\n"
+                                          + "Create a new class derived from IOperation and add it to the OperationManager.\n"
+                                          + "I did a tremendous work. Now it is your turn!", "Not Implemented", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            return null;
+        }
+    }
+}
+

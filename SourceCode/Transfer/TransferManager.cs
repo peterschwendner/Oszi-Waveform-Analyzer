@@ -1,0 +1,141 @@
+﻿/*
+------------------------------------------------------------
+Oscilloscope Waveform Analyzer by ElmüSoft (www.netcult.ch/elmue)
+This code is released under the terms of the GNU General Public License.
+------------------------------------------------------------
+
+NAMING CONVENTIONS which allow to see the type of a variable immediately without having to jump to the variable declaration:
+ 
+     cName  for class    definitions
+     tName  for type     definitions
+     eName  for enum     definitions
+     kName  for "konstruct" (struct) definitions (letter 's' already used for string)
+   delName  for delegate definitions
+
+    b_Name  for bool
+    c_Name  for Char, also Color
+    d_Name  for double
+    e_Name  for enum variables
+    f_Name  for function delegates, also float
+    i_Name  for instances of classes
+    k_Name  for "konstructs" (struct) (letter 's' already used for string)
+	r_Name  for Rectangle
+    s_Name  for strings
+    o_Name  for objects
+ 
+   s8_Name  for   signed  8 Bit (sbyte)
+  s16_Name  for   signed 16 Bit (short)
+  s32_Name  for   signed 32 Bit (int)
+  s64_Name  for   signed 64 Bit (long)
+   u8_Name  for unsigned  8 Bit (byte)
+  u16_Name  for unsigned 16 bit (ushort)
+  u32_Name  for unsigned 32 Bit (uint)
+  u64_Name  for unsigned 64 Bit (ulong)
+
+  An additional "m" is prefixed for all member variables (e.g. ms_String)
+*/ 
+
+using System;
+using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
+using System.Text;
+using System.ComponentModel;
+using System.Reflection;
+using System.Windows.Forms;
+
+using eMark             = OsziWaveformAnalyzer.Utils.eMark;
+using SmplMark          = OsziWaveformAnalyzer.Utils.SmplMark;
+using Capture           = OsziWaveformAnalyzer.Utils.Capture;
+using Channel           = OsziWaveformAnalyzer.Utils.Channel;
+using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
+using Utils             = OsziWaveformAnalyzer.Utils;
+
+namespace Transfer
+{
+    /// <summary>
+    /// This class manages transferring analog and digital channel data from an oscilloscope over USB.
+    /// 
+    /// In the future new Forms can be added here that have controls for other oscilloscope models.
+    /// It does not amke any sense to derive them from a base class or interface because 
+    /// the oscilloscopes and their SCPI commands are COMPLETELY different.
+    /// Each company needs it's own classes and Forms.
+    /// Each future Form should have a button "Install Driver".
+    /// </summary>
+    public class TransferManager
+    {
+        /// <summary>
+        /// The Description of this enum is displayed in the same order in the Combobox
+        /// Rigol is such an incredibly **STUPID** company that the SCPI commands are not even consistent
+        /// within their OWN series of products. What a Chinese crap!
+        /// </summary>
+        public enum eOsziSerie
+        {
+            [Description("Rigol DS1000D / DS1000E Series")] // for example DS1102E
+            Rigol_1000DE, 
+
+            [Description("Rigol DS1000Z / MSO1000Z Series")] // for example DS1074Z
+            Rigol_1000Z,  
+
+            // TODO: Add more oscilloscope brands like Tektronix, Rhode & Schwarz, Siglent, ...
+        }
+
+        public static void FillComboOsziModel(ComboBox i_ComboOsziModel)
+        {
+            i_ComboOsziModel.Sorted = false; // IMPORTANT!
+            i_ComboOsziModel.Items.Clear();
+            foreach (eOsziSerie e_Serie in Enum.GetValues(typeof(eOsziSerie)))
+            {
+                String s_Descript = Utils.GetDescriptionAttribute(e_Serie);
+                i_ComboOsziModel.Items.Add(s_Descript);
+            }
+            Utils.ComboAdjustDropDownWidth(i_ComboOsziModel);
+
+            i_ComboOsziModel.Text = Utils.RegReadString(eRegKey.OsziSerie);
+            if (i_ComboOsziModel.SelectedIndex < 0)
+                i_ComboOsziModel.SelectedIndex = 0;
+        }
+
+        /// <summary>
+        /// Opens a Form that allows to capture from the selected oscilloscope over the USB SCPI protocol
+        /// </summary>
+        public static void Transfer(ComboBox i_ComboOsziModel)
+        {
+            Utils.RegWriteString(eRegKey.OsziSerie, i_ComboOsziModel.Text);
+
+            Form i_Form;
+            eOsziSerie e_OsziSerie = (eOsziSerie)i_ComboOsziModel.SelectedIndex;
+            switch (e_OsziSerie)
+            {
+                case eOsziSerie.Rigol_1000DE:
+                case eOsziSerie.Rigol_1000Z:  i_Form = new TransferRigol(e_OsziSerie); break;
+
+                // TODO: Add Tektronix, Rhode & Schwarz, Siglent, ...
+
+                default:
+                    Debug.Assert(false, "Programming Error: OsziSerie not implemented");
+                    return;
+            }
+            i_Form.ShowDialog(Utils.FormMain);
+        }
+
+        public static Capture ParseCsvFile(String s_Path, ComboBox i_ComboOsziModel, ref bool b_Abort)
+        {
+            Utils.RegWriteString(eRegKey.OsziSerie, i_ComboOsziModel.Text);
+
+            eOsziSerie e_OsziSerie = (eOsziSerie)i_ComboOsziModel.SelectedIndex;
+            switch (e_OsziSerie)
+            {
+                case eOsziSerie.Rigol_1000DE:
+                case eOsziSerie.Rigol_1000Z:
+                    return Rigol.ParseCsvFile(s_Path, e_OsziSerie, ref b_Abort);
+
+                // TODO: Add Tektronix, Rhode & Schwarz, Siglent, ... which probably use their own proprietary CSV format
+
+                default:
+                    Debug.Assert(false, "Programming Error: OsziSerie not implemented");
+                    return null;
+            }
+        }
+    }
+}
