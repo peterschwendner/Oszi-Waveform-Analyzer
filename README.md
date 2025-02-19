@@ -5,4 +5,4 @@ Converts your oscilloscope into a powerful logic analyzer.
 
 
 Please read the detailed project description here:
-https://nectcult.ch/elmue/Oszi-Waveform-Analyzer/
+https://netcult.ch/elmue/Oszi-Waveform-Analyzer/
