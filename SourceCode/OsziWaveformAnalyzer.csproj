@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{8C028E14-51A7-48C5-96BF-F09511A35D9F}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>OsziWaveformAnalyzer</RootNamespace>
+    <AssemblyName>OsziWaveformAnalyzer</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Compiled\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Compiled\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>App.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <ApplicationManifest>Properties\OsziWaveformAnalyzer.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ExImport\OsziFile.cs" />
+    <Compile Include="Operations\Digitizer.cs" />
+    <Compile Include="PostDecoder\ISO14230.cs" />
+    <Compile Include="PostDecoder\ISO7816.cs" />
+    <Compile Include="Transfer\TransferManager.cs" />
+    <Compile Include="Transfer\TransferRigol.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Transfer\TransferRigol.designer.cs">
+      <DependentUpon>TransferRigol.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ExImport\ExImportManager.cs" />
+    <Compile Include="Operations\DecodeCanBus.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\DecodeCanBus.designer.cs">
+      <DependentUpon>DecodeCanBus.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\DecodeI2C.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\DecodeI2C.designer.cs">
+      <DependentUpon>DecodeI2C.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\DecodeInfrared.cs" />
+    <Compile Include="Operations\DecodeUART.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\DecodeUART.designer.cs">
+      <DependentUpon>DecodeUART.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\Mathematical.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\Mathematical.designer.cs">
+      <DependentUpon>Mathematical.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\ConvertAD.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\ConvertAD.designer.cs">
+      <DependentUpon>ConvertAD.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\CopyPaste.cs" />
+    <Compile Include="Operations\DecodeSPI.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\DecodeSPI.designer.cs">
+      <DependentUpon>DecodeSPI.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\DeleteSamples.cs" />
+    <Compile Include="Operations\MoreDecoders.cs" />
+    <Compile Include="Operations\NoiseFilter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\NoiseFilter.designer.cs">
+      <DependentUpon>NoiseFilter.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\OperationManager.cs" />
+    <Compile Include="Operations\DecodeMagStripe.cs" />
+    <Compile Include="Operations\InvertChannel.cs" />
+    <Compile Include="Operations\DeleteChannel.cs" />
+    <Compile Include="Operations\SetChannelName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\SetChannelName.designer.cs">
+      <DependentUpon>SetChannelName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Operations\MoveChannel.cs" />
+    <Compile Include="Operations\SetCursor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\SetCursor.designer.cs">
+      <DependentUpon>SetCursor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="OsziPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ExImport\Crc32.cs" />
+    <Compile Include="FormMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormMain.Designer.cs">
+      <DependentUpon>FormMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PostDecoder\PN532.cs" />
+    <Compile Include="PostDecoder\PostDecoderManager.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Transfer\Rigol.cs" />
+    <Compile Include="Transfer\SCPI.cs" />
+    <Compile Include="RtfViewer.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Utils.cs" />
+    <EmbeddedResource Include="Transfer\TransferRigol.resx">
+      <DependentUpon>TransferRigol.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormMain.resx">
+      <DependentUpon>FormMain.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\DecodeCanBus.resx">
+      <DependentUpon>DecodeCanBus.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\DecodeI2C.resx">
+      <DependentUpon>DecodeI2C.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\DecodeUART.resx">
+      <DependentUpon>DecodeUART.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\Mathematical.resx">
+      <DependentUpon>Mathematical.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\ConvertAD.resx">
+      <DependentUpon>ConvertAD.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\DecodeSPI.resx">
+      <DependentUpon>DecodeSPI.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\NoiseFilter.resx">
+      <DependentUpon>NoiseFilter.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\SetChannelName.resx">
+      <DependentUpon>SetChannelName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Operations\SetCursor.resx">
+      <DependentUpon>SetCursor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="App.ico" />
+    <EmbeddedResource Include="Resources\ArrowUpDown.ico" />
+    <EmbeddedResource Include="Resources\Copy.ico" />
+    <EmbeddedResource Include="Resources\Cut.ico" />
+    <EmbeddedResource Include="Resources\Paste.ico" />
+    <EmbeddedResource Include="Resources\Logo.png" />
+    <EmbeddedResource Include="Resources\Calculator.ico" />
+    <EmbeddedResource Include="Resources\ArrowLeftRight.ico" />
+    <EmbeddedResource Include="Resources\Port.ico" />
+    <EmbeddedResource Include="Resources\BankCard.ico" />
+    <EmbeddedResource Include="Resources\ConvertAD.ico" />
+    <EmbeddedResource Include="Resources\Balloon.ico" />
+    <EmbeddedResource Include="Resources\Cross.ico" />
+    <EmbeddedResource Include="Resources\Cursor.ico" />
+    <EmbeddedResource Include="Resources\ArrowLeft.ico" />
+    <EmbeddedResource Include="Resources\ArrowRight.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Filter.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\ArrowDown.ico" />
+    <EmbeddedResource Include="Resources\ArrowUp.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\RemoteControl.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Lock.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\CursorRaster.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\CanBus.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\CopyAll.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Chip.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\I2C.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\CursorRemove.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Oszi.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
