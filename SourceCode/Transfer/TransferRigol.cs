@@ -50,6 +50,7 @@ using eOsziSerie        = Transfer.TransferManager.eOsziSerie;
 using eOperation        = Transfer.Rigol.eOperation;
 using OsziModel         = Transfer.Rigol.OsziModel;
 using OsziConfig        = Transfer.Rigol.OsziConfig;
+using ScpiDevice        = Transfer.SCPI.ScpiDevice;
 using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
 using Utils             = OsziWaveformAnalyzer.Utils;
 
@@ -62,11 +63,10 @@ namespace Transfer
 {
     public partial class TransferRigol : Form
     {
-        eOsziSerie                 me_OsziSerie;
-        Rigol                      mi_Rigol;
-        WForms.Timer               mi_StatusTimer;
-        WForms.Timer               mi_ConfigTimer;
-        Dictionary<String, String> mi_UsbDevices;
+        eOsziSerie     me_OsziSerie;
+        Rigol          mi_Rigol;
+        WForms.Timer   mi_StatusTimer;
+        WForms.Timer   mi_ConfigTimer;
 
         /// <summary>
         /// Constructor
@@ -195,7 +195,7 @@ namespace Transfer
         {
             try
             {
-                mi_UsbDevices = SCPI.GetUsbDeviceList(comboUsbDevice);
+                SCPI.GetUsbDeviceList(comboUsbDevice);
             }
             catch (Exception Ex)
             {
@@ -229,7 +229,7 @@ namespace Transfer
                 return;
             }
 
-            if (mi_UsbDevices.Count == 0)
+            if (comboUsbDevice.Items.Count == 0)
             {
                 MessageBox.Show(this, "Please connect the oscilloscope over USB, turn it on and click 'Refresh'. "
                                     + "If it does not appear, click 'Install Diver'.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -238,10 +238,11 @@ namespace Transfer
 
             try
             {
-                String s_DevicePath = mi_UsbDevices[comboUsbDevice.Text];
+                // If any device exists it has been pre-selected in Scpi.GetUsbDeviceList()
+                ScpiDevice i_Device = (ScpiDevice)comboUsbDevice.SelectedItem;
             
                 mi_Rigol = new Rigol(me_OsziSerie);
-                mi_Rigol.Open(this, s_DevicePath); // throws
+                mi_Rigol.Open(this, i_Device.ms_DevicePath); // throws
 
                 btnOpen.Text = "Close";
                 LoadGroupBox();

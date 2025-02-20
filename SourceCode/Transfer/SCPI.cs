@@ -263,6 +263,30 @@ namespace Transfer
 
         #endregion
 
+        #region ScpiDevice
+
+        /// <summary>
+        /// This class is stored in the ComboBox Items
+        /// </summary>
+        public class ScpiDevice
+        {
+            public String ms_Serial;     // Displayed to the user
+            public String ms_DevicePath; // Full NT device path
+
+            public ScpiDevice(String s_Serial, String s_DevicePath)
+            {
+                ms_Serial     = s_Serial;
+                ms_DevicePath = s_DevicePath;
+            }
+
+            public override string ToString()
+            {
+                return ms_Serial;
+            }
+        }
+
+        #endregion
+
         // ============================ Enumerate USB devices ================================
 
         /// <summary>
@@ -360,7 +384,7 @@ namespace Transfer
                 i_ComboUsbDevice.Items.Clear();
                 foreach (KeyValuePair<String, String> i_Pair in i_DeviceList)
                 {
-                    i_ComboUsbDevice.Items.Add(i_Pair.Key);
+                    i_ComboUsbDevice.Items.Add(new ScpiDevice(i_Pair.Key, i_Pair.Value));
                 }
                 Utils.ComboAdjustDropDownWidth(i_ComboUsbDevice);
 
@@ -658,7 +682,7 @@ namespace Transfer
                         // ATTENTION:
                         // This CancelIo() is EXTREMELY important! If it is missing you get TIMEOUT's again and again
                         CancelIo(mh_Device);
-                        throw new TimeoutException("Timeout waiting for response from device.\nThis may happen when an invalid SCPI command was sent.");
+                        throw new TimeoutException("Timeout waiting for response from device.\nThis may happen when an invalid SCPI command was sent or the wrong oscilloscope serie was selected.");
                     }
 
                     if (!GetOverlappedResult(mh_Device, ref mk_Overlap, out s32_BytesRead, false))
