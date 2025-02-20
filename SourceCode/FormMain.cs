@@ -239,11 +239,7 @@ namespace OsziWaveformAnalyzer
 
         private void linkUpdate_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            String s_URL = "https://netcult.ch/elmue/Oszi-Waveform-Analyzer";
-            #if DEBUG
-                s_URL = "http://localhost/Oszi-Waveform-Analyzer"; // XAMPP
-            #endif
-            Utils.ShellExecute(this, s_URL, true);
+            Utils.ShellExecute(this, "https://netcult.ch/elmue/Oszi-Waveform-Analyzer", true);
         }
 
         // --------------------------------------------------
