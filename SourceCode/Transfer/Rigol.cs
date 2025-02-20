@@ -73,6 +73,7 @@ namespace Transfer
             GetIdent = 0,
             Reset,
             GetSystemError,
+            Unlock,
             Run,
             Stop,
             Clear,
@@ -220,6 +221,7 @@ namespace Transfer
                 mi_FixData.ms_Commands[(int)eCmd.GetIdent]          = "*IDN?";
                 mi_FixData.ms_Commands[(int)eCmd.Reset]             = "*RST";
                 mi_FixData.ms_Commands[(int)eCmd.GetSystemError]    = null;
+                mi_FixData.ms_Commands[(int)eCmd.Unlock]            = ":KEY:FORCe";
                 // ---------------------------------
                 mi_FixData.ms_Commands[(int)eCmd.Run]               = ":RUN";
                 mi_FixData.ms_Commands[(int)eCmd.Stop]              = ":STOP";
@@ -260,6 +262,7 @@ namespace Transfer
                 mi_FixData.ms_Commands[(int)eCmd.GetIdent]          = "*IDN?";
                 mi_FixData.ms_Commands[(int)eCmd.Reset]             = "*RST";
                 mi_FixData.ms_Commands[(int)eCmd.GetSystemError]    = ":SYSTEM:ERROR?";
+                mi_FixData.ms_Commands[(int)eCmd.Unlock]            = null;
                 // ---------------------------------
                 mi_FixData.ms_Commands[(int)eCmd.Run]               = ":RUN";
                 mi_FixData.ms_Commands[(int)eCmd.Stop]              = ":STOP";
@@ -347,6 +350,14 @@ namespace Transfer
         {
             if (mi_Scpi != null)
             {
+                try
+                {
+                    // The Rigol DS1000DE is locked while connected to the computer and in remote control mode.
+                    // It must be explicitely unlocked to make the hardware buttons work again.
+                    mi_Scpi.SendOpcCommand(GetCmd(eCmd.Unlock));
+                }
+                catch {} // ignore error
+
                 mi_Scpi.Dispose(); // close native handles
                 mi_Scpi = null;
             }
