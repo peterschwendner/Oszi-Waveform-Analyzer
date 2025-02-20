@@ -487,7 +487,7 @@
 
 <div>The CAN bus decoder is the most complex of all decoders (1100 lines of code).</div>
 <div>It can also decode <b>CAN FD</b> (Flexible Datarate) with two different baudrates and up to 64 data bytes per packet.</div>
-<div>It has a fully implemented <b>error detection</b> (timing errors, bit stuffing errorrs, CRC errors,...)</div>
+<div>It has a fully implemented <b>error detection</b> (timing errors, bit stuffing errorrs, parity errors, CRC errors,...)</div>
 <div>It is a great help if you have to analyze errors in a CAN network.</div>
 <p>
 <img src="Images/CanFdBaudrateSwitch.png" width="856" height="495" alt="Oszi Waveform Analyzer - CAN FD Packet BRS bit">
@@ -540,30 +540,30 @@
 <div>It may be in your country, but I can assure you that still in the year 2025 it is used in other parts of the world.</div>
 <p>
 <div>Who needs this if there are magnetic stripe readers ready to buy?</div>
-<div>I work in automation of QA of POS (Point of Sale) and have to simulate a user sliding a card through a pinpad.</div>
-<div>A special hardware creates a magnetic field for each track with tiny coils inside the card slot.</div>
-<p>
-<div>This decoder was a challenge, not because of the decoding, but because the A/D conversion of the analog signals is difficult.</div>
-<div>The analog sine wave must be converted into a square wave of 50% duty cycle otherwise the decoder will not work.</div>
-<div>The data is encoded using 2 frequencies, one beeing the double of the other.</div>
-<div>One half period of the slow frequency encodes a binay 'zero' and an entire period of the high frequency encodes a binay 'one'.</div>
-<div>The <a href="#AD_Conversion">A/D conversion</a> must be very precise because a half period already encodes one bit.</div>
-<div>The analog signal is dancing up and down. A fix threshold does not work.</div>
-<div>Track 2 is the most difficult track. Oszi Waveform Analzyer tries Min/Max A/D conversion if Adaptive A/D does not work.</div>
-<div>The baudrate is varying. It depends on the manual sliding speed. The decoder must permanently re-synchronize to the signal.</div>
-<div>The entire data may come reverse, depending on the sliding direction of the card.</div>
+<div>I work on an automation robot for QA of POS (Point of Sale) and have to simulate a user sliding a card through a pinpad.</div>
+<div>A special hardware of my robot injects a magnetic field for each track with 3 tiny coils inside the pinpad card slot.</div>
 <p>
 <div>The demo file <b>ISO 7813 Magnetic Stripe Bank Card.oszi</b> has been captured from a VISA debit card with this amplifier:</div>
 <p>
 <img src="Images/DiagramMagneticTrackAmplifier.png" width="443" height="336" class="Img" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Amplifier">
 <p>
-<img src="Images/MagStripeDecoder.png" width="582" height="241" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Decoder">
+<div>The MagStripe decoder was a challenge, not because of the decoding, but because the A/D conversion of the analog signals is difficult.</div>
+<div>The analog sine wave must be converted into a square wave of 50% duty cycle, otherwise the decoder will not work.</div>
+<div>The track data is encoded using 2 frequencies, one beeing the double of the other.</div>
+<div>One half period of the slow frequency encodes a binay 'zero' and an entire period of the high frequency encodes a binay 'one'.</div>
+<div>The <a href="#AD_Conversion">A/D conversion</a> must be very precise because a half period already encodes one bit.</div>
+<div>The analog signal is dancing up and down. A fix threshold does not work here.</div>
+<div>Here you see a perfect conversion using Adaptive A/D:</div>
 <p>
-<div>A perfect conversion with adaptive A/D.</div>
+<img src="Images/MagStripeDecoder.png" width="582" height="241" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Decoder">
+<div>Track 2 is the most difficult track. Oszi Waveform Analzyer tries Min/Max A/D conversion if Adaptive A/D does not work.</div>
+<div>The frequency of Track 1 is 14/5 times higher than the frequency of Track 2.</div>
+<div>Additionally the baudrate is varying, it depends on the manual <b>sliding speed</b>. The decoder must permanently re-synchronize to the signal.</div>
+<div>Additionally the entire data may come reverse, depending on the <b>sliding direction</b> of the card.</div>
 <p>
 <img src="Images/MagStripeData.png" width="477" height="290" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Data">
 <p>
-<div>The decoded tracks. Track 3 is empty on bank cards.</div>
+<div>This is the result of the Magnetic Stripe decoder. Track 3 is empty on bank cards.</div>
 
 <a name="DecodeIR"></a>
 <h1>Decode Infrared Remote Control</h1>
