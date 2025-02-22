@@ -55,6 +55,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Management;
 
 using Utils             = OsziWaveformAnalyzer.Utils;
 
@@ -100,12 +101,9 @@ namespace Transfer
         static readonly IntPtr INVALID_HANDLE_VALUE = (IntPtr)(-1);
         const int              ERROR_FILE_NOT_FOUND =   2;
         const int              ERROR_GEN_FAILURE    =  31; // A device attached to the system is not functioning.
-        const int              ERROR_MORE_DATA      = 234;
         const int              WAIT_TIMEOUT         = 258;
-        const int              ERROR_NO_MORE_ITEMS  = 259;
         const int              ERROR_IO_PENDING     = 997;
-
-        static Guid USBTMC_CLASS_GUID = new Guid("A9FDBB24-128A-11D5-9961-00108335E361");
+        const String           USBTMC_CLASS_GUID    = "{A9FDBB24-128A-11D5-9961-00108335E361}"; // USB Test and Measurement Devices
 
         // ------------------------ NATIVE ENUMS ---------------------------
 
@@ -146,47 +144,6 @@ namespace Transfer
             Overlapped = 0x40000000,
         }
 
-        [Flags]
-        enum eDiGetClassFlags : uint
-        {
-            None = 0,
-            DIGCF_DEFAULT          = 0x01,
-            DIGCF_PRESENT          = 0x02,
-            DIGCF_ALL_CLASSES      = 0x04,
-            DIGCF_PROFILE          = 0x08,
-            DIGCF_DEVICE_INTERFACE = 0x10,
-        }
-
-        // ------------------------ NATIVE STRUCTS ---------------------------
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct SP_DEVINFO_DATA
-        {
-            public uint   cbSize;
-            public Guid   ClassGuid;
-            public uint   DevInst;
-            public IntPtr Reserved;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct SP_DEVICE_INTERFACE_DATA
-        {
-            public  int  cbSize;
-            public  Guid interfaceClassGuid;
-            public  uint flags;
-            private UIntPtr reserved;
-        }
-
-        const int INTERFACE_DETAIL_BUF_SIZE = 256;
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        struct SP_DEVICE_INTERFACE_DETAIL_DATA_W
-        {
-            public int cbSize;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = INTERFACE_DETAIL_BUF_SIZE)]
-            public String DevicePath;
-        }
-
         // ------------------------ KERNEL IMPORT ---------------------------
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -212,23 +169,6 @@ namespace Transfer
 
 		[DllImport("kernel32.dll")]
 		private static extern bool CancelIo(IntPtr hHandle);
-
-        // ------------------------ SETUPAPI IMPORT --------------------------
-
-        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern IntPtr SetupDiGetClassDevsW(ref Guid ClassGuid, String Enumerator, IntPtr hWndParent, eDiGetClassFlags Flags);
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        static extern bool SetupDiEnumDeviceInfo(IntPtr DeviceInfoSet, uint MemberIndex, ref SP_DEVINFO_DATA DeviceInfoData);
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        static extern bool SetupDiEnumDeviceInterfaces(IntPtr hDevInfo, ref SP_DEVINFO_DATA devInfo, ref Guid interfaceClassGuid, uint memberIndex, ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData);
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        static extern bool SetupDiGetDeviceInterfaceDetailW(IntPtr hDevInfo, ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData, ref SP_DEVICE_INTERFACE_DETAIL_DATA_W deviceInterfaceDetailData, uint deviceInterfaceDetailDataSize, ref uint requiredSize, IntPtr deviceInfoData);
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        static extern bool SetupDiDestroyDeviceInfoList (IntPtr DeviceInfoSet);
 
         #endregion
 
@@ -291,90 +231,32 @@ namespace Transfer
 
         /// <summary>
         /// Throws
-        /// Gets the list of the DevicePaths of the connected Measurement USB devices, like
-        /// "\\\\?\\usb#vid_1ab1&pid_04ce#ds1zc204807063#{a9fdbb24-128a-11d5-9961-00108335e361}"
+        /// Gets the list of the Symbolic Links of the connected Measurement USB devices, like
+        /// \\?\USB#VID_1AB1&PID_04CE#DS1ZC204807063#{A9FDBB24-128A-11D5-9961-00108335E361}
         /// </summary>
         public static Dictionary<String, String> GetUsbDeviceList(ComboBox i_ComboUsbDevice)
         {
-            IntPtr h_DevInfoSet = SetupDiGetClassDevsW(ref USBTMC_CLASS_GUID, null, IntPtr.Zero, 
-                                                       eDiGetClassFlags.DIGCF_PRESENT | eDiGetClassFlags.DIGCF_DEVICE_INTERFACE);
-            if (h_DevInfoSet == INVALID_HANDLE_VALUE) 
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-
             Dictionary<String, String> i_DeviceList = new Dictionary<String, String>();
-            try
+
+            using (ManagementClass i_Entity = new ManagementClass("Win32_PnPEntity"))
             {
-                for (uint u32_DevIdx = 0; true; u32_DevIdx++) 
+                foreach (ManagementObject i_Inst in i_Entity.GetInstances())
                 {
-                    SP_DEVINFO_DATA k_DevInfoData = new SP_DEVINFO_DATA();
-                    k_DevInfoData.cbSize = (uint)Marshal.SizeOf(k_DevInfoData);
+                    Object o_ClassGUID = i_Inst.GetPropertyValue("ClassGuid");
+                    if (o_ClassGUID == null || o_ClassGUID.ToString().ToUpper() != USBTMC_CLASS_GUID)
+                        continue;
+                   
+                    // s_DeviceID = USB\VID_1AB1&PID_04CE\DS1ZC204807063
+                    String s_DeviceID = i_Inst.GetPropertyValue("PnpDeviceID").ToString();
 
-                    if (!SetupDiEnumDeviceInfo(h_DevInfoSet, u32_DevIdx, ref k_DevInfoData)) 
-                    {
-                        int s32_Error = Marshal.GetLastWin32Error();
-                        if (s32_Error == ERROR_NO_MORE_ITEMS)
-                            break;
+                    // Same link as in HKLM\SYSTEM\CurrentControlSet\Control\DeviceClasses\{a9fdbb24-128a-11d5-9961-00108335e361}
+                    String s_SymbolicLink = @"\\?\" + s_DeviceID.Replace('\\', '#') + '#' + USBTMC_CLASS_GUID;
 
-                        throw new Win32Exception(s32_Error);
-                    }
-
-                    for (uint u32_InterfIdx = 0; true; u32_InterfIdx++) 
-                    {
-                        SP_DEVICE_INTERFACE_DATA k_InterfaceData = new SP_DEVICE_INTERFACE_DATA();
-                        k_InterfaceData.cbSize = Marshal.SizeOf(k_InterfaceData);
-
-                        if (!SetupDiEnumDeviceInterfaces(h_DevInfoSet, ref k_DevInfoData, ref USBTMC_CLASS_GUID, 
-                                                         u32_InterfIdx, ref k_InterfaceData)) 
-                        {
-                            int s32_Error = Marshal.GetLastWin32Error();
-                            if (s32_Error == ERROR_NO_MORE_ITEMS)
-                                break;
-
-                            throw new Win32Exception(s32_Error);
-                        }
-
-                        SP_DEVICE_INTERFACE_DETAIL_DATA_W k_DetailData = new SP_DEVICE_INTERFACE_DETAIL_DATA_W();
-
-                        // The same native C structure has a differnet size depending if compiled as 32 bit or 64 bit.
-                        // The 64 bit compiler adds padding, so the 32 bit SetupApi.dll expects another struct size than the 64 bit DLL.
-                        // If the struct size is wrong, SetupDiGetDeviceInterfaceDetailW() returns ERROR_INVALID_USER_BUFFER (1784)
-                        k_DetailData.cbSize = Environment.Is64BitProcess ? 8 : 6;
-
-                        uint u32_RequBufSize = 0;
-                        if (!SetupDiGetDeviceInterfaceDetailW(h_DevInfoSet, ref k_InterfaceData, ref k_DetailData, 
-                                                              INTERFACE_DETAIL_BUF_SIZE, ref u32_RequBufSize, IntPtr.Zero)) 
-                        {
-                            throw new Win32Exception(Marshal.GetLastWin32Error());
-                        }
-
-                        // Get the display name for the user by splitting
-                        // "\\\\?\\usb#vid_1ab1&pid_04ce#ds1zc204807063#{a9fdbb24-128a-11d5-9961-00108335e361}"
-                        // and use the serial number "DS1ZC204807063" as display name.
-                        // Better would be to obtain the Oscilloscope Model from the USB descriptor (iProduct), but this requires
-                        // a very huge code enumerating all USB hubs. Microsoft did not implement an easy way.
-                        String[] s_Parts = k_DetailData.DevicePath.Split('#');
-
-                        // Will it ever happen that 2 oscilloscopes with the same serial number are connected?
-                        // Possible, because some vendors are too lazy to apply a unique serial number to each device.
-                        // In this case return "Serial1", "Serial2", etc..
-                        for (int i=1; true; i++)
-                        {
-                            String s_Serial = s_Parts[2].ToUpper();
-                            if (i > 1)
-                                s_Serial += i; // append index "2", "3", etc..
-
-                            if (!i_DeviceList.ContainsKey(s_Serial))
-                            {
-                                i_DeviceList.Add(s_Serial, k_DetailData.DevicePath);
-                                break;
-                            }
-                        }
-                    }
+                    String[] s_Parts = s_DeviceID.Split('\\');
+                    String  s_Serial = s_Parts[s_Parts.Length -1].ToUpper(); // DS1ZC204807063
+                    
+                    i_DeviceList.Add(s_Serial, s_SymbolicLink);
                 }
-            }
-            finally
-            {
-                SetupDiDestroyDeviceInfoList(h_DevInfoSet);
             }
 
             // ------------- optionally fill combobox ------------------
@@ -418,9 +300,7 @@ namespace Transfer
 
         /// <summary>
         /// s_DevicePath comes from GetUsbDeviceList()
-        /// s_DevicePath = "\\\\?\\usb#vid_1ab1&pid_04ce#ds1zc204807063#{a9fdbb24-128a-11d5-9961-00108335e361}"
-        /// This corresponds to
-        /// HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_1AB1&PID_04CE\DS1ZC204807063\....
+        /// s_DevicePath = \\?\USB#VID_1AB1&PID_04CE#DS1ZC204807063#{A9FDBB24-128A-11D5-9961-00108335E361}
         /// </summary>
         public void Open(String s_DevicePath)
         {
