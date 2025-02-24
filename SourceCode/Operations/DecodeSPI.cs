@@ -62,6 +62,7 @@ using eSpiChip          = PostDecoder.PostDecoderManager.eSpiChip;
 using Utils             = OsziWaveformAnalyzer.Utils;
 using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
 using PostDecoderManager= PostDecoder.PostDecoderManager;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -191,7 +192,7 @@ namespace Operations
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "DecodeSync");
+            PlatformManager.Instance.ShowHelp(this, "DecodeSync");
         }
 
         private void radioFullDuplex_CheckedChanged(object sender, EventArgs e)

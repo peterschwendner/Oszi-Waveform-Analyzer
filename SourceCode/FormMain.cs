@@ -54,6 +54,7 @@ using ExImportManager   = ExImport.ExImportManager;
 using eSaveAs           = ExImport.ExImportManager.eSaveAs;
 using OperationManager  = Operations.OperationManager;
 using TransferManager   = Transfer.TransferManager;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace OsziWaveformAnalyzer
 {
@@ -148,25 +149,36 @@ namespace OsziWaveformAnalyzer
             }
         }
 
+        /// <summary>
+        /// Makes the main window visible on the screen
+        /// </summary>
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
             mi_CmdLineTimer.Start();
         }
+
+        /// <summary>
+        /// IMPORTANT: This must be called from a timer!
+        /// Loading an OSZI file with 24 Megasamples may take several seconds.
+        /// Meanwhile the user does not even see the main window if there is no timer.
+        /// </summary>
         void OnCmdLineTimer(object sender, EventArgs e)
         {
             mi_CmdLineTimer.Stop();
 
+            // The user has double clicked an .OSZI file which results in a Commandline like:
+            // "C:\Program Files\OsziWaveformAnalyzer.exe" -open "D:\Temp\MyCapture.oszi" 
             String s_Cmd = Environment.CommandLine;
             int s32_Open = s_Cmd.IndexOf(Utils.CMD_LINE_ACTION);
             if (s32_Open <= 0)
                 return;
-            
-            // The user has double clicked an .OSZI file
+           
             String s_OsziFile = s_Cmd.Substring(s32_Open + Utils.CMD_LINE_ACTION.Length).Trim('"');
             if (!File.Exists(s_OsziFile) || Path.GetExtension(s_OsziFile).ToLower() != ".oszi")
                 return;
             
+            // If the user double clicked a file in subfolder "Samples" it is already in the ComboBox --> select it.
             foreach (ComboPath i_Exist in comboInput.Items)
             {
                 if (String.Compare(i_Exist.ms_Path, s_OsziFile, true) == 0)
@@ -176,7 +188,7 @@ namespace OsziWaveformAnalyzer
                 }
             }
 
-            // The path may be anywhere on disk, not necessarily in subfolder "Samples".
+            // The path may be anywhere on disk, not necessarily in subfolder "Samples" --> add it to the ComboBox
             ComboPath i_New = new ComboPath(s_OsziFile);
             comboInput.Items.Add(i_New);
             comboInput.SelectedItem = i_New;
@@ -234,12 +246,12 @@ namespace OsziWaveformAnalyzer
 
         private void linkSave_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "SaveOptions");
+            PlatformManager.Instance.ShowHelp(this, "SaveOptions");
         }
 
         private void linkUpdate_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShellExecute(this, "https://netcult.ch/elmue/Oszi-Waveform-Analyzer", true);
+            PlatformManager.Instance.ShowURL(this, "https://netcult.ch/elmue/Oszi-Waveform-Analyzer");
         }
 
         // --------------------------------------------------

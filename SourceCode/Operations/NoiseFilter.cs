@@ -50,6 +50,7 @@ using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
 using GraphMenuItem     = Operations.OperationManager.GraphMenuItem;
 using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -120,7 +121,7 @@ namespace Operations
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "NoiseSuppression");
+            PlatformManager.Instance.ShowHelp(this, "NoiseSuppression");
         }
 
         private void trackBar_Scroll(object sender, EventArgs e)

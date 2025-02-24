@@ -51,6 +51,7 @@ using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
 using GraphMenuItem     = Operations.OperationManager.GraphMenuItem;
 using Utils             = OsziWaveformAnalyzer.Utils;
 using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -122,7 +123,7 @@ namespace Operations
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "AD_Conversion");
+            PlatformManager.Instance.ShowHelp(this, "AD_Conversion");
         }
 
         private void comboMethod_SelectedIndexChanged(object sender, EventArgs e)
