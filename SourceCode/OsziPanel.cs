@@ -1254,7 +1254,7 @@ namespace OsziWaveformAnalyzer
             r_Area.Width = Math.Min(r_Area.Width, mi_Capture.ms32_Samples);
             if (r_Area.Width > 32760)
                 throw new Exception("An image with "+r_Area.Width+" pixels width cannot be generated.\n"
-                                  + "The maximum that Windows allows are 32760 pixels.\n"
+                                  + "The maximum width is 32760 pixels.\n"
                                   + "Please select a smaller display factor.");
 
             DrawPos i_Pos = CalcVerticalDrawPos(r_Area.Height, false);

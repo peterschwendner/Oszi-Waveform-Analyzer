@@ -45,173 +45,49 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
+using PlatformManager   = Platform.PlatformManager;
+using PlfMicrosoft      = Platform.PlfMicrosoft;
+using eRuntime          = Platform.PlatformManager.eRuntime;
+
 namespace OsziWaveformAnalyzer
 {
     public class RtfViewer : RichTextBox
     {
-        #region Workaround for ugly Framework bug: The last links are dead
-
-        // In the RichTextBox class in the .NET framework there is an ugly bug in the function CharRangeToString()
-        // See https://referencesource.microsoft.com/#System.Windows.Forms/winforms/Managed/System/WinForms/RichTextBox.cs,e50e843694f23c30
-        // The following is Microsoft code:
-
-        /* -----------------------------------------------------------------------------
-        //Windows bug: 64-bit windows returns a bad range for us.  VSWhidbey 504502.  
-        //Putting in a hack to avoid an unhandled exception.
-        if (c.cpMax > Text.Length || c.cpMax-c.cpMin <= 0)                                <--- WRONG !
-            return string.Empty;
-        -------------------------------------------------------------------------------*/
-
-        // With this workaround Microsoft introduced a new bug: cpMax can be greater than Text.Length !!
-        // This line is complete nonsense because the URL of the link is invisible and not contained in RichTextBox.Text
-        // This bugfix is a bug itself!
-        // The consequence of this wrong Microsoft workaround for Whidbey is that the last links
-        // at the end of the RTF document do not fire the OnLinkClicked() event handler.
-
-        // ======================== Declarations =======================
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct NMHDR
-        {
-            public IntPtr hwndFrom;
-            public IntPtr idFrom;   // This is declared as UINT_PTR in winuser.h
-            public int    code;
-        }
-
-        // And this is another bug, but this time in the Richtext control itself: 
-        // The 64 bit MsftEdit.dll sends an invalid struct because it does not respect the IA64 struct alignment conventions.
-        // The member "msg" occupies only 4 bit instead of beeing padded to 8 bit.
-        // All the following members behind "msg" have a wrong offset.
-        [StructLayout(LayoutKind.Sequential)]
-        class ENLINK
-        {
-            public NMHDR  nmhdr;
-            public int    msg;
-            // IntPtr     wParam;     // cannot be used on 64 bit!
-            // IntPtr     lParam;     // cannot be used on 64 bit!
-            // CHARRANGE  charRange;  // cannot be used on 64 bit!
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        class CHARRANGE
-        {
-            public int  cpMin;
-            public int  cpMax;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        class TEXTRANGE
-        {
-            public CHARRANGE charRange;
-            public IntPtr    lpstrText; // allocated by caller, zero terminated by RichEdit
-        }
-
-        const int EN_LINK         = 0x070b;
-        const int WM_NOTIFY       = 0x004E;
-        const int WM_LBUTTONDOWN  = 0x0201;
-        const int WM_USER         = 0x0400;
-        const int EM_GETTEXTRANGE = WM_USER + 75;
-        const int WM_REFLECT      = 0x2000;
-
-        [DllImport("User32.dll", EntryPoint="SendMessageW")]
-        static extern IntPtr SendMessage(IntPtr h_Wnd, int s32_Message, IntPtr wParam, TEXTRANGE lParam);
-
-        // ============================= Code ==============================
-
-        protected override void WndProc(ref Message k_Msg)
-        {
-            if (k_Msg.Msg == WM_REFLECT + WM_NOTIFY) 
-            {
-                NMHDR k_Notify = (NMHDR)k_Msg.GetLParam(typeof(NMHDR));
-                if (k_Notify.code == EN_LINK) // the mouse is hovering a link or the link has been clicked
-                {
-                    ENLINK k_Link = (ENLINK)k_Msg.GetLParam(typeof(ENLINK));
-                    if (k_Link.msg == WM_LBUTTONDOWN) // the user has clicked the link
-                        OnLinkMouseDown(k_Msg);
-                }
-            }
-            base.WndProc(ref k_Msg);
-        }
-
-        /// <summary>
-        /// WM_LBUTTONDOWN on a RTF link
-        /// </summary>
-        void OnLinkMouseDown(Message k_Msg)
-        {
-            int s32_FirstChar, s32_LastChar;
-
-            // Workaround because the struct ENLINK cannot be used on 64 bit.
-            if (Environment.Is64BitProcess)
-            {
-                s32_FirstChar = Marshal.ReadInt32(k_Msg.LParam + 44); // ENLINK.CHARRANGE.cpMin
-                s32_LastChar  = Marshal.ReadInt32(k_Msg.LParam + 48); // ENLINK.CHARRANGE.cpMax
-            }
-            else // 32 bit
-            {
-                s32_FirstChar = Marshal.ReadInt32(k_Msg.LParam + 24); // ENLINK.CHARRANGE.cpMin
-                s32_LastChar  = Marshal.ReadInt32(k_Msg.LParam + 28); // ENLINK.CHARRANGE.cpMax
-            }
-
-            int s32_CharCount = s32_LastChar - s32_FirstChar;
-            if (s32_FirstChar < 0 || s32_CharCount < 1 || s32_CharCount > 10000)
-            {
-                Debug.Assert(false, "RtfViewer: Invalid values from EN_LINK event.");
-                return;
-            }
-
-            TEXTRANGE k_TxtRange       = new TEXTRANGE();
-            k_TxtRange.charRange       = new CHARRANGE();
-            k_TxtRange.charRange.cpMin = s32_FirstChar;
-            k_TxtRange.charRange.cpMax = s32_LastChar;
-            k_TxtRange.lpstrText       = Marshal.AllocHGlobal((s32_CharCount + 1) * 2); // 1 unicode char = 2 byte + terminating zero
-
-            // Extract a range of characters from the document. The link URL is invisible on the screen.
-            int s32_RetCount = (int)SendMessage(Handle, EM_GETTEXTRANGE, IntPtr.Zero, k_TxtRange);
-            if (s32_RetCount == s32_CharCount)
-            {
-                String s_LinkUrl = Marshal.PtrToStringUni(k_TxtRange.lpstrText);
-                OnTimestampClicked(s_LinkUrl);
-            }
-            else
-            {
-                Debug.Assert(false, "RtfViewer: Invalid char count from EM_GETTEXTRANGE");
-            }
-            Marshal.FreeHGlobal(k_TxtRange.lpstrText);
-        }
-
-        // =============================== End Workaround ================================
-
-        #endregion
-
-        /// <summary>
-        /// Performance boost:
-        /// The framework uses by default "Richedit20W" in RICHED20.DLL.
-        /// This needs 4 minutes to load a 2,5 MB RTF file with 45000 lines.
-        /// Microsoft has fixed this in Richedit50W which needs only 2 seconds for the same RTF document.
-        /// Additionally the old DLL does not support links.
-        /// </summary>
         protected override CreateParams CreateParams
         {
             get
             {
                 CreateParams i_Params = base.CreateParams;
 
-                // This DLL is available since Windows XP SP1
-                IntPtr h_Module = Utils.LoadLibrary("MsftEdit.dll");
-                if (h_Module != IntPtr.Zero)
-                {
-                    // Replace "RichEdit20W" with "RichEdit50W"
-                    i_Params.ClassName = "RichEdit50W";
-                }
+                // Adapt RichTextBox to use the new MsftEdit.dll
+                PlatformManager.Instance.RtfBoxCreateParams(i_Params);
                 return i_Params;
             }
         }
 
+        protected override void WndProc(ref Message k_Msg)
+        {
+            // Adapt .NET framework to support clickable RTF links in RichTextBox
+            PlatformManager.Instance.RtfBoxWndProc(this, ref k_Msg);
+
+            base.WndProc(ref k_Msg);
+        }
+
+        /// <summary>
+        /// OnLinkClicked does not work correctly using the new MsftEdit.dll --> do not use
+        /// </summary>
+        protected override void OnLinkClicked(LinkClickedEventArgs e)
+        {
+            if (PlatformManager.Runtime != eRuntime.Microsoft)
+                OnTimestampClicked(e.LinkText);
+        }
+
         /// <summary>
         /// The user has clicked a timestamp --> jump in OsziPanel to this location.
-        /// This replaces the framework function OnLinkClicked() which has an ugly bug.
+        /// Microsoft : This is called from class PlfMicrosoft
+        /// Mono :      This is called from OnLinkClicked() above (if Mono supports clickable links)
         /// </summary>
-        void OnTimestampClicked(String s_LinkUrl)
+        public void OnTimestampClicked(String s_LinkUrl)
         {
             String[] s_Parts = s_LinkUrl.Split(',');
             int s32_StartSample, s32_EndSample;

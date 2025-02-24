@@ -57,7 +57,7 @@ using SmplMark          = OsziWaveformAnalyzer.Utils.SmplMark;
 using eMark             = OsziWaveformAnalyzer.Utils.eMark;
 using Utils             = OsziWaveformAnalyzer.Utils;
 using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
-
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -439,7 +439,7 @@ namespace Operations
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "DecodeCAN");
+            PlatformManager.Instance.ShowHelp(this, "DecodeCAN");
         }
 
         private void btnDecode_Click(object sender, EventArgs e)

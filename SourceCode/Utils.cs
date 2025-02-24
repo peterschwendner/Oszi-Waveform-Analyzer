@@ -47,10 +47,10 @@ using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
 using Microsoft.VisualBasic.FileIO;
 
 using SplMinMax         = OsziWaveformAnalyzer.OsziPanel.SplMinMax;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace OsziWaveformAnalyzer
 {
@@ -395,55 +395,7 @@ namespace OsziWaveformAnalyzer
 
         #endregion
 
-        #region interface IShellLink
-
-        [ComImport]
-        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        [Guid("000214F9-0000-0000-C000-000000000046")]
-        interface IShellLink
-        {
-            void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszFile, int cchMaxPath, out IntPtr pfd, int fFlags);
-            void GetIDList(out IntPtr ppidl);
-            void SetIDList(IntPtr pidl);
-            void GetDescription([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszName, int cchMaxName);
-            void SetDescription([MarshalAs(UnmanagedType.LPWStr)] string pszName);
-            void GetWorkingDirectory([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszDir, int cchMaxPath);
-            void SetWorkingDirectory([MarshalAs(UnmanagedType.LPWStr)] string pszDir);
-            void GetArguments([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszArgs, int cchMaxPath);
-            void SetArguments([MarshalAs(UnmanagedType.LPWStr)] string pszArgs);
-            void GetHotkey(out short pwHotkey);
-            void SetHotkey(short wHotkey);
-            void GetShowCmd(out int piShowCmd);
-            void SetShowCmd(int iShowCmd);
-            void GetIconLocation([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszIconPath, int cchIconPath, out int piIcon);
-            void SetIconLocation([MarshalAs(UnmanagedType.LPWStr)] string pszIconPath, int iIcon);
-            void SetRelativePath([MarshalAs(UnmanagedType.LPWStr)] string pszPathRel, int dwReserved);
-            void Resolve(IntPtr hwnd, int fFlags);
-            void SetPath([MarshalAs(UnmanagedType.LPWStr)] string pszFile);
-        }
-
-        [ComImport]
-        [Guid("00021401-0000-0000-C000-000000000046")]
-        internal class ShellLink
-        {
-        }
-
-        #endregion
-
-        #region DLL Import
-
-        [DllImport("kernel32.dll", EntryPoint="LoadLibraryW", CharSet=CharSet.Unicode, SetLastError=true)]
-        public static extern IntPtr LoadLibrary(string s_File);
-
-        [DllImport("Msvcrt.dll", CallingConvention=CallingConvention.Cdecl)]
-        private static extern IntPtr memset(Byte[] u8_Buf, Byte u8_Value, IntPtr p_Count);
-
-        [DllImport("Shlwapi.dll", EntryPoint="AssocQueryStringW", SetLastError=true, CharSet=CharSet.Unicode)]
-        private static extern int AssocQueryString(int AssocF, int AssocStr, string pszAssoc, string pszExtra, [Out] StringBuilder pszOut, ref int pcchOut);
-
-        #endregion
-
-        public  const  String     APP_VERSION       = "v1.5"; // displayed in Main Window Title
+        public  const  String     APP_VERSION       = "v1.6"; // displayed in Main Window Title
         public  const  int        MIN_VALID_SAMPLES = 100;    // Error if loaded file contains less samples
         public  const  String     ERR_MIN_SAMPLES   = "The minimum amount of samples is 100.";
         public  const  String     NO_SAMPLES_LOADED = "No samples loaded. Use button 'Capture' or select an Input file.";
@@ -460,7 +412,7 @@ namespace OsziWaveformAnalyzer
         private static FormMain   mi_Main;
         private static OsziPanel  mi_OsziPanel;
         private static String     ms_AppDir;
-        private static String     ms_InstallerPath;
+        private static String     ms_WinInstaller;
         private static String     ms_HelpHtmlPath;
         private static bool       mb_Busy;
         private static Image      mi_OsziImg;
@@ -473,6 +425,16 @@ namespace OsziWaveformAnalyzer
         public static String SampleDir
         {
             get { return ms_AppDir + "\\Samples"; }
+        }
+
+        public static String WinInstallerPath
+        {
+            get { return ms_WinInstaller; }
+        }
+
+        public static String HelpHtmlPath
+        {
+            get { return ms_HelpHtmlPath; }
         }
 
         public static FormMain FormMain
@@ -512,9 +474,9 @@ namespace OsziWaveformAnalyzer
             {
                 ms_AppDir = Path.GetDirectoryName(Application.ExecutablePath);
 
-                ms_InstallerPath = ms_AppDir + "\\Driver\\dpinst-amd64.exe";
-                String s_Driver  = ms_AppDir + "\\Driver\\amd64\\ausbtmc.sys";
-                if (!File.Exists(ms_InstallerPath) || !File.Exists(s_Driver))
+                ms_WinInstaller = ms_AppDir + "\\Driver\\dpinst-amd64.exe";
+                String s_Driver = ms_AppDir + "\\Driver\\amd64\\ausbtmc.sys";
+                if (!File.Exists(ms_WinInstaller) || !File.Exists(s_Driver))
                     throw new Exception("Driver files not found");
 
                 ms_HelpHtmlPath = ms_AppDir + "\\Manual.htm";
@@ -532,7 +494,7 @@ namespace OsziWaveformAnalyzer
 
             // ----------------------------------------------------------
 
-            // CHeck that subfolder "Samples" has write permission
+            // Check that subfolder "Samples" has write permission
             try
             {
                 if (!Directory.Exists(SampleDir))
@@ -550,35 +512,13 @@ namespace OsziWaveformAnalyzer
 
             // ----------------------------------------------------------
 
-            // Register file extension *.oszi for the current user.
-            // The icon will become visible after logging off the next time.
-            String s_Icon = "\"" + Application.ExecutablePath + "\",0";
-            String s_Open = "\"" + Application.ExecutablePath + "\"" + CMD_LINE_ACTION + "\"%1\"";
-
-            Registry.SetValue(@"HKEY_CURRENT_USER\Software\Classes\.oszi", "", "OsziDataAnalyzerFile");
-            Registry.SetValue(@"HKEY_CURRENT_USER\Software\Classes\OsziDataAnalyzerFile\DefaultIcon",        "", s_Icon);
-            Registry.SetValue(@"HKEY_CURRENT_USER\Software\Classes\OsziDataAnalyzerFile\shell\open\command", "", s_Open);
+            // Associate file extension *.oszi with this program
+            PlatformManager.Instance.AssociateOsziExtension();
 
             // ----------------------------------------------------------
 
             // Create shortcut in startmenu once. (If the user deletes it, it will not be created again)
-            String s_LastInstalled = RegReadString(eRegKey.InstallPath);
-            if (String.Compare(Application.ExecutablePath, s_LastInstalled, true) != 0)
-            {
-                try
-                {
-                    String s_StartMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
-                    String s_LinkPath  = Path.Combine(s_StartMenu, "Oszi Waveform Analyzer.lnk");
-
-                    // Always update an existing shortcut in case the user has moved the executable to another folder
-                    CreateShortcut(Application.ExecutablePath, ms_AppDir, s_LinkPath, "Oszi Waveform Analyzer - Capture, Display, A/D, Logicanalyzer bu ElmüSoft");
-                }
-                catch (Exception Ex)
-                {
-                    ShowExceptionBox(null, Ex, "Error creating shortcut.");
-                }
-                Utils.RegWriteString(eRegKey.InstallPath, Application.ExecutablePath);
-            }
+            PlatformManager.Instance.CreateShortcutInStartMenu();
         }
 
         // --------------------------------------------------------------------------
@@ -710,7 +650,10 @@ namespace OsziWaveformAnalyzer
 
         public static void FillArray(Byte[] u8_Array, Byte u8_Value)
         {
-            memset(u8_Array, u8_Value, (IntPtr)u8_Array.Length);
+            for (int i=0; i<u8_Array.Length; i++)
+            {
+                u8_Array[i] = u8_Value;
+            }
         }
 
         public static bool CompareBytes(List<Byte> i_Data, int s32_Start, params Byte[] u8_Data)
@@ -784,105 +727,6 @@ namespace OsziWaveformAnalyzer
                 i_Bytes.Add((Byte)u64_Long);
             }
             return i_Bytes;
-        }
-
-        // --------------------------------------------------------------------------
-
-        /// <summary>
-        /// returns the Command Line:  "C:\\Program Files\\Mozilla Firefox\\firefox.exe" -osint -url "%1"
-        /// Resolving a file extension into the default program is very complicated.
-        /// Once upon a time in Windows 95 you could simply look it up in the registry under HKLM\Software\Classes
-        /// But with every new Windows version it became more complicated.
-        /// Then the user could override this in in HKCU. 
-        /// Then Microsoft added the option to select an "Open With" program for each file extension.
-        /// The registry entry "UserChoice" was added that overrides all the previous registry keys.
-        /// And in the next Windows version Microsoft may change this again.
-        /// A complex lookup process is required to open a .HTML file in the same browser 
-        /// that opens when the user double clicks a HTML file in Explorer.
-        /// If you try to resolve this manually from the registry you will end up with the wrong browser opening
-        /// or you may even get a path to a browser that has been uninstalled long ago.
-        /// The only bullet proof way is to let the Shell do this work "the Microsoft way".
-        /// The API FindExecutable() may return useless results (for example the path to a DLL).
-        /// The only API that always gives corret results is AssocQueryString()
-        /// </summary>
-        public static String GetAssociatedProgram(String s_FileExtension)
-        {
-            if (!s_FileExtension.StartsWith("."))
-                 s_FileExtension = "." + s_FileExtension;
-
-            StringBuilder i_CmdLine = new StringBuilder(300); // MAX_PATH = 260
-            int s32_Length = i_CmdLine.Capacity;
-
-            const int ASSOCSTR_COMMAND = 1;
-            int s32_Error = AssocQueryString(0, ASSOCSTR_COMMAND, s_FileExtension, null, i_CmdLine, ref s32_Length);
-            if (s32_Error != 0)
-                throw new Win32Exception(s32_Error); // HRESULT
-
-            return i_CmdLine.ToString();
-        }
-
-        /// <summary>
-        /// Process.Start("C:\\....\\UserManual.htm#Chapter") results in an error.
-        /// It is not possible to pass a path that does not end with a file extension.
-        /// </summary>
-        public static void ShowHelp(Form i_Owner, String s_Chapter = "")
-        {
-            try
-            {
-                if (s_Chapter.Length > 0) s_Chapter = "#" + s_Chapter;
-
-                // "file://C:/Program Files/Oszi Waveform Analyzer/Help/UserManual.htm#Chapter"
-                String s_URL = "file://" + ms_HelpHtmlPath.Replace('\\', '/') + s_Chapter;
-
-                // "C:\\Program Files\\Mozilla Firefox\\firefox.exe" -osint -url "%1"
-                String s_CmdLine = GetAssociatedProgram(".htm");
-                s_CmdLine = s_CmdLine.Replace("%1", s_URL);
-
-                ProcessStartInfo k_Info = new ProcessStartInfo(s_CmdLine, "");
-                k_Info.UseShellExecute = false;
-                Process.Start(k_Info);
-            }
-            catch (Exception Ex)
-            {
-                ShowExceptionBox(i_Owner, Ex, "Error opening the help file in the browser");
-            }
-        }
-
-        /// <summary>
-        /// Start a process or the browser
-        /// </summary>
-        public static void ShellExecute(Form i_Owner, String s_FileOrURL, bool b_Maximized)
-        {
-            try
-            {
-                ProcessStartInfo k_Info = new ProcessStartInfo(s_FileOrURL);
-                k_Info.WindowStyle = b_Maximized ? ProcessWindowStyle.Maximized : ProcessWindowStyle.Normal;
-                k_Info.UseShellExecute = true;
-                Process.Start(k_Info);
-            }
-            catch (Exception Ex)
-            {
-                ShowExceptionBox(i_Owner, Ex);
-            }
-        }
-
-        /// <summary>
-        /// This function is called from the button "Install Driver" that should exist in all the Capture Forms.
-        /// The driver installer must run elevated.
-        /// </summary>
-        public static void InstallDriver(Form i_Owner)
-        {
-            try
-            {
-                ProcessStartInfo k_Info = new ProcessStartInfo(ms_InstallerPath, "");
-                k_Info.UseShellExecute = true;
-                k_Info.Verb = "runas"; // run as administrator
-                Process.Start(k_Info);
-            }
-            catch (Exception Ex)
-            {
-                ShowExceptionBox(i_Owner, Ex, "Error starting the installer");
-            }
         }
 
         // --------------------------------------------------------------------------
@@ -1188,19 +1032,6 @@ namespace OsziWaveformAnalyzer
                 i_Dict[s_Key] = s_Val;
             }
             return i_Dict;
-        }
-
-        public static void CreateShortcut(String s_DestPath, String s_WorkDir, String s_LinkPath, String s_Description)
-        {
-            Debug.Assert(s_LinkPath.EndsWith(".lnk"));
-
-            IShellLink i_Link = (IShellLink)new ShellLink();
-            i_Link.SetDescription     (s_Description);
-            i_Link.SetWorkingDirectory(s_WorkDir);
-            i_Link.SetPath            (s_DestPath);
-
-            IPersistFile i_File = (IPersistFile)i_Link;
-            i_File.Save(s_LinkPath, false);
         }
 
         /// <summary>

@@ -49,6 +49,7 @@ using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 
 using eOsziSerie        = Transfer.TransferManager.eOsziSerie;
+using ScpiCombo         = Transfer.SCPI.ScpiCombo;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Utils             = OsziWaveformAnalyzer.Utils;
@@ -129,6 +130,8 @@ namespace Transfer
             public int        ms32_HorScreenRes;     // The horizontal screen resolution (for example 1200 or 600)
             public int        ms32_AnalogRes;        // The resolution of the A/D converter in the oscilloscope in bits (Rigol = 8 bit)
             public int        ms32_OpcReplaceDelay;  // See comment of SCPI.OpcReplaceDelay
+            public int        ms32_AnalogChannels;   // The count of analog channels
+            public int        ms32_Blocksize;        // The size of blocks transferred with :WAVEFORM:DATA?
             public String[]   ms_Commands = new String[(int)eCmd.COUNT];
         }
 
@@ -215,8 +218,10 @@ namespace Transfer
             {
                 mi_FixData.ms32_HorScreenRes    = 600;
                 mi_FixData.ms32_HorRasterLines  = 12;
-                mi_FixData.ms32_AnalogRes       = 8;   // The oscilloscope uses an 8 bit A/D converter
-                mi_FixData.ms32_OpcReplaceDelay = 100; // command "*OPC?" is not supported, make a pause of 100 ms instead.
+                mi_FixData.ms32_AnalogRes       = 8;       // The oscilloscope uses an 8 bit A/D converter
+                mi_FixData.ms32_OpcReplaceDelay = 100;     // command "*OPC?" is not supported, make a pause of 100 ms instead.
+                mi_FixData.ms32_AnalogChannels  = 2;       // This serie has 2 analog channels
+                mi_FixData.ms32_Blocksize       = 2000000; // 2 MB Buffer for :WAVEFORM:DATA?, but the scope sends max 1.048.576 bytes.
                 // ---------------------------------
                 mi_FixData.ms_Commands[(int)eCmd.GetIdent]          = "*IDN?";
                 mi_FixData.ms_Commands[(int)eCmd.Reset]             = "*RST";
@@ -255,9 +260,11 @@ namespace Transfer
             if (e_Serie == eOsziSerie.Rigol_1000Z)
             {
                 mi_FixData.ms32_HorScreenRes    = 1200;
-                mi_FixData.ms32_HorRasterLines  = 12; // Using :SYSTem:GAM? does not make sense because the result is always 12.
-                mi_FixData.ms32_AnalogRes       = 8;  // The oscilloscope uses an 8 bit A/D converter
-                mi_FixData.ms32_OpcReplaceDelay = 0;  // command "*OPC?" is supported.
+                mi_FixData.ms32_HorRasterLines  = 12;     // Using :SYSTem:GAM? does not make sense because the result is always 12.
+                mi_FixData.ms32_AnalogRes       = 8;      // The oscilloscope uses an 8 bit A/D converter
+                mi_FixData.ms32_OpcReplaceDelay = 0;      // command "*OPC?" is supported.
+                mi_FixData.ms32_AnalogChannels  = 4;       // This serie has 4 analog channels
+                mi_FixData.ms32_Blocksize       = 250000; // 250 kB can be transferred in one block with :WAVEFORM:DATA?
                 // ---------------------------------
                 mi_FixData.ms_Commands[(int)eCmd.GetIdent]          = "*IDN?";
                 mi_FixData.ms_Commands[(int)eCmd.Reset]             = "*RST";
@@ -321,14 +328,13 @@ namespace Transfer
         /// <summary>
         /// f_PrintStatus write a text into the status bar. It may also be null.
         /// </summary>
-        public void Open(TransferRigol i_Owner, String s_DevicePath)
+        public void Open(TransferRigol i_Owner, ScpiCombo i_Combo)
         {
             Debug.Assert(mi_Scpi == null, "Programming Error: Do not call Open() multiple times!");
 
             mi_Owner = i_Owner;
 
-            mi_Scpi = new SCPI();
-            mi_Scpi.Open(s_DevicePath); // throws
+            mi_Scpi = new SCPI(i_Combo); // opens device, throws
             mi_Scpi.OpcReplaceDelay = mi_FixData.ms32_OpcReplaceDelay;
 
             // Important: Execute the command *IDN? immediatley here.
@@ -414,7 +420,7 @@ namespace Transfer
             {
                 case eOsziSerie.Rigol_1000DE: 
                     // The command :ACQUIRE:MEMDEPTH? is garbage. It returns "NORMAL" or "LONG" instead of the current memory depth.
-                    for (int s32_Chan = 1; s32_Chan <= 2; s32_Chan ++)
+                    for (int s32_Chan = 1; s32_Chan <= mi_FixData.ms32_AnalogChannels; s32_Chan ++)
                     {
                         // If channel is enabled -> get Channel Memory Depth which is returned as 1048576, 524288, 16384 or 8192
                         if (mi_Scpi.SendBoolCommand(GetCmd(eCmd.GetAnalDisplay, s32_Chan)))
@@ -622,7 +628,7 @@ namespace Transfer
 
             // Rigol is inconsistent: First analog channel is 1, first digital channel is 0.
             // The 1000DE serie has only 2 analog channels.
-            for (int s32_AnalChan = 1; s32_AnalChan <= 2; s32_AnalChan++)
+            for (int s32_AnalChan = 1; s32_AnalChan <= mi_FixData.ms32_AnalogChannels; s32_AnalChan++)
             {
                 // Check if the channel is enabled
                 if (!mi_Scpi.SendBoolCommand(GetCmd(eCmd.GetAnalDisplay, s32_AnalChan), 250))
@@ -635,13 +641,13 @@ namespace Transfer
                 // Allocate enough Receive buffer!
                 // It is extremely important that the buffer is not too small to hold the ENTIRE response from the device!
                 // Documentation says (PDF page 82) that max 1048576 bytes can be read --> 2 MB buffer is enough.
-                Byte[] u8_Data = mi_Scpi.SendByteCommand(2000000, GetCmd(eCmd.GetWaveData, s32_AnalChan));
+                Byte[] u8_Data = mi_Scpi.SendByteCommand(mi_FixData.ms32_Blocksize, GetCmd(eCmd.GetWaveData, s32_AnalChan));
 
-                // Rigol is SOO STUPID that they send always only 600 samples in the first command even in RAW mode.
+                // Rigol is SOO INCREDIBLY STUPID that they send always only 600 samples in the first command even in RAW mode.
                 // So we must send this command twice to get the full memory resolution!
                 // See "Rigol DS1000E Waveform Guide.htm" in subfolder "Documentation"
                 if (b_Memory && u8_Data.Length <= mi_FixData.ms32_HorScreenRes)
-                    u8_Data = mi_Scpi.SendByteCommand(2000000, GetCmd(eCmd.GetWaveData, s32_AnalChan));
+                    u8_Data = mi_Scpi.SendByteCommand(mi_FixData.ms32_Blocksize, GetCmd(eCmd.GetWaveData, s32_AnalChan));
 
                 if (mb_Abort)
                     return;
@@ -665,24 +671,16 @@ namespace Transfer
         /// from screen and memory for the SAME oscilloscope!
         /// NOTE: It does not make sense to work with double's for voltages because the oscilloscope has only an A/D resolution of 8 bits.
         /// A double uses 8 byte in memory while a float uses 4 bytes.
-        /// See file "Logfile SCPI Commands DS1074Z.txt" in subfolder "Documentation" for an analg WAVEFORM transfer.
+        /// See file "Logfile SCPI Commands DS1074Z.txt" in subfolder "Documentation" showing an analg WAVEFORM transfer.
         /// </summary>
         void CaptureAnalog_Serie_1000Z(Capture i_Capture, bool b_Memory, List<Int64> i_Durations)
         {
-            // There are oscilloscopes with 8 analog channels.
             // Rigol is inconsistent: First analog channel is 1, first digital channel is 0.
-            for (int s32_AnalChan = 1; s32_AnalChan <= 8; s32_AnalChan++)
+            for (int s32_AnalChan = 1; s32_AnalChan <= mi_FixData.ms32_AnalogChannels; s32_AnalChan++)
             {
-                try
-                {
-                    // Check if the channel is enabled
-                    if (!mi_Scpi.SendBoolCommand(GetCmd(eCmd.GetAnalDisplay, s32_AnalChan), 250))
-                        continue; // Channel is turned off
-                }
-                catch (TimeoutException)
-                {
-                    break; // Channel does not exist on this model --> no answer from the scope --> mo more channels available
-                }
+                // Check if the channel is enabled
+                if (!mi_Scpi.SendBoolCommand(GetCmd(eCmd.GetAnalDisplay, s32_AnalChan), 250))
+                    continue; // Channel is turned off
 
                 mi_Scpi.SendOpcCommand(GetCmd(eCmd.SetWaveMode, b_Memory ? "RAW" : "NORMAL"));
                 mi_Scpi.SendOpcCommand(GetCmd(eCmd.SetWaveSource, "CHANNEL" + s32_AnalChan));
@@ -691,7 +689,7 @@ namespace Transfer
                 Preamble i_Prbl = GetPreamble(true);
                 String s_DisplayName = "Analog " + s32_AnalChan;
 
-                Byte[] u8_RawData = ReadRawByteDataStartStop(100000, s_DisplayName, i_Prbl.ms32_SamplePoints);
+                Byte[] u8_RawData = ReadRawByteDataStartStop(s_DisplayName, i_Prbl.ms32_SamplePoints);
                 if (mb_Abort)
                     return;
 
@@ -748,7 +746,7 @@ namespace Transfer
 
                 // This is stupid. Only Bit 0 of the raw data is used.
                 // This could be 8 times faster if there would be any intelligence inside Rigol.
-                Byte[] u8_RawData = ReadRawByteDataStartStop(100000, s_DisplayName, i_Prbl.ms32_SamplePoints);
+                Byte[] u8_RawData = ReadRawByteDataStartStop(s_DisplayName, i_Prbl.ms32_SamplePoints);
                 if (mb_Abort)
                     return;
 
@@ -801,7 +799,7 @@ namespace Transfer
                 Preamble i_Prbl = GetPreamble(true);
                 String s_DisplayName = String.Format("Digital {0} - {1}", s32_FirstChannel, s32_FirstChannel + 7);
 
-                Byte[] u8_RawData = ReadRawByteDataStartStop(100000, s_DisplayName, i_Prbl.ms32_SamplePoints);
+                Byte[] u8_RawData = ReadRawByteDataStartStop(s_DisplayName, i_Prbl.ms32_SamplePoints);
                 if (mb_Abort)
                     return;
 
@@ -913,18 +911,18 @@ namespace Transfer
         /// It reads digital data or analog data in BYTE format and removes the Rigol headers from all response packets.
         /// Pass s_DispChan for status display: "Analog 3" or "Digital 12"
         /// s32_Samples must be calculated correctly to match the extact count of samples on the screen or in memory.
-        /// s32_BlockSize = 100000 --> request 100 thousand bytes in one TMC response.
+        /// s32_BlockSize = 250000 --> request 250 kbyte in one TMC response.
         /// returns null if user has aborted.
         /// ------------------------------------
-        /// The DS1000Z has 24 MB memory. Set s32_BlockSize to read 100.000 samples at once.
-        /// DS1000Z documentation says (PDF page 235) that in BYTE mode max 250 kB can be transferred in one request.
+        /// The DS1000Z has 24 MB memory. Set ms32_BlockSize to read 250000 samples at once.
+        /// DS1000Z documentation says (PDF page 235) that in BYTE mode max 250 kB can be transferred in BYTE mode.
         /// </summary>
-        Byte[] ReadRawByteDataStartStop(int s32_BlockSize, String s_DispChan, int s32_Samples)
+        Byte[] ReadRawByteDataStartStop(String s_DispChan, int s32_Samples)
         {
-            MemoryStream i_RawData = new MemoryStream(s32_BlockSize);
+            MemoryStream i_RawData = new MemoryStream(s32_Samples);
             while (i_RawData.Length < s32_Samples)
             {
-                int s32_Remain = Math.Min(s32_BlockSize, s32_Samples - (int)i_RawData.Length);
+                int s32_Remain = Math.Min(mi_FixData.ms32_Blocksize, s32_Samples - (int)i_RawData.Length);
 
                 // ":WAVEFORM:START 1" --> start reading at the first sample
                 mi_Scpi.SendOpcCommand(GetCmd(eCmd.SetWaveStart, i_RawData.Length + 1));
@@ -932,7 +930,7 @@ namespace Transfer
 
                 // Request binary data (BYTE mode) from the oscilloscope memory.
                 // It is extremely important that the buffer is not too small to hold the ENTIRE response from the device!
-                Byte[] u8_UsbData = mi_Scpi.SendByteCommand(s32_BlockSize + 1000, GetCmd(eCmd.GetWaveData));
+                Byte[] u8_UsbData = mi_Scpi.SendByteCommand(mi_FixData.ms32_Blocksize, GetCmd(eCmd.GetWaveData));
 
                 ExtractRigolHeader_Serie_1000Z(u8_UsbData, i_RawData);
                

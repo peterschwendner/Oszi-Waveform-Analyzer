@@ -62,6 +62,7 @@ using eCtrlChar         = OsziWaveformAnalyzer.Utils.eCtrlChar;
 using GraphMenuItem     = Operations.OperationManager.GraphMenuItem;
 using eI2cChip          = PostDecoder.PostDecoderManager.eI2cChip;
 using PostDecoderManager= PostDecoder.PostDecoderManager;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -256,7 +257,7 @@ namespace Operations
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "DecodeI2C");
+            PlatformManager.Instance.ShowHelp(this, "DecodeI2C");
         }
 
         private void comboChip_SelectedIndexChanged(object sender, EventArgs e)
@@ -514,7 +515,7 @@ namespace Operations
                 i_Packet.ms32_EndSample = i_I2CByte.ms32_EndSample;
             }
 
-            Debug.Assert(i_Packet == null || i_Packet.mi_Bytes.Count == 0);
+            Debug.Assert(i_Packet == null || i_Packet.mi_Bytes.Count == 0, "Empty Packet!");
 
             return i_PackList.ToArray();
         }

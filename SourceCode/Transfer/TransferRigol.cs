@@ -50,9 +50,10 @@ using eOsziSerie        = Transfer.TransferManager.eOsziSerie;
 using eOperation        = Transfer.Rigol.eOperation;
 using OsziModel         = Transfer.Rigol.OsziModel;
 using OsziConfig        = Transfer.Rigol.OsziConfig;
-using ScpiDevice        = Transfer.SCPI.ScpiDevice;
+using ScpiCombo         = Transfer.SCPI.ScpiCombo;
 using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
 using Utils             = OsziWaveformAnalyzer.Utils;
+using PlatformManager   = Platform.PlatformManager;
 
 // This class implements communication with a Rigol oscilloscope
 // Sadly there is no standard for this communication so each vendor cooks his own soup.
@@ -195,7 +196,7 @@ namespace Transfer
         {
             try
             {
-                SCPI.GetUsbDeviceList(comboUsbDevice);
+                PlatformManager.Instance.EnumerateScpiDevices(comboUsbDevice);
             }
             catch (Exception Ex)
             {
@@ -205,12 +206,12 @@ namespace Transfer
 
         private void btnInstallDriver_Click(object sender, EventArgs e)
         {
-            Utils.InstallDriver(this);
+            PlatformManager.Instance.InstallDriver(this);
         }
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "SCPI");
+            PlatformManager.Instance.ShowHelp(this, "SCPI");
         }
 
         // ==========================================================
@@ -238,11 +239,11 @@ namespace Transfer
 
             try
             {
-                // If any device exists it has been pre-selected in Scpi.GetUsbDeviceList()
-                ScpiDevice i_Device = (ScpiDevice)comboUsbDevice.SelectedItem;
+                // If any device exists it has already been pre-selected in EnumerateScpiDevices()
+                ScpiCombo i_Combo = (ScpiCombo)comboUsbDevice.SelectedItem;
             
                 mi_Rigol = new Rigol(me_OsziSerie);
-                mi_Rigol.Open(this, i_Device.ms_DevicePath); // throws
+                mi_Rigol.Open(this, i_Combo); // throws
 
                 btnOpen.Text = "Close";
                 LoadGroupBox();

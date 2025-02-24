@@ -62,6 +62,7 @@ using eCtrlChar         = OsziWaveformAnalyzer.Utils.eCtrlChar;
 using GraphMenuItem     = Operations.OperationManager.GraphMenuItem;
 using PostDecoderManager= PostDecoder.PostDecoderManager;
 using eUartChip         = PostDecoder.PostDecoderManager.eUartChip;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -223,7 +224,7 @@ namespace Operations
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "DecodeAsync");
+            PlatformManager.Instance.ShowHelp(this, "DecodeAsync");
         }
 
         private void comboChannelB_SelectedIndexChanged(object sender, EventArgs e)

@@ -49,6 +49,7 @@ using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
 using GraphMenuItem     = Operations.OperationManager.GraphMenuItem;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -56,6 +57,9 @@ namespace Operations
     {
         const String MATH_SUBTRACT_AB = "Subtract Channel A - B";
         const String MATH_SUBTRACT_BA = "Subtract Channel B - A";
+        const String MATH_LOGIC_AND   = "Logical AND";
+        const String MATH_LOGIC_OR    = "Logical OR";
+        const String MATH_LOGIC_XOR   = "Logical XOR";
 
         Channel mi_ChannelA;
         Channel mi_ChannelB;
@@ -73,7 +77,7 @@ namespace Operations
                 return; // Analog channels cannot be distinguished while drawn one on top of the other
 
             if (OsziPanel.CurCapture.mi_Channels.Count < 2)
-                return; // at least 2 channels are required
+                return; // at least 2 channels are required for math
 
             GraphMenuItem i_Item = new GraphMenuItem();
             i_Item.ms_MenuText  = "Math Operations";
@@ -98,12 +102,21 @@ namespace Operations
         {
             base.OnLoad(e);
 
-            comboMath.Items.Add(MATH_SUBTRACT_AB);
-            comboMath.Items.Add(MATH_SUBTRACT_BA);
+            if (mb_Analog)
+            {
+                comboMath.Items.Add(MATH_SUBTRACT_AB);
+                comboMath.Items.Add(MATH_SUBTRACT_BA);
+            }
+            else // Digital
+            {
+                comboMath.Items.Add(MATH_LOGIC_AND);
+                comboMath.Items.Add(MATH_LOGIC_OR);
+                comboMath.Items.Add(MATH_LOGIC_XOR); // This is the same as subtracting digital A - B  or  B - A
+            }
 
             lblMathMode.Text = mb_Analog ? "Analog" : "Digital";
 
-            lblNameA.Text = mi_ChannelA.ms_Name;
+            lblNameA   .Text      = mi_ChannelA.ms_Name;
             lblNameA   .ForeColor = OsziPanel.GetChannelColor(mi_ChannelA);
             lblChannelA.ForeColor = lblNameA.ForeColor;
 
@@ -119,7 +132,7 @@ namespace Operations
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Utils.ShowHelp(this, "SplitHalfDuplex");
+            PlatformManager.Instance.ShowHelp(this, "SplitHalfDuplex");
         }
 
         private void comboChannelB_SelectedIndexChanged(object sender, EventArgs e)
@@ -140,30 +153,25 @@ namespace Operations
         {
             try
             {
-                if (mb_Analog && (mi_ChannelA.mf_Analog == null || mi_ChannelB.mf_Analog == null))
+                if (mb_Analog)
                 {
-                    MessageBox.Show(this, "If you right-click on an analog channel you must select two analog channels.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    if (mi_ChannelA.mf_Analog == null || mi_ChannelB.mf_Analog == null)
+                    {
+                        MessageBox.Show(this, "If you right-click on an analog channel you must select two analog channels.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
                 }
-                if (!mb_Analog && (mi_ChannelA.mu8_Digital == null || mi_ChannelB.mu8_Digital == null))
+                else // digital
                 {
-                    MessageBox.Show(this, "If you right-click on a digital channel you must select two digital channels.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    if (mi_ChannelA.mu8_Digital == null || mi_ChannelB.mu8_Digital == null)
+                    {
+                        MessageBox.Show(this, "If you right-click on a digital channel you must select two digital channels.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
                 }
 
-                Channel i_OperandA = mi_ChannelA;
-                Channel i_OperandB = mi_ChannelB;
-                Channel i_Result   = OsziPanel.CurCapture.FindOrCreateChannel(textResult.Text, mi_ChannelA);
-                int    s32_Samples = OsziPanel.CurCapture.ms32_Samples;
-
-                switch (comboMath.Text)
-                {
-                    case MATH_SUBTRACT_BA:
-                //  case FUTURE_OPERAION:
-                        i_OperandA = mi_ChannelB; // Swap channels if required
-                        i_OperandB = mi_ChannelA;
-                        break;
-                }
+                Channel i_Result = OsziPanel.CurCapture.FindOrCreateChannel(textResult.Text, mi_ChannelA);
+                int  s32_Samples = OsziPanel.CurCapture.ms32_Samples;
 
                 if (mb_Analog)
                 {
@@ -173,19 +181,17 @@ namespace Operations
                     switch (comboMath.Text)
                     {
                         case MATH_SUBTRACT_AB:
-                        case MATH_SUBTRACT_BA:
                             for (int S=0; S<s32_Samples; S++)
-                            {
-                                i_Result.mf_Analog[S] = i_OperandA.mf_Analog[S] - i_OperandB.mf_Analog[S];
-                            }
+                                i_Result.mf_Analog[S] = mi_ChannelA.mf_Analog[S] - mi_ChannelB.mf_Analog[S];
                             break;
 
-                    //  case FUTURE_OPERATION:
-                    //      ** TODO **
-                    //      break;
+                        case MATH_SUBTRACT_BA:
+                            for (int S=0; S<s32_Samples; S++)
+                                i_Result.mf_Analog[S] = mi_ChannelB.mf_Analog[S] - mi_ChannelA.mf_Analog[S];
+                            break;
                     }
                 }
-                else // Digital
+                else // Digital (Only bit 0 is used)
                 {
                     i_Result.mu8_Digital = new Byte[s32_Samples];
                     i_Result.mi_MarkRows = null;
@@ -193,18 +199,20 @@ namespace Operations
 
                     switch (comboMath.Text)
                     {
-                        case MATH_SUBTRACT_AB:
-                        case MATH_SUBTRACT_BA:
+                        case MATH_LOGIC_AND:
                             for (int S=0; S<s32_Samples; S++)
-                            {
-                                // Only bit 0 is used for digital data
-                                i_Result.mu8_Digital[S] = (Byte)((i_OperandA.mu8_Digital[S] - i_OperandB.mu8_Digital[S]) & 0x01);
-                            }
+                                i_Result.mu8_Digital[S] = (Byte)((mi_ChannelA.mu8_Digital[S] & mi_ChannelB.mu8_Digital[S]) & 0x01);
                             break;
 
-                    //  case FUTURE_OPERATION:
-                    //      ** TODO **
-                    //      break;
+                        case MATH_LOGIC_OR:
+                            for (int S=0; S<s32_Samples; S++)
+                                i_Result.mu8_Digital[S] = (Byte)((mi_ChannelA.mu8_Digital[S] | mi_ChannelB.mu8_Digital[S]) & 0x01);
+                            break;
+
+                        case MATH_LOGIC_XOR: // This is the same as subtracting digital A - B  or  B - A
+                            for (int S=0; S<s32_Samples; S++)
+                                i_Result.mu8_Digital[S] = (Byte)((mi_ChannelA.mu8_Digital[S] ^ mi_ChannelB.mu8_Digital[S]) & 0x01);
+                            break;
                     }
                 }
 

@@ -52,6 +52,9 @@
   <ItemGroup>
     <Compile Include="ExImport\OsziFile.cs" />
     <Compile Include="Operations\Digitizer.cs" />
+    <Compile Include="Platform\PlfMono.cs" />
+    <Compile Include="Platform\PlatformManager.cs" />
+    <Compile Include="Platform\PlfMicrosoft.cs" />
     <Compile Include="PostDecoder\ISO14230.cs" />
     <Compile Include="PostDecoder\ISO7816.cs" />
     <Compile Include="Transfer\TransferManager.cs" />
