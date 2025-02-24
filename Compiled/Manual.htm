@@ -219,7 +219,7 @@
 <li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB using the <b>SCPI</b> protocol.</div>
 <li><div>Oszi Waveform Analyzer does <span class="Error">NOT</span> require any huge installations like NI-VISA (1 GB), TekVISA (100 MB), IVI, UltraSigma (500 MB).</div>
 <li><div>Oszi Waveform Analyzer requires only the .NET framework 4.0 or higher.</div>
-<li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>.</div>
+<li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>. Support for Linux and Mac can be added (see <a href="#Download">below</a>).</div>
 <li><div>Oszi Waveform Analyzer includes the installer for the small 64 bit <b>USB TMC driver</b> (24 kB).</div>
 <li><div>Oszi Waveform Analyzer supports up to 255 channels that may have analog or digital data or both.</div>
 <li><div>Oszi Waveform Analyzer can <b>zoom</b> the signal horizontally and vertically.</div>
@@ -444,7 +444,7 @@
 <div>which shows the SPI bus communication between a Teensy processor and a Philips PN532 chip.</div>
 <div>The <b>PN532</b> is an RFID and NFC transmission chip that can read and write RFID cards at 13.56 MHz.</div>
 <div>I use this chip in my project <a href="https://netcult.ch/elmue/RFID-Secure-Doorlock" target="_blank">RFID Secure Doorlock</a>, a high-security door opener with RFID cards using DES or AES encryption.</div>
-<div>In this project you find the detailed project description and the programming manual of the PN532.</div>
+<div>In this project you find the detailed description and the programming manual of the PN532.</div>
 <p>
 <img src="Images/SpiDecoded.png" width="683" height="274" alt="Oszi Waveform Analyzer - SPI Bus decoder">
 
@@ -540,10 +540,10 @@
 <div>It may be in your country, but I can assure you that still in the year 2025 it is used in other parts of the world.</div>
 <p>
 <div>Who needs this if there are magnetic stripe readers ready to buy?</div>
-<div>I work on an automation robot for QA of POS (Point of Sale) and have to simulate a user sliding a card through a pinpad.</div>
-<div>A special hardware of my robot injects a magnetic field for each track with 3 tiny coils inside the pinpad card slot.</div>
+<div>I work on an automation robot for QA of POS (Point of Sale) and have to simulate a user sliding a card through a card reader.</div>
+<div>A special hardware of my robot injects a magnetic field for each track with 3 tiny coils inside the card slot.</div>
 <p>
-<div>The demo file <b>ISO 7813 Magnetic Stripe Bank Card.oszi</b> has been captured from a VISA debit card with this amplifier:</div>
+<div>The demo file <b>ISO 7813 Magnetic Stripe Bank Card.oszi</b> has been captured from sliding a VISA debit card with this amplifier:</div>
 <p>
 <img src="Images/DiagramMagneticTrackAmplifier.png" width="443" height="336" class="Img" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Amplifier">
 <p>
@@ -553,7 +553,7 @@
 <div>One half period of the slow frequency encodes a binay 'zero' and an entire period of the high frequency encodes a binay 'one'.</div>
 <div>The <a href="#AD_Conversion">A/D conversion</a> must be very precise because a half period already encodes one bit.</div>
 <div>The analog signal is dancing up and down. A fix threshold does not work here.</div>
-<div>Here you see a perfect conversion using Adaptive A/D:</div>
+<div>Here you see a perfect conversion of Track 1 using Adaptive A/D:</div>
 <p>
 <img src="Images/MagStripeDecoder.png" width="582" height="241" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Decoder">
 <div>Track 2 is the most difficult track. Oszi Waveform Analzyer tries Min/Max A/D conversion if Adaptive A/D does not work.</div>
@@ -655,13 +655,18 @@
 <a name="TransferSpeed"></a>
 <h3>Transfer Speed</h3>
 
-<div>The transfer is relatively fast because High Speed USB runs at 480 MBit/sec.</div>
-<div>Although SCPI is an entirely text based protocol, the command <b>:WAVEFORM:DATA</b> is an exception: It sends binary data.</div>
-<div>My oscilloscope has an 8 bit A/D converter, so one analog sample is transferred in one byte.</div>
-<div>For digital channels the oscilloscope packs 1 to 8 channels into one byte.</div>
+<div>The USB transfer itself is very fast because High Speed USB runs at 480 MBit/sec.</div>
+<div>Although SCPI is an entirely text based protocol, the command <b>:WAVEFORM:DATA?</b> is an exception: It sends binary data.</div>
+<div>My Rigol oscilloscope has an 8 bit A/D converter, so one analog sample is transferred in one byte.</div>
+<div>For digital channels Rigol packs 1 to 8 channels into one byte.</div>
 <p>
-<div>However, you will only transfer captures, but not a live stream. This is impossible over USB and would require a PCIe digitizer card.</div>
-<div>And the processor in the oscilloscope is not fast enough to capture and display signals and at the same time stream them over USB.</div>
+<div>However at least my Rigol oscilloscope transfers far below the possible USB speed, because the scope is very slow.</div>
+<div>The waveform data must be transferred in blocks of max. 250 kB. Before each block the commands <code>:WAVEFORM:START</code> and <code>:WAVEFORM:STOP</code></div>
+<div>define which part of the memory to transfer. Alone executing <code>:WAVEFORM:STOP</code> takes between 60 ms and 100 ms!</div>
+<div>And this command does nothing else than telling the scope where in memory to start the next transfer with <code>:WAVEFORM:DATA?</code></div>
+<p>
+<div>So forget it to transfer a live stream from the scope. This is impossible over USB and would require a PCIe digitizer card.</div>
+<div>And the processor in the oscilloscope is far too slow to capture and display signals and at the same time stream them over USB.</div>
 <div>By the way, live streaming was never the purpose of Oszi Waveform Analyzer.</div>
 
 <a name="ImplementOszi"></a>
@@ -675,6 +680,7 @@
 <tr><td class="Green">Rigol</td><td>DS1000E</td> <td>Implemented and tested</td></tr>
 <tr><td class="Red">Tektronix</td>           <td>TODO</td><td>Download <a href="https://download.tek.com/manual/MSO-DPO5000-B-DPO7000-C-DPO70000-B-C-D-DX-SX-DSA70000-B-C-D-and-MSO70000-C-DX-077001019.pdf" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Rhode &amp; Schwarz</td> <td>TODO</td><td>Download <a href="https://www.batronix.com/files/Rohde-&-Schwarz/Oscilloscope/HMO1xx2/HMO1002_1202_ProgrammingManual_en.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Agilent</td>             <td>TODO</td><td>Download <a href="https://ridl.cfd.rit.edu/products/manuals/Agilent/oscilloscopes/6000_series_prog_guide.pdf" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Siglent</td>             <td>TODO</td><td>Download <a href="https://www.siglent.com/upload_file/document/SDS1000%20Series&SDS2000X&SDS2000X-E_ProgrammingGuide_PG01-E02D.pdf" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Keysight</td>            <td>TODO</td><td>Download <a href="https://www.keysight.com/us/en/assets/9018-07141/programming-guides/9018-07141.pdf?success=true" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Hantek</td>              <td>TODO</td><td>Download <a href="https://www.hantek.com/Product/DSO4000BC/DSO4000BC_SCPI_EN.pdf" target="_blank">Manual</a></td></tr>
@@ -839,6 +845,7 @@ etc....</td></tr>
 <li><div>New operations in the right-click menu (e.g. <b>decoders</b>) can be added to the class OperationManager.</div>
 <li><div>New <b>file formats</b> for export and import can be added to the class ExImportManager.</div>
 <li><div>New <b>post decoders</b> for UART, SPI, I²C data can be added to the class PostDecoderManager.</div>
+<li><div>Support for <b>Mac, Linux</b> can be added to the class PlatformManager.</div>
 </ul>
 <div>If you have problems with the communication over USB you can enable debugging with <code>TRACE_OUTPUT</code> in the class SCPI.</div>
 <div>When you add new features I recommend to clone an existing class and make all the required adaptions.</div>
@@ -1002,7 +1009,7 @@ Others have confirmed to observe the same even on other oscilloscope models.</di
 <h4>Second:</h4>
 <div>I know from a user who made a firmware update and that introduced a new severe bug.</div>
 <div>The new bug does not allow him anymore to copy waveforms from the oscilloscope to the computer. This worked before.</div>
-<div>He wrote to the Rigol support and they told they will fix it, which they never did in several years.</div>
+<div>He wrote to the Rigol support and they told they will fix it, which they never did in 3 years.</div>
 <div>You can read about this problem in the forum  <a href="https://www.eevblog.com/forum/testgear/rigol-ds1052e-firmware-v00-04-04-00-00-from-20200827" target="_blank">EEV Blog</a>.</div>
 
 <h4>Recommendation:</h4>
