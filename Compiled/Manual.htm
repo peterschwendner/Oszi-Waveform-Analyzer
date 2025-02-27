@@ -182,7 +182,8 @@
         <div><a href="#DecodeCAN"        class="MenuLink" onClick="ShowMenu(false)">Decode CAN Bus</a></div>
         <div><a href="#DecodeMagStripe"  class="MenuLink" onClick="ShowMenu(false)">Decode Magnetic Stripe Tracks</a></div>
         <div><a href="#DecodeIR"         class="MenuLink" onClick="ShowMenu(false)">Decode Infrared Remote Control</a></div>
-        <div><a href="#WaveformTransfer" class="MenuLink" onClick="ShowMenu(false)">Waveform Transfer over USB</a></div>
+        <div><a href="#TransferUSB"      class="MenuLink" onClick="ShowMenu(false)">Waveform Transfer over USB</a></div>
+        <div><a href="#TransferTCP"      class="MenuLink" onClick="ShowMenu(false)">Waveform Transfer over TCP</a></div>
         <div>— &nbsp; <a href="#Ultrascope"       class="MenuLink" onClick="ShowMenu(false)">Rigol UltraScope</a></div>
         <div>— &nbsp; <a href="#SCPI"             class="MenuLink" onClick="ShowMenu(false)">SCPI</a></div>
         <div>— &nbsp; <a href="#Prerequisites"    class="MenuLink" onClick="ShowMenu(false)">Prerequisites</a></div>
@@ -209,7 +210,8 @@
     <div>&nbsp;</div>
 </noscript>
 
-<div>Oszi Waveform Analyzer is a masterpiece that converts your oscilloscope into a powerful analysis instrument with logic analyzer.</div>
+<div>Oszi Waveform Analyzer is a masterpiece that converts your oscilloscope into a powerful analysis instrument</div>
+<div>with features that you cannot find anywhere else.</div>
 <p>
 <img src="Images/OsziWaveformAnalyzer.png" width="895" height="733" alt="Oszi Waveform Analyzer - Main window">
 
@@ -581,8 +583,8 @@
 <img src="Images/GrundigRemoteControl.png" width="422" height="229" alt="Oszi Waveform Analyzer - Grundig Remote Control decoded">
 
 
-<a name="WaveformTransfer"></a>
-<h1>Waveform Transfer over USB</h1>
+<a name="TransferUSB"></a>
+<h1>Waveform Transfer over USB (recommended)</h1>
 
 <a name="Ultrascope"></a>
 <h3>Rigol UltraScope</h3>
@@ -699,6 +701,38 @@
 <div>In the subfolder 'Documentation' in the source code you find a <b>logfile</b> of the SCPI commands and responses of my scope.</div>
 <div>In the class SCPI you can enable <code>TRACE_OUTPUT</code> to see the communication over USB.</div>
 
+
+<a name="TransferTCP"></a>
+<h1>Waveform Transfer over TCP (deprecated)</h1>
+
+<div>Modern oscilloscopes also have a RJ-45 connector over which Oszi Waveform Analyzer can connect.</div>
+<div>However, at least for my Rigol I <b>cannot recommend</b> TCP transfer for various reasons:</div>
+<ol>
+<li><div>TCP transfer is <b>significantly slower</b> (four times slower!) if the scope has 100 Mbit LAN and 480 MBit USB speed.</div>
+<li><div>You have to find out and <b>configure</b> the IP address and the port, while USB does not need any configuration.</div>
+<li><div>My Rigol uses a very <b>stupid IP address</b> by default: 168.254.109.240</div>
+<li><div>My Rigol is so buggy that DHCP mode does not work (see <a href="#BugDHCP">bug report</a>)</div>
+<li><div>My Rigol uses port 5555 which is <b>completely undocumented</b>. Your scope may use another unknown port.</div>
+<li><div>My Rigol will not connect over TCP anymore if the USB cable was once connected. (see <a href="#BugTCP_USB">bug report</a>)</div>
+</ol>
+
+<h3>Configure TCP</h3>
+
+<div>On a Rigol oscilloscope press button <b>Utility</b>, then <b>IO Settings</b>, then <b>Lan Config</b> and you see this:</div>
+<p>
+<img src="Images/TcpSettings.png" width="400" height="260" alt="Oszi Waveform Analyzer - Rigol TCP Settings">
+<p>
+<div>The only option that works correctly for my scope is to define a static IP address.</div>
+
+<h3>Test the TCP Connection</h3>
+
+<ul>
+<li><div>On your computer enter <code>PING 192.168.0.240</code>. The scope should respond.</div>
+<li><div>On your computer enter the same IP into your <b>browser</b>. You should see a HTML page from your scope.</div>
+<li><div>Enter IP and port into Oszi Waveform Analyzer and you should be able to connect.</div>
+</ul>
+<div>If it does not work you surely have the wrong port. Use a port scanner or Google to find it.</div>
+<div>Send me an email with your oscilloscope model and your port and I will add this information here.</div>
 
 <a name="StoreDisk"></a>
 <h1>Storing Waveforms on Disk</h1>
@@ -908,7 +942,7 @@ etc....</td></tr>
 <p>
 <div>The progressbar runs to the middle and stays there <b>forever</b>.</div>
 <div>The file is never written. You can wait 3 hours with no advance.</div>
-<div>The same happens when I save a WFM file. This is 100% reproducable.</div>
+<div>The same happens when I save a WFM file. This is 100% reproducible.</div>
 <div>But the oscilloscope is not crashed. After pulling out the USB stick it shows an error and works again.</div>
 <div>A sloppy Chinese developer has programmed an endless loop.</div>
 
@@ -949,6 +983,18 @@ Others have confirmed to observe the same even on other oscilloscope models.</di
 <div>I would understand that the decoder turns off when the space on screen is too small. But it displays wrong values.</div>
 <div>And Rigol wants you to pay extra money for a <b>license</b> to "unlock" their primitive decoders!<div>
 <div>What a luck that you don't need this crap anymore, now that you have Oszi Waveform Analyzer.</div>
+
+<a name="BugDHCP"></a>
+<h3>Bug in DS1074Z</h3>
+<div>After configuring the <b>LAN settings</b>, enabling DHCP mode and clicking <b>Apply</b> the scope gets an IP address from DHCP.</div>
+<div>After turning the scope off and on, it will be back in mode "Auto IP" with a useless IP of 168.254.109.240</div>
+<div>The scope is so stupid that DHCP mode works only once and only manually.</div>
+
+<a name="BugTCP_USB"></a>
+<h3>Bug in DS1074Z</h3>
+<div>If the <b>USB</b> cable was once plugged in, a connection over <b>TCP</b> is impossible.</div>
+<div>After disconnecting the USB cable the scope will still not respond over TCP.</div>
+<div>To use TCP the scope must be turned off and on again without USB cable. What an <b>INCREDIBLE GARBAGE</b>!</div>
 
 <h3>Bug in RPL1116</h3>
 <p>
