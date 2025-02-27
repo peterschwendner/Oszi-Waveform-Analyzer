@@ -625,7 +625,7 @@ namespace Transfer
                     // This is captured in PanelRigol.SendManualCommand() when manually sending an invalid command.
                     const int WSAETIMEDOUT = 10060;
                     if (Ex.ErrorCode == WSAETIMEDOUT)
-                        throw new TimeoutException("Timeout. No response from the oscilloscope.");
+                        throw new TimeoutException("Timeout. No response from the oscilloscope.\nRead the Help file!");
 
                     throw Ex;
                 }
