@@ -123,10 +123,11 @@ namespace Platform
         }
 
         /// <summary>
-        /// Create a new instance of the class that is derived from IDevice and open the device.
+        /// Create a new instance of the class that is derived from IDevice.
+        /// The constructor of this class opens the device with fopen("/dev/usbtmc0", "r+")
         /// i_Combo comes from EnumerateScpiDevices()
         /// </summary>
-        public IDevice OpenDevice(ScpiCombo i_Combo)
+        public IDevice OpenUsbDevice(ScpiCombo i_Combo)
         {
             throw new NotImplementedException();
         }

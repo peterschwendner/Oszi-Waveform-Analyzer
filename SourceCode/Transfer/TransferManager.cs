@@ -80,6 +80,28 @@ namespace Transfer
             // TODO: Add more oscilloscope brands like Tektronix, Rhode & Schwarz, Siglent, ...
         }
 
+        /// <summary>
+        /// Used for all UserControl's that are displayed in Form Transfer
+        /// </summary>
+        public interface ITransferPanel
+        {
+            // This is called when the Form is opened
+            // Must not throw
+            void OnLoad(eOsziSerie e_OsziSerie);
+
+            // Open the connection to the oscilloscope, update GUI
+            // Throws on error
+            void OnOpenDevice(SCPI i_Scpi);
+
+            // Close the connection to the oscilloscope, update GUI
+            // Must not throw
+            void OnCloseDevice();
+
+            // Sends a command that the user has typed and displays the response in i_TextReponse.
+            // Must not throw, but display error in i_TextReponse
+            void SendManualCommand(String s_Command, TextBox i_TextReponse);
+        }
+
         public static void FillComboOsziModel(ComboBox i_ComboOsziModel)
         {
             i_ComboOsziModel.Sorted = false; // IMPORTANT!
@@ -103,12 +125,12 @@ namespace Transfer
         {
             Utils.RegWriteString(eRegKey.OsziSerie, i_ComboOsziModel.Text);
 
-            Form i_Form;
+            ITransferPanel i_Panel;
             eOsziSerie e_OsziSerie = (eOsziSerie)i_ComboOsziModel.SelectedIndex;
             switch (e_OsziSerie)
             {
                 case eOsziSerie.Rigol_1000DE:
-                case eOsziSerie.Rigol_1000Z:  i_Form = new TransferRigol(e_OsziSerie); break;
+                case eOsziSerie.Rigol_1000Z:  i_Panel = new PanelRigol(); break;
 
                 // TODO: Add Tektronix, Rhode & Schwarz, Siglent, ...
 
@@ -116,6 +138,8 @@ namespace Transfer
                     Debug.Assert(false, "Programming Error: OsziSerie not implemented");
                     return;
             }
+
+            Form i_Form = new FormTransfer(e_OsziSerie, i_Panel);
             i_Form.ShowDialog(Utils.FormMain);
         }
 
