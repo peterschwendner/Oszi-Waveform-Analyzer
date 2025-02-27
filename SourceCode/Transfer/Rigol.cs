@@ -179,6 +179,9 @@ namespace Transfer
         int           ms32_Tick;
         OsziModel     mi_OsziModel;
 
+        /// <summary>
+        /// returns null if no valid response to *IDN?
+        /// </summary>
         public OsziModel Model
         {
             get { return mi_OsziModel; }
@@ -337,14 +340,15 @@ namespace Transfer
 
             // returns "RIGOL TECHNOLOGIES,DS1074Z Plus,DS1ZC204807063,00.04.04.SP4"
             String[] s_Parts = s_IDN.Split(',');
-            if (s_Parts.Length != 4)
-                throw new Exception("Invalid response from command *IDN?");
-            
-            mi_OsziModel = new OsziModel();
-            mi_OsziModel.ms_Brand    = Utils.FirstToUpper(s_Parts[0]);
-            mi_OsziModel.ms_Model    = s_Parts[1];
-            mi_OsziModel.ms_Serial   = s_Parts[2];
-            mi_OsziModel.ms_Firmware = s_Parts[3];
+
+            if (s_Parts.Length == 4)
+            {
+                mi_OsziModel = new OsziModel();
+                mi_OsziModel.ms_Brand    = Utils.FirstToUpper(s_Parts[0]);
+                mi_OsziModel.ms_Model    = s_Parts[1];
+                mi_OsziModel.ms_Serial   = s_Parts[2];
+                mi_OsziModel.ms_Firmware = s_Parts[3];
+            }
         }
 
         public void Disconnect()

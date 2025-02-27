@@ -133,10 +133,17 @@ namespace Transfer
         {
             if (mi_Rigol.Model != null)
             {
-                lblBrand   .Text = mi_Rigol.Model.ms_Brand;
-                lblModel   .Text = mi_Rigol.Model.ms_Model;
-                lblSerial  .Text = mi_Rigol.Model.ms_Serial;
-                lblFirmware.Text = mi_Rigol.Model.ms_Firmware;
+                SetLabel(lblBrand,    false, mi_Rigol.Model.ms_Brand);
+                SetLabel(lblModel,    false, mi_Rigol.Model.ms_Model);
+                SetLabel(lblSerial,   false, mi_Rigol.Model.ms_Serial);
+                SetLabel(lblFirmware, false, mi_Rigol.Model.ms_Firmware);
+            }
+            else
+            {
+                SetLabel(lblBrand,    true, "ERROR");
+                SetLabel(lblModel,    true, "ERROR");
+                SetLabel(lblSerial,   true, "ERROR");
+                SetLabel(lblFirmware, true, "ERROR");
             }
 
             btnReset    .BackColor = Color.BlanchedAlmond;
