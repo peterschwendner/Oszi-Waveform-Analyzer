@@ -57,12 +57,18 @@
     <Compile Include="Platform\PlfMicrosoft.cs" />
     <Compile Include="PostDecoder\ISO14230.cs" />
     <Compile Include="PostDecoder\ISO7816.cs" />
+    <Compile Include="Transfer\PanelRigol.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Transfer\PanelRigol.Designer.cs">
+      <DependentUpon>PanelRigol.cs</DependentUpon>
+    </Compile>
     <Compile Include="Transfer\TransferManager.cs" />
-    <Compile Include="Transfer\TransferRigol.cs">
+    <Compile Include="Transfer\FormTransfer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Transfer\TransferRigol.designer.cs">
-      <DependentUpon>TransferRigol.cs</DependentUpon>
+    <Compile Include="Transfer\FormTransfer.designer.cs">
+      <DependentUpon>FormTransfer.cs</DependentUpon>
     </Compile>
     <Compile Include="ExImport\ExImportManager.cs" />
     <Compile Include="Operations\DecodeCanBus.cs">
@@ -148,8 +154,11 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Utils.cs" />
-    <EmbeddedResource Include="Transfer\TransferRigol.resx">
-      <DependentUpon>TransferRigol.cs</DependentUpon>
+    <EmbeddedResource Include="Transfer\PanelRigol.resx">
+      <DependentUpon>PanelRigol.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Transfer\FormTransfer.resx">
+      <DependentUpon>FormTransfer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormMain.resx">
       <DependentUpon>FormMain.cs</DependentUpon>
