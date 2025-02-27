@@ -111,6 +111,7 @@ namespace Transfer
             else // USB
                 radioTCP.Checked = true;
 
+            btnRefreshUSB_Click    (null, null); // refresh USB devices
             radioUSB_CheckedChanged(null, null); // toggle controls
         }
 
@@ -179,9 +180,6 @@ namespace Transfer
             textPort      .Visible = !radioUSB.Checked;
             lblPort       .Visible = !radioUSB.Checked;
             lblUsbIP.Text = radioUSB.Checked ? "TMC USB Devices:" : "IP Address:";
-
-            if (radioUSB.Checked)
-                btnRefreshUSB_Click(null, null); // refresh USB devices
         }
 
         // ==========================================================
