@@ -92,7 +92,7 @@ namespace Platform
             void EnumerateScpiDevices(ComboBox i_ComboUsbDevice);
 
             // Create a new instance of the class that is derived from IDevice and open the device
-            IDevice OpenDevice(ScpiCombo i_Combo);
+            IDevice OpenUsbDevice(ScpiCombo i_Combo);
         }
 
         public interface IDevice : IDisposable

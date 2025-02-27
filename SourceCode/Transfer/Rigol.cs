@@ -50,6 +50,7 @@ using System.Runtime.InteropServices;
 
 using eOsziSerie        = Transfer.TransferManager.eOsziSerie;
 using ScpiCombo         = Transfer.SCPI.ScpiCombo;
+using eBinaryTCP        = Transfer.SCPI.eBinaryTCP;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Utils             = OsziWaveformAnalyzer.Utils;
@@ -65,7 +66,7 @@ namespace Transfer
     /// <summary>
     /// This class implements the most important SCPI commands for Rigol oscilloscopes.
     /// </summary>
-    public class Rigol : IDisposable
+    public class Rigol
     {
         #region enums
 
@@ -171,17 +172,12 @@ namespace Transfer
         #endregion
 
         FixData       mi_FixData;
-        TransferRigol mi_Owner;
+        FormTransfer  mi_Form;
         eOsziSerie    me_Serie;
         SCPI          mi_Scpi;
         bool          mb_Abort;
         int           ms32_Tick;
         OsziModel     mi_OsziModel;
-
-        public SCPI Scpi
-        {
-            get { return mi_Scpi; }
-        }
 
         public OsziModel Model
         {
@@ -218,10 +214,10 @@ namespace Transfer
             {
                 mi_FixData.ms32_HorScreenRes    = 600;
                 mi_FixData.ms32_HorRasterLines  = 12;
-                mi_FixData.ms32_AnalogRes       = 8;       // The oscilloscope uses an 8 bit A/D converter
-                mi_FixData.ms32_OpcReplaceDelay = 100;     // command "*OPC?" is not supported, make a pause of 100 ms instead.
-                mi_FixData.ms32_AnalogChannels  = 2;       // This serie has 2 analog channels
-                mi_FixData.ms32_Blocksize       = 2000000; // 2 MB Buffer for :WAVEFORM:DATA?, but the scope sends max 1.048.576 bytes.
+                mi_FixData.ms32_AnalogRes       = 8;   // The oscilloscope uses an 8 bit A/D converter
+                mi_FixData.ms32_OpcReplaceDelay = 100; // command "*OPC?" is not supported, make a pause of 100 ms instead.
+                mi_FixData.ms32_AnalogChannels  = 2;   // This serie has 2 analog channels
+                mi_FixData.ms32_Blocksize       = 0;   // Transfer in blocks is not available for :WAVEFORM:DATA?
                 // ---------------------------------
                 mi_FixData.ms_Commands[(int)eCmd.GetIdent]          = "*IDN?";
                 mi_FixData.ms_Commands[(int)eCmd.Reset]             = "*RST";
@@ -263,8 +259,8 @@ namespace Transfer
                 mi_FixData.ms32_HorRasterLines  = 12;     // Using :SYSTem:GAM? does not make sense because the result is always 12.
                 mi_FixData.ms32_AnalogRes       = 8;      // The oscilloscope uses an 8 bit A/D converter
                 mi_FixData.ms32_OpcReplaceDelay = 0;      // command "*OPC?" is supported.
-                mi_FixData.ms32_AnalogChannels  = 4;       // This serie has 4 analog channels
-                mi_FixData.ms32_Blocksize       = 250000; // 250 kB can be transferred in one block with :WAVEFORM:DATA?
+                mi_FixData.ms32_AnalogChannels  = 4;      // This serie has 4 analog channels
+                mi_FixData.ms32_Blocksize       = 250000; // maximum 250 kB can be transferred in one block with :WAVEFORM:DATA?
                 // ---------------------------------
                 mi_FixData.ms_Commands[(int)eCmd.GetIdent]          = "*IDN?";
                 mi_FixData.ms_Commands[(int)eCmd.Reset]             = "*RST";
@@ -325,16 +321,13 @@ namespace Transfer
 
         // ==============================================================================
 
-        /// <summary>
-        /// f_PrintStatus write a text into the status bar. It may also be null.
-        /// </summary>
-        public void Open(TransferRigol i_Owner, ScpiCombo i_Combo)
+        // May throw
+        public void Connect(FormTransfer i_Form, SCPI i_Scpi)
         {
             Debug.Assert(mi_Scpi == null, "Programming Error: Do not call Open() multiple times!");
 
-            mi_Owner = i_Owner;
-
-            mi_Scpi = new SCPI(i_Combo); // opens device, throws
+            mi_Form = i_Form;
+            mi_Scpi = i_Scpi;
             mi_Scpi.OpcReplaceDelay = mi_FixData.ms32_OpcReplaceDelay;
 
             // Important: Execute the command *IDN? immediatley here.
@@ -344,7 +337,9 @@ namespace Transfer
 
             // returns "RIGOL TECHNOLOGIES,DS1074Z Plus,DS1ZC204807063,00.04.04.SP4"
             String[] s_Parts = s_IDN.Split(',');
-
+            if (s_Parts.Length != 4)
+                throw new Exception("Invalid response from command *IDN?");
+            
             mi_OsziModel = new OsziModel();
             mi_OsziModel.ms_Brand    = Utils.FirstToUpper(s_Parts[0]);
             mi_OsziModel.ms_Model    = s_Parts[1];
@@ -352,21 +347,15 @@ namespace Transfer
             mi_OsziModel.ms_Firmware = s_Parts[3];
         }
 
-        public void Dispose()
+        public void Disconnect()
         {
-            if (mi_Scpi != null)
+            try
             {
-                try
-                {
-                    // The Rigol DS1000DE is locked while connected to the computer and in remote control mode.
-                    // It must be explicitely unlocked to make the hardware buttons work again.
-                    mi_Scpi.SendOpcCommand(GetCmd(eCmd.Unlock));
-                }
-                catch {} // ignore error
-
-                mi_Scpi.Dispose(); // close native handles
-                mi_Scpi = null;
+                // The Rigol DS1000DE is locked in remote control mode while connected to the computer.
+                // It must be explicitely unlocked to make the hardware buttons work again.
+                mi_Scpi.SendOpcCommand(GetCmd(eCmd.Unlock));
             }
+            catch {} // ignore error
         }
 
         // ===============================================================================================
@@ -516,7 +505,7 @@ namespace Transfer
         {
             String s_Cmd = GetCmd((eCmd)e_Operation);
 
-            mi_Owner.PrintStatus("Command   " + s_Cmd, Color.Black);
+            mi_Form.PrintStatus("Command   " + s_Cmd, Color.Blue);
 
             mi_Scpi.SendOpcCommand(s_Cmd);
         }
@@ -534,10 +523,10 @@ namespace Transfer
             // returns TD, WAIT, RUN, AUTO or STOP
             String s_Status = mi_Scpi.SendStringCommand(GetCmd(eCmd.GetTrigStatus));
             if (s_Status != "STOP")
-                throw new ArgumentException("The CRAP from Rigol is not able to transfer multiple channels at once "
+                throw new ArgumentException("The oscilloscope is not able to transfer multiple channels at once "
                                           + "while in RUN mode. The oscilloscope must be in STOP mode otherwise you see all channels "
                                           + "out of sync because the stupid Chinese capture one life channel, transfer it over USB, "
-                                          + "capture the next life channel, transfer it, etc.");
+                                          + "then capture the next life channel and transfer it, etc.");
 
             if (b_Memory && mi_Scpi.SendBoolCommand(GetCmd(eCmd.GetMathDisplay)))
                 throw new ArgumentException("During a MATH operation it is not possible to capture the entire memory.");
@@ -597,7 +586,7 @@ namespace Transfer
                 {
                     s_Error += Utils.FormatTimePico(s64_Time) + "\n";
                 }
-                MessageBox.Show(mi_Owner, s_Error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(mi_Form, s_Error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             // The value from GetOsziConfiguration() is correct (at least on my scope with my firmware version)
@@ -627,7 +616,6 @@ namespace Transfer
             mi_Scpi.SendOpcCommand(GetCmd(eCmd.SetWaveMode, b_Memory ? "RAW" : "NORMAL"));
 
             // Rigol is inconsistent: First analog channel is 1, first digital channel is 0.
-            // The 1000DE serie has only 2 analog channels.
             for (int s32_AnalChan = 1; s32_AnalChan <= mi_FixData.ms32_AnalogChannels; s32_AnalChan++)
             {
                 // Check if the channel is enabled
@@ -636,18 +624,18 @@ namespace Transfer
 
                 // The serie 1000DE does not support a progress display in the status bar showing how many samples have been tranmsitted.
                 String s_Msg = String.Format("Transfer Analog Channel {0}.  Please wait.", s32_AnalChan);
-                mi_Owner.PrintStatus(s_Msg, Color.Black);
+                mi_Form.PrintStatus(s_Msg, Color.Black);
 
                 // Allocate enough Receive buffer!
                 // It is extremely important that the buffer is not too small to hold the ENTIRE response from the device!
                 // Documentation says (PDF page 82) that max 1048576 bytes can be read --> 2 MB buffer is enough.
-                Byte[] u8_Data = mi_Scpi.SendByteCommand(mi_FixData.ms32_Blocksize, GetCmd(eCmd.GetWaveData, s32_AnalChan));
+                Byte[] u8_Data = mi_Scpi.SendByteCommand(eBinaryTCP.Linefeed, 2000000, GetCmd(eCmd.GetWaveData, s32_AnalChan));
 
                 // Rigol is SOO INCREDIBLY STUPID that they send always only 600 samples in the first command even in RAW mode.
                 // So we must send this command twice to get the full memory resolution!
                 // See "Rigol DS1000E Waveform Guide.htm" in subfolder "Documentation"
                 if (b_Memory && u8_Data.Length <= mi_FixData.ms32_HorScreenRes)
-                    u8_Data = mi_Scpi.SendByteCommand(mi_FixData.ms32_Blocksize, GetCmd(eCmd.GetWaveData, s32_AnalChan));
+                    u8_Data = mi_Scpi.SendByteCommand(eBinaryTCP.Linefeed, 2000000, GetCmd(eCmd.GetWaveData, s32_AnalChan));
 
                 if (mb_Abort)
                     return;
@@ -767,7 +755,7 @@ namespace Transfer
         /// <summary>
         /// Rigol is so fucking inconsistent that we must write different functions for eaach oscilloscope serie.
         /// And as if this was not stupid enough, the digital channels are transferred completely different 
-        /// from screen and memory by the SAME oscilloscope!
+        /// from screen and from memory by the SAME oscilloscope!
         /// </summary>
         void CaptureDigitalFromMemory_Serie_1000Z(Capture i_Capture, List<Int64> i_Durations)
         {
@@ -805,7 +793,7 @@ namespace Transfer
 
                 AppendPodChannels(i_Capture, u8_RawData, s32_FirstChannel);
 
-                i_Capture.ms32_Samples  = i_Prbl.ms32_SamplePoints;
+                i_Capture.ms32_Samples = i_Prbl.ms32_SamplePoints;
 
                 if (!i_Durations.Contains(i_Prbl.ms64_Duration))
                      i_Durations.Add(i_Prbl.ms64_Duration);
@@ -929,8 +917,9 @@ namespace Transfer
                 mi_Scpi.SendOpcCommand(GetCmd(eCmd.SetWaveStop,  i_RawData.Length + s32_Remain));
 
                 // Request binary data (BYTE mode) from the oscilloscope memory.
-                // It is extremely important that the buffer is not too small to hold the ENTIRE response from the device!
-                Byte[] u8_UsbData = mi_Scpi.SendByteCommand(mi_FixData.ms32_Blocksize, GetCmd(eCmd.GetWaveData));
+                // For USB it is extremely important that the buffer is not too small to hold the ENTIRE response from the device!
+                // For TCP add 11 bytes for the Rigol header.
+                Byte[] u8_UsbData = mi_Scpi.SendByteCommand(eBinaryTCP.MinSize, s32_Remain + 11, GetCmd(eCmd.GetWaveData));
 
                 ExtractRigolHeader_Serie_1000Z(u8_UsbData, i_RawData);
                
@@ -947,7 +936,7 @@ namespace Transfer
         /// ASCII mode starts with a header "#9000015599", then 15599 characters,  then a linefeed and optionally a padding byte 4F
         /// 
         /// In BYTE mode the returned packet is a mix of first ASCII, then binary data and at the end an ASCII linefeed!
-        /// How STUPID !
+        /// How INCREDIBLY STUPID is this?
         /// 
         /// This header must be skipped. The problem is that at the end there may be additional bytes which are not waveform data.
         /// To be sure the header must be parsed which contains the exact length in bytes, not including the garbage at the end.
@@ -974,6 +963,9 @@ namespace Transfer
 
             // '#' + '9' + 9 digits = 11 byte header length
             int s32_FirstByte = 2 + s32_HeadLen;
+            if (u8_UsbData.Length < s32_FirstByte + s32_ByteCount)
+                throw new Exception("Incomplete data block received.");
+
             i_RawData.Write(u8_UsbData, s32_FirstByte, s32_ByteCount);
         }
 
@@ -989,7 +981,7 @@ namespace Transfer
             if (Math.Abs(Environment.TickCount - ms32_Tick) > 330)
             {
                 String s_Msg = String.Format("Transfer Channel {0}, Sample {1:N0}  Please wait.", s_DispChan, s32_Samples);
-                mi_Owner.PrintStatus(s_Msg, Color.Black);
+                mi_Form.PrintStatus(s_Msg, Color.Black);
                 ms32_Tick = Environment.TickCount;
             }
         }

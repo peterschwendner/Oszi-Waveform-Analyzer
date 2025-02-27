@@ -70,6 +70,9 @@ namespace OsziWaveformAnalyzer
             SeparateChannel,
             CaptureMemory,
             SendCommand,
+            ConnectTCP,
+            ConnectIpAddr,
+            ConnectPort,
             // ------------
             RasterInterval,
             RasterUnit,
@@ -395,7 +398,7 @@ namespace OsziWaveformAnalyzer
 
         #endregion
 
-        public  const  String     APP_VERSION       = "v1.6"; // displayed in Main Window Title
+        public  const  String     APP_VERSION       = "v1.7"; // displayed in Main Window Title
         public  const  int        MIN_VALID_SAMPLES = 100;    // Error if loaded file contains less samples
         public  const  String     ERR_MIN_SAMPLES   = "The minimum amount of samples is 100.";
         public  const  String     NO_SAMPLES_LOADED = "No samples loaded. Use button 'Capture' or select an Input file.";
@@ -669,6 +672,26 @@ namespace OsziWaveformAnalyzer
             return true;
         }
 
+        /// <summary>
+        /// s32_DataLen = the count of bytes in u8_Data that have valid values.
+        /// Reverse search u8_Pattern in u8_Data.
+        /// If s32_MaxCount == 4 --> check only the last 4 bytes of u8_Data.
+        /// returns the index of the found byte or -1 if not found.
+        /// </summary>
+        public static int FindByteReverse(Byte[] u8_Data, int s32_DataLen, int s32_MaxCount, Byte u8_Pattern)
+        {
+            int s32_Limit = Math.Max(0, s32_DataLen - s32_MaxCount);
+            for (int i=s32_DataLen - 1; i >= s32_Limit; i--)
+            {
+                if (u8_Data[i] == u8_Pattern)
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Search u8_Pattern in i_Data
+        /// </summary>
         public static int FindBytes(List<Byte> i_Data, int s32_Start, params Byte[] u8_Pattern)
         {
             if (s32_Start + u8_Pattern.Length > i_Data.Count || u8_Pattern.Length == 0)

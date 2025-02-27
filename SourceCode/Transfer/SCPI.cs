@@ -44,9 +44,10 @@ NAMING CONVENTIONS which allow to see the type of a variable immediately without
 
 // --------------------------------------------------------------
 
-
 using System;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
@@ -95,6 +96,37 @@ namespace Transfer
     /// </summary>
     public class SCPI : IDisposable
     {
+        #region enums
+
+        /// <summary>
+        /// This enum is only used for transferring binary data from :WAVEFORM:DATA? over a TCP connection.
+        /// As SCPI is extremely primitive the only way to detect the last data packet is the Linefeed at the end.
+        /// Unlike for USB there is no struct kTmcHeader that has a flag indicating the last packet.
+        /// How to make sure that a byte of 0x0A within the binary data does not terminate the transmission?
+        /// This enum defines how to detect the end of the binary data for a TCP connection.
+        /// ATTENTION:
+        /// The option to receive data until a timeout is no option because it would make the transfer EXTREMELY slow.
+        /// </summary>
+        public enum eBinaryTCP
+        {
+            // It seems that the Rigol serie DS1000DE does not send linefeed bytes inside the binary data.
+            // At least the file "Rigol DS1000E Waveform Guide.htm" in subfolder Documentation says so:
+            // "....each byte should have a value of between 15 and 240."
+            // "The top of the LCD display of the scope represents byte value 25 and the bottom is 225."
+            // So it seems that they take care not to send linefeeds withinh the data.
+            // In this mode the transmission ends when a packet ends with a linefeed.
+            Linefeed,
+
+            // The Rigol serie DS1000Z definitely sends bytes of value 0x0A within the binary data.
+            // But the oscilloscope sends reliably the count of samples that are to be transmitted for the current configuration.
+            // In this mode the transmission ends when the given minimum count of bytes was received.
+            // Behind the last binary byte comes the linefeed and sometimes a completely useless padding byte.
+            // These are eliminated here.
+            MinSize,
+        }
+
+        #endregion
+
         #region TMC
 
         enum eTmcMsgId : byte
@@ -129,14 +161,17 @@ namespace Transfer
         #region ScpiCombo
 
         /// <summary>
-        /// This class is stored in the ComboBox Items
+        /// This class is stored in ComboBox.Items of the combobox that shows the connected USB devices
         /// </summary>
         public class ScpiCombo
         {
-            public String ms_Display;    // The USB serial number is displayed to the user
-            public String ms_DevicePath; // Full NT device path (symbolic link) "\\?\USB#VID_1AB1&PID_04CE#DS1ZC204807063#{A9FDBB24-128A-11D5-9961-00108335E361}"
-
-            // Additional variables may be added if this is required for Linux
+            // Windows: Microsoft's unique device string from the registry (mostly this is the serial number of the USB device)
+            // Linux:   Any string that uniquely identifies the oscilloscope among all connected SCPI devices
+            public String ms_Display;    
+            
+            // Windows: "\\?\USB#VID_1AB1&PID_04CE#DS1ZC204807063#{A9FDBB24-128A-11D5-9961-00108335E361}"
+            // Linux:   "/dev/usbtmc0"
+            public String ms_DevicePath;
 
             public ScpiCombo(String s_Display, String s_DevicePath)
             {
@@ -152,10 +187,17 @@ namespace Transfer
 
         #endregion
 
-        Byte     mu8_Tag; 
-        int      ms32_OpcReplaceDelay;
-        IntPtr   mp_HeaderMem;
-        IDevice  mi_Device;
+        // 128 byte buffer is sufficient for all SCPI commands that return an ASCII response 
+        const int BUF_SIZE_ASCII = 128;
+
+        // The default timeout for TCP connection is 20 seconds which is much too long.
+        const int TCP_CONNECT_TIMEOUT = 2000;
+
+        Byte      mu8_Tag; 
+        int       ms32_OpcReplaceDelay;
+        IntPtr    mp_HeaderMem;
+        IDevice   mi_UsbDevice;
+        Socket    mi_TcpSocket;
 
         /// <summary>
         /// A delay which replaces the *OPC? command.
@@ -171,18 +213,51 @@ namespace Transfer
         }
 
         /// <summary>
+        /// Constructor for USB connection
         /// i_Combo comes from EnumerateScpiDevices()
         /// </summary>
         public SCPI(ScpiCombo i_Combo)
         {
             #if TRACE_OUTPUT
-                Debug.Print("Open device \"" + i_Combo + "\"");
+                Debug.Print("Open USB device \"" + i_Combo + "\"");
             #endif
 
             Debug.Assert(Marshal.SizeOf(typeof(kTmcHeader)) == SIZE_OF_TMC_HEADER, "struct compilation error");
 
-            mi_Device    = PlatformManager.Instance.OpenDevice(i_Combo);
+            mi_UsbDevice = PlatformManager.Instance.OpenUsbDevice(i_Combo);
             mp_HeaderMem = Marshal.AllocHGlobal(SIZE_OF_TMC_HEADER);
+        }
+
+        /// <summary>
+        /// Constructor for TCP connection
+        /// </summary>
+        public SCPI(IPAddress i_IpAddr, UInt16 u16_Port)
+        {
+            #if TRACE_OUTPUT
+                Debug.Print("Open TCP connection to {0}:{1}", i_IpAddr, u16_Port);
+            #endif
+
+            mi_TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            mi_TcpSocket.ReceiveTimeout = 2000; // changed later
+            mi_TcpSocket.SendTimeout    = 1000; // all commands are very short (< 50 byte)
+
+            // Microsoft did not implement a function Socket.Connect(int Timeout)
+            // The deault timeout is 20 seconds which is much too long --> Use CONNECT_TIMEOUT instead.
+            ManualResetEvent     i_Event = new ManualResetEvent(false);
+            SocketAsyncEventArgs i_Args  = new SocketAsyncEventArgs();
+            i_Args.RemoteEndPoint = new IPEndPoint(i_IpAddr, u16_Port);
+            i_Args.SocketError    = SocketError.TimedOut;
+            i_Args.Completed     += delegate(Object o_Sender, SocketAsyncEventArgs i_EvArgs)
+            {
+                i_Event.Set();
+            };
+
+            if (mi_TcpSocket.ConnectAsync(i_Args) &&  // returns true if connection is pending
+               !i_Event.WaitOne(TCP_CONNECT_TIMEOUT)) // returns false on timeout
+                throw new Exception("Could not connect to " + i_Args.RemoteEndPoint + "  (Timeout)");
+
+            if (i_Args.SocketError != SocketError.Success)
+                throw new Exception("Could not connect to " + i_Args.RemoteEndPoint + "  (" + i_Args.SocketError + ")");
         }
 
         /// <summary>
@@ -198,20 +273,30 @@ namespace Transfer
         /// </summary>
         public void Dispose()
         {
+            if (mi_UsbDevice != null)
+            {
+                #if TRACE_OUTPUT
+                    Debug.Print("Close USB device");
+                #endif
+
+                mi_UsbDevice.Dispose();
+                mi_UsbDevice = null;
+            }
+
+            if (mi_TcpSocket != null)
+            {
+                #if TRACE_OUTPUT
+                    Debug.Print("Close TCP connection");
+                #endif
+
+                mi_TcpSocket.Dispose();
+                mi_TcpSocket = null;
+            }
+
             if (mp_HeaderMem != IntPtr.Zero)
             {
                 Marshal.FreeHGlobal(mp_HeaderMem);
                 mp_HeaderMem = IntPtr.Zero;
-            }
-
-            if (mi_Device != null)
-            {
-                #if TRACE_OUTPUT
-                    Debug.Print("Close device");
-                #endif
-
-                mi_Device.Dispose();
-                mi_Device = null;
             }
         }
 
@@ -253,7 +338,9 @@ namespace Transfer
                 {
                     // ATTENTION:
                     // This is EXTREMELY important! If it is missing you get TIMEOUT's again and again
-                    mi_Device.CancelTransfer();
+                    if (mi_UsbDevice != null)
+                        mi_UsbDevice.CancelTransfer();
+
                     #if TRACE_OUTPUT
                         Debug.Print("No response to OPC Command");
                     #endif
@@ -308,10 +395,10 @@ namespace Transfer
 
         /// <summary>
         /// Send an ASCII command and return a byte array.
-        /// ATTENTION: If s32_MaxRxData is too small to receive the ENTIRE response, the USB communication will crash.
+        /// ATTENTION: If s32_BlockSize is too small to receive the ENTIRE response, the USB communication will crash.
         /// s32_Timeout = timeout used for sending and for receiving one chunk
         /// </summary>
-        public Byte[] SendByteCommand(int s32_MaxRxData, String s_Command, int s32_Timeout = DEFAULT_TIMEOUT)
+        public Byte[] SendByteCommand(eBinaryTCP e_BinaryTcp, int s32_BlockSize, String s_Command, int s32_Timeout = DEFAULT_TIMEOUT)
         {
             TransmitString(s_Command, s32_Timeout);
 
@@ -319,10 +406,12 @@ namespace Transfer
                 Debug.Print(">> SendByteCommand() timeout= "+s32_Timeout);
             #endif
 
-            Byte[] u8_Data = Receive(s32_MaxRxData, s32_Timeout);
+            Byte[] u8_Data;
+            if (mi_TcpSocket != null) u8_Data = ReceiveTcp(e_BinaryTcp, s32_BlockSize, s32_Timeout);
+            else                      u8_Data = ReceiveUsb(s32_BlockSize, s32_Timeout);
 
             #if TRACE_OUTPUT
-                Debug.Print("<< SendByteCommand() response= " + u8_Data.Length + " bytes");
+                Debug.Print("<< SendByteCommand() response= {0:N0} byte", u8_Data.Length);
             #endif
             return u8_Data;
         }
@@ -337,8 +426,12 @@ namespace Transfer
             #endif
 
             Byte[] u8_TxCommand = Encoding.ASCII.GetBytes(s_Command + '\n');
-            SendTmcPacket(u8_TxCommand, 0, s32_Timeout);
 
+            if (mi_TcpSocket != null)
+                mi_TcpSocket.Send(u8_TxCommand, 0, u8_TxCommand.Length, SocketFlags.None);
+            else
+                SendUsbPacket(u8_TxCommand, 0, s32_Timeout);
+        
             #if TRACE_OUTPUT
                 Debug.Print("<< TransmitString() finished");
             #endif
@@ -350,8 +443,10 @@ namespace Transfer
                 Debug.Print(">> ReceiveString() timeout= "+s32_Timeout);
             #endif
 
-            // All ASCII responses are shorter than 128 bytes
-            Byte[] u8_RxData  = Receive(128, s32_Timeout);
+            Byte[] u8_RxData;
+            if (mi_TcpSocket != null) u8_RxData = ReceiveTcp(eBinaryTCP.Linefeed, 0, s32_Timeout);
+            else                      u8_RxData = ReceiveUsb(BUF_SIZE_ASCII, s32_Timeout);
+
             String s_Response = Encoding.ASCII.GetString(u8_RxData);
 
             // ATTENTION: There may be garbage behind the response: "1.000000e+09\nO"
@@ -365,14 +460,14 @@ namespace Transfer
             return s_Response;
         }
 
-        // ----------------------------------------
+        // ================================== USB ===================================
 
         /// <summary>
         /// ATTENTION: If s32_MaxRxData is too small to receive the entire response, the USB communication will crash.
         /// s32_Timeout is for a chunk of data received in one TMC frame.
         /// USB High-Speed bulk data transfer is extremely fast: approx 100 kB in less than 20 ms.
         /// </summary>
-        private Byte[] Receive(int s32_MaxRxData, int s32_Timeout = DEFAULT_TIMEOUT)
+        private Byte[] ReceiveUsb(int s32_MaxRxData, int s32_Timeout = DEFAULT_TIMEOUT)
         {
             Byte[] u8_RxBuffer = new Byte[s32_MaxRxData + SIZE_OF_TMC_HEADER];
 
@@ -384,7 +479,7 @@ namespace Transfer
             while (true)
             {
                 // Request response from device
-                SendTmcPacket(null, s32_MaxRxData, s32_Timeout);
+                SendUsbPacket(null, s32_MaxRxData, s32_Timeout);
 
                 #if TRACE_OUTPUT
                     Debug.Print("  >> Receive() requesting " + s32_MaxRxData + " data bytes ...");
@@ -392,7 +487,7 @@ namespace Transfer
 
                 // The IVI driver does not allow to call Receive() first to request only the TMC header and then again to read the data.
                 // This is no problem with other drivers, but you will screw up the entire communication when you try this here.
-                int s32_BytesRead = mi_Device.Receive(u8_RxBuffer, s32_Timeout);
+                int s32_BytesRead = mi_UsbDevice.Receive(u8_RxBuffer, s32_Timeout);
                 if (s32_BytesRead < SIZE_OF_TMC_HEADER)
                 {
                     #if TRACE_OUTPUT
@@ -443,12 +538,12 @@ namespace Transfer
         /// u8_TxCommand != null --> u8_TxCommand is appended to the 12 byte header and sent in one or multiple Bulk OUT packets of 512 bytes
         /// u8_TxCommand == null --> A response is requested from the device in a Bulk IN transfer
         /// </summary>
-		private void SendTmcPacket(Byte[] u8_TxCommand, int s32_MaxRxData, int s32_Timeout)
+		private void SendUsbPacket(Byte[] u8_TxCommand, int s32_MaxRxData, int s32_Timeout)
 		{
             bool b_Command = u8_TxCommand != null;
             #if TRACE_OUTPUT
-                if (b_Command) Debug.Print("  >> SendTmcPacket() sending command (TxData= " + u8_TxCommand.Length + " bytes)");
-                else           Debug.Print("  >> SendTmcPacket() requesting response (MaxRxData= " + s32_MaxRxData + " byte)");
+                if (b_Command) Debug.Print("  >> SendUsbPacket() sending command (TxData= " + u8_TxCommand.Length + " byte)");
+                else           Debug.Print("  >> SendUsbPacket() requesting response (MaxRxData= " + s32_MaxRxData + " byte)");
             #endif
 
             // incremet counter, always > 0
@@ -468,7 +563,7 @@ namespace Transfer
             else // Request IN transfer
             {
                 k_Header.e_MsgID       = eTmcMsgId.REQUEST_DEV_DEP_MSG_IN; // (command sent on Bulk OUT requesting the device to send a response on Bulk-IN)
-                k_Header.s32_DataLen   = s32_MaxRxData; // maximum data length for the requested IN packet
+                k_Header.s32_DataLen   = s32_MaxRxData; // maximum data length for the requested Bulk IN packet
                 k_Header.u8_Attributes = 0; // 0 = Device must ignore u8_TermChar
             }
 
@@ -488,11 +583,80 @@ namespace Transfer
                 i_Transfer.Add(0);
             }
 
-            mi_Device.Send(i_Transfer.ToArray(), s32_Timeout);
+            mi_UsbDevice.Send(i_Transfer.ToArray(), s32_Timeout);
 
             #if TRACE_OUTPUT
-                Debug.Print("  << SendTmcPacket() finished");
+                Debug.Print("  << SendUsbPacket() finished");
             #endif
+        }
+
+        // ================================== TCP ===================================
+
+        /// <summary>
+        /// While for USB the struct kTmcHeader has a flag indicating the last packet,
+        /// over TCP no such information is available and the linefeed at the end is the only way to detect the end.
+        /// But the binary data may also contain multiple values of 0x0A within the data.
+        /// The oscilloscope sends the data in many separate packets. Rigol sends packets of 5840 bytes.
+        /// See comment of eBinaryTCP for more details.
+        /// s32_MinSize is only used in mode eBinaryTCP.MinSize
+        /// </summary>
+        private Byte[] ReceiveTcp(eBinaryTCP e_BinaryTcp, int s32_MinSize, int s32_Timeout)
+        {
+            #if TRACE_OUTPUT
+                if (e_BinaryTcp == eBinaryTCP.MinSize) Debug.Print("  >> ReceiveTcp(MinSize = {0:N0} byte)", s32_MinSize);
+                else                                   Debug.Print("  >> ReceiveTcp(Linefeed)");
+            #endif
+
+            MemoryStream i_Stream = new MemoryStream();
+            Byte[] u8_Buffer = new Byte[0x8000];
+
+            mi_TcpSocket.ReceiveTimeout = s32_Timeout;
+            while (true)
+            {
+                // s32_RxCount will never be zero. A timeout exception is thrown in case nothing was received.  
+                int s32_RxCount = 0;
+                try
+                {
+                    s32_RxCount = mi_TcpSocket.Receive(u8_Buffer, u8_Buffer.Length, SocketFlags.None);
+                }
+                catch (SocketException Ex)
+                {
+                    // In case of Timeout the SocketException must be converted into a TimeoutException. 
+                    // This is captured in PanelRigol.SendManualCommand() when manually sending an invalid command.
+                    const int WSAETIMEDOUT = 10060;
+                    if (Ex.ErrorCode == WSAETIMEDOUT)
+                        throw new TimeoutException("Timeout. No response from the oscilloscope.");
+
+                    throw Ex;
+                }
+
+                #if TRACE_OUTPUT
+                    Debug.Print("     Rx block of {0} byte, Total Rx = {1:N0} byte", s32_RxCount, i_Stream.Length + s32_RxCount);
+                #endif
+                   
+                if (e_BinaryTcp == eBinaryTCP.Linefeed || 
+                   (e_BinaryTcp == eBinaryTCP.MinSize && i_Stream.Length + s32_RxCount >= s32_MinSize))
+                {
+                    // Abort when the block ends with linefeed.
+                    // ATTENTION: There may be padding bytes behind the linefeed.
+                    // The linefeed is not necessarily the last byte --> search the last 4 bytes for a linefeed.
+                    int s32_LF = Utils.FindByteReverse(u8_Buffer, s32_RxCount, 4, 0x0A);
+                    if (s32_LF > -1)
+                    {
+                        // Append all received bytes except the linefeed (and padding) at the end
+                        i_Stream.Write(u8_Buffer, 0, s32_LF);
+                        break;
+                    }
+                }
+
+                // Append the entire block, more data will follow.
+                i_Stream.Write(u8_Buffer, 0, s32_RxCount);
+            }
+
+            #if TRACE_OUTPUT
+                Debug.Print("  << ReceiveTcp() --> received {0:N0} bytes", i_Stream.Length);
+            #endif
+            return i_Stream.ToArray();
         }
     }
 }
