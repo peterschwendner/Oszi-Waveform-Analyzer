@@ -40,6 +40,7 @@ using System.Net;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Diagnostics;
 using System.Threading;
 using System.Text;
 using System.Windows.Forms;
@@ -48,6 +49,7 @@ using WForms            = System.Windows.Forms;
 using eOsziSerie        = Transfer.TransferManager.eOsziSerie;
 using ITransferPanel    = Transfer.TransferManager.ITransferPanel;
 using ScpiCombo         = Transfer.SCPI.ScpiCombo;
+using eConnectMode      = Transfer.SCPI.eConnectMode;
 using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
 using Utils             = OsziWaveformAnalyzer.Utils;
 using PlatformManager   = Platform.PlatformManager;
@@ -59,10 +61,12 @@ namespace Transfer
 {
     public partial class FormTransfer : Form
     {
+        eConnectMode   me_Mode;
         eOsziSerie     me_OsziSerie;
         SCPI           mi_Scpi;
         ITransferPanel mi_Panel;
         WForms.Timer   mi_StatusTimer;
+        RadioButton[]  mi_RadioBtn = new RadioButton[3];
 
         /// <summary>
         /// Constructor
@@ -74,8 +78,12 @@ namespace Transfer
 
             InitializeComponent();
 
+            mi_RadioBtn[(int)eConnectMode.USB] = radioUSB;
+            mi_RadioBtn[(int)eConnectMode.TCP] = radioTCP;
+            mi_RadioBtn[(int)eConnectMode.VXI] = radioVXI;
+
             Control i_Ctrl = (Control)i_Panel;
-            i_Ctrl.Top  = btnInstallDriver.Bottom + 3;
+            i_Ctrl.Top  = btnInstallDriver.Bottom + 5;
             i_Ctrl.Left = 10;
             Controls.Add(i_Ctrl);
 
@@ -94,25 +102,21 @@ namespace Transfer
             textCommand.Text = Utils.RegReadString(eRegKey.SendCommand, "*IDN?");
             textCommand.KeyDown += new KeyEventHandler(OnTextCommandKeyDown);
 
-            statusLabel.Text  = "";
-            statusLabel.Width = ClientSize.Width - 4;           
+            statusLabel .Text  = "";
+            statusLabel .Width = ClientSize.Width - 4;           
+
+            // Load Combobox with USB devices
+            try { PlatformManager.Instance.EnumerateUsbDevices(comboDevices); }               // FIRST
+            catch {}
+
+            int s32_Mode = Utils.RegReadInteger(eRegKey.ConnectMode, (int)eConnectMode.USB) % 3; // AFTER
+            mi_RadioBtn[s32_Mode].Checked = true; // fires OnRadioButton_CheckedChanged()
+
+            textVxiLink.Text = Utils.RegReadString(eRegKey.LinkVXI, "inst0");
 
             mi_StatusTimer = new WForms.Timer();
             mi_StatusTimer.Tick += new EventHandler(OnStatusTimer);
             mi_StatusTimer.Interval = 4000;
-
-            textIpAddr.Width = comboUsbDevice.Width -2;
-            textPort  .Width = btnRefreshUSB .Width -4;
-            textIpAddr.Text = Utils.RegReadString(eRegKey.ConnectIpAddr, "192.168.1.127");
-            textPort  .Text = Utils.RegReadString(eRegKey.ConnectPort,   "5555");
-
-            if (Utils.RegReadBool(eRegKey.ConnectTCP))
-                radioTCP.Checked = true;
-            else // USB
-                radioTCP.Checked = true;
-
-            btnRefreshUSB_Click    (null, null); // refresh USB devices
-            radioUSB_CheckedChanged(null, null); // toggle controls
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -150,16 +154,44 @@ namespace Transfer
 
         // ==========================================================
 
-        private void btnRefreshUSB_Click(object sender, EventArgs e)
+        private void btnSearch_Click(object sender, EventArgs e)
         {
+            if (!Utils.StartBusyOperation(this))
+                return;
+
+            comboDevices.Items.Clear();
+            comboDevices.Text = "";
+            btnSearch.Enabled = false;
+            PrintStatus("Please wait ...", Color.Blue);
+
             try
             {
-                PlatformManager.Instance.EnumerateScpiDevices(comboUsbDevice);
+                if (me_Mode == eConnectMode.USB)
+                {
+                    PlatformManager.Instance.EnumerateUsbDevices(comboDevices); // throws
+                    if (comboDevices.Items.Count == 0)
+                        throw new Exception("No USB device of type 'Test and Measurement Class' is connected.");
+
+                    PrintStatus("Loaded " + comboDevices.Items.Count + " USB device(s) into Combobox", Color.Green);
+                }
+                else // TCP / VXI
+                {
+                    VxiClient i_VxiCLient = new VxiClient();
+                    i_VxiCLient.EnumerateVxiDevices(comboDevices); // throws
+
+                    if (comboDevices.Items.Count == 0)
+                        throw new Exception("No device has responded to the VXI broadcast request.");
+
+                    PrintStatus("Loaded " + comboDevices.Items.Count + " VXI device(s) into Combobox", Color.Green);
+                }
             }
             catch (Exception Ex)
             {
                 Utils.ShowExceptionBox(this, Ex);
             }
+
+            Utils.EndBusyOperation(this);
+            btnSearch.Enabled = true;
         }
 
         private void btnInstallDriver_Click(object sender, EventArgs e)
@@ -172,14 +204,35 @@ namespace Transfer
             PlatformManager.Instance.ShowHelp(this, "SCPI");
         }
 
-        private void radioUSB_CheckedChanged(object sender, EventArgs e)
+        /// <summary>
+        /// Called from all 3 RadioButtons
+        /// </summary>
+        private void OnRadioButton_CheckedChanged(object sender, EventArgs e)
         {
-            comboUsbDevice.Visible =  radioUSB.Checked;
-            btnRefreshUSB .Visible =  radioUSB.Checked;
-            textIpAddr    .Visible = !radioUSB.Checked;
-            textPort      .Visible = !radioUSB.Checked;
-            lblPort       .Visible = !radioUSB.Checked;
-            lblUsbIP.Text = radioUSB.Checked ? "TMC USB Devices:" : "IP Address:";
+            if (radioUSB.Checked)
+            {
+                me_Mode = eConnectMode.USB;
+                comboDevices.DropDownStyle = ComboBoxStyle.DropDownList;
+                comboDevices.Text = Utils.RegReadString(eRegKey.ConnectUSB);
+                lblUsbEndp  .Text = "USB Device";
+            }
+            if (radioTCP.Checked)
+            {
+                me_Mode = eConnectMode.TCP;
+                comboDevices.DropDownStyle = ComboBoxStyle.DropDown;
+                comboDevices.Text = Utils.RegReadString(eRegKey.ConnectTCP, "192.168.0.240 : 5555");
+                lblUsbEndp  .Text = "IP Address : Port";
+            }
+            if (radioVXI.Checked)
+            {
+                me_Mode = eConnectMode.VXI;
+                comboDevices.DropDownStyle = ComboBoxStyle.DropDown;
+                comboDevices.Text = Utils.RegReadString(eRegKey.ConnectVXI, "192.168.0.240");
+                lblUsbEndp  .Text = "IP Address";
+            }
+
+            lblVxiLink .Enabled = radioVXI.Checked;
+            textVxiLink.Enabled = radioVXI.Checked;
         }
 
         // ==========================================================
@@ -198,35 +251,41 @@ namespace Transfer
                 return;
             }
 
-            Utils.RegWriteBool  (eRegKey.ConnectTCP,    radioTCP.Checked);
-            Utils.RegWriteString(eRegKey.ConnectIpAddr, textIpAddr.Text);
-            Utils.RegWriteString(eRegKey.ConnectPort,   textPort  .Text);
-
             if (!Utils.StartBusyOperation(this))
                 return;
 
+            Utils.RegWriteInteger(eRegKey.ConnectMode,  (int)me_Mode);
+
+            textVxiLink.Text = textVxiLink.Text.Trim();
+
             btnOpen.Enabled = false;
             PrintStatus("Connecting to oscilloscope...", Color.Blue);
+            mi_Scpi = new SCPI();
             try
             {
-                if (radioUSB.Checked)
+                switch (me_Mode)
                 {
-                    ScpiCombo i_Combo = (ScpiCombo)comboUsbDevice.SelectedItem;
-                    if (i_Combo == null)
-                        throw new Exception("Please connect the oscilloscope over USB, turn it on and click 'Refresh'.\n"
-                                          + "If it does not appear, click 'Install Diver'.");
+                    case eConnectMode.USB:
+                        ScpiCombo i_Combo = (ScpiCombo)comboDevices.SelectedItem;
+                        if (i_Combo == null)
+                            throw new Exception("Please connect the oscilloscope over USB, turn it on and click 'Search'.\n"
+                                              + "If it does not appear, click 'Install Diver'.\n"
+                                              + "Check if there is an error in the Device Manager.");
 
-                    mi_Scpi = new SCPI(i_Combo); // opens USB device, throws
-                }
-                else // TCP
-                {
-                    IPAddress i_IpAddr = System.Net.IPAddress.Parse(textIpAddr.Text);
+                        mi_Scpi.ConnectUsb(i_Combo); // opens USB device, throws
+                        Utils.RegWriteString(eRegKey.ConnectUSB, comboDevices.Text);
+                        break;
 
-                    UInt16 u16_Port;
-                    if (!UInt16.TryParse(textPort.Text, out u16_Port) || u16_Port == 0)
-                        throw new Exception("Enter a valid port.");
+                    case eConnectMode.VXI:
+                        mi_Scpi.ConnectVxi(comboDevices.Text, textVxiLink.Text); // opens network connection, throws
+                        Utils.RegWriteString(eRegKey.ConnectVXI, comboDevices.Text);
+                        Utils.RegWriteString(eRegKey.LinkVXI,    textVxiLink.Text);
+                        break;
 
-                    mi_Scpi = new SCPI(i_IpAddr, u16_Port); // opens network connection, throws
+                    case eConnectMode.TCP:
+                        mi_Scpi.ConnectTcp(comboDevices.Text); // opens network connection, throws
+                        Utils.RegWriteString(eRegKey.ConnectTCP, comboDevices.Text);
+                        break;
                 }
                 
                 mi_Panel.OnOpenDevice(mi_Scpi);
@@ -235,9 +294,9 @@ namespace Transfer
             }
             catch (Exception Ex)
             {
-                Disconnect();
                 PrintStatus("Connect Error", Color.Red);
                 Utils.ShowExceptionBox(this, Ex);
+                Disconnect();
             }
 
             btnOpen.Enabled = true;
@@ -257,17 +316,17 @@ namespace Transfer
 
         void EnableGui(bool b_Open)
         {
-            groupCommand  .Enabled =  b_Open;
-            comboUsbDevice.Enabled = !b_Open;
-            btnRefreshUSB .Enabled = !b_Open;
-            radioTCP      .Enabled = !b_Open;
-            radioUSB      .Enabled = !b_Open;
-            textIpAddr    .Enabled = !b_Open;
-            textPort      .Enabled = !b_Open;
-            lblUsbIP      .Enabled = !b_Open;
-            lblPort       .Enabled = !b_Open;
-            textResponse  .Text    = "";
-            btnOpen       .Text    = b_Open ? "Close" : "Open";
+            groupCommand.Enabled =  b_Open;
+            comboDevices.Enabled = !b_Open;
+            btnSearch   .Enabled = !b_Open;
+            radioTCP    .Enabled = !b_Open;
+            radioUSB    .Enabled = !b_Open;
+            radioVXI    .Enabled = !b_Open;
+            lblUsbEndp  .Enabled = !b_Open;
+            textVxiLink .Enabled = !b_Open;
+            lblVxiLink  .Enabled = !b_Open;
+            textResponse.Text    = "";
+            btnOpen     .Text    = b_Open ? "Close" : "Open";
         }
 
         // ==========================================================

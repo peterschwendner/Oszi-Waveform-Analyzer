@@ -39,8 +39,9 @@ NAMING CONVENTIONS which allow to see the type of a variable immediately without
 
 // Writes debug output to the debugger (or SysInternals DbgView)
 // See file "Logfile SCPI Commands DS1074Z.txt" in subfolder "Documentation" which shows a successful communication.
-
-// #define TRACE_OUTPUT
+#if DEBUG
+//   #define TRACE_OUTPUT
+#endif
 
 // --------------------------------------------------------------
 
@@ -125,6 +126,13 @@ namespace Transfer
             MinSize,
         }
 
+        public enum eConnectMode
+        {
+            USB = 0,
+            TCP = 1,
+            VXI = 2,
+        }
+
         #endregion
 
         #region TMC
@@ -192,12 +200,15 @@ namespace Transfer
 
         // The default timeout for TCP connection is 20 seconds which is much too long.
         const int TCP_CONNECT_TIMEOUT = 2000;
+        const int WSAETIMEDOUT        = 10060; // SocketException
 
-        Byte      mu8_Tag; 
-        int       ms32_OpcReplaceDelay;
-        IntPtr    mp_HeaderMem;
-        IDevice   mi_UsbDevice;
-        Socket    mi_TcpSocket;
+        eConnectMode me_Mode;
+        Byte         mu8_Tag; 
+        int          ms32_OpcReplaceDelay;
+        IntPtr       mp_HeaderMem;
+        IDevice      mi_UsbDevice;
+        Socket       mi_TcpSocket;
+        VxiClient    mi_VxiClient;
 
         /// <summary>
         /// A delay which replaces the *OPC? command.
@@ -213,10 +224,9 @@ namespace Transfer
         }
 
         /// <summary>
-        /// Constructor for USB connection
         /// i_Combo comes from EnumerateScpiDevices()
         /// </summary>
-        public SCPI(ScpiCombo i_Combo)
+        public void ConnectUsb(ScpiCombo i_Combo)
         {
             #if TRACE_OUTPUT
                 Debug.Print("Open USB device \"" + i_Combo + "\"");
@@ -224,19 +234,45 @@ namespace Transfer
 
             Debug.Assert(Marshal.SizeOf(typeof(kTmcHeader)) == SIZE_OF_TMC_HEADER, "struct compilation error");
 
+            me_Mode      = eConnectMode.USB;
             mi_UsbDevice = PlatformManager.Instance.OpenUsbDevice(i_Combo);
             mp_HeaderMem = Marshal.AllocHGlobal(SIZE_OF_TMC_HEADER);
         }
 
         /// <summary>
-        /// Constructor for TCP connection
+        /// s_Endpoint   = "192.168.0.240 : 618" --> Connect directly to the control port 618.
+        /// s_Endpoint   = "192.168.0.240"       --> Request the control port from the portmapper and connect to it.
+        /// s_DeviceName = "inst0" for Rigol     ATTENTION: CASE SENSITIVE!
         /// </summary>
-        public SCPI(IPAddress i_IpAddr, UInt16 u16_Port)
+        public void ConnectVxi(String s_Endpoint, String s_DeviceName)
         {
             #if TRACE_OUTPUT
-                Debug.Print("Open TCP connection to {0}:{1}", i_IpAddr, u16_Port);
+                Debug.Print("Open VXI connection to " + s_Endpoint);
             #endif
 
+            UInt16 u16_Port; // Port is allowed to be 0 here
+            IPAddress i_IpAddr = ParseEndpoint(s_Endpoint, out u16_Port);
+
+            me_Mode      = eConnectMode.VXI;
+            mi_VxiClient = new VxiClient();
+            mi_VxiClient.ConnectDevice(i_IpAddr, u16_Port);
+
+            mi_VxiClient.CreateLink(s_DeviceName);
+        }
+
+        public void ConnectTcp(String s_Endpoint)
+        {
+            #if TRACE_OUTPUT
+                Debug.Print("Open TCP connection to " + s_Endpoint);
+            #endif
+
+            UInt16 u16_TcpPort;
+            IPAddress i_IpAddr = ParseEndpoint(s_Endpoint, out u16_TcpPort);
+
+            if (u16_TcpPort == 0)
+                Throw("Enter IP address and port separated by colon like: \"192.168.0.240 : 1234\"");
+
+            me_Mode      = eConnectMode.TCP;
             mi_TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             mi_TcpSocket.ReceiveTimeout = 2000; // changed later
             mi_TcpSocket.SendTimeout    = 1000; // all commands are very short (< 50 byte)
@@ -245,7 +281,7 @@ namespace Transfer
             // The deault timeout is 20 seconds which is much too long --> Use CONNECT_TIMEOUT instead.
             ManualResetEvent     i_Event = new ManualResetEvent(false);
             SocketAsyncEventArgs i_Args  = new SocketAsyncEventArgs();
-            i_Args.RemoteEndPoint = new IPEndPoint(i_IpAddr, u16_Port);
+            i_Args.RemoteEndPoint = new IPEndPoint(i_IpAddr, u16_TcpPort);
             i_Args.SocketError    = SocketError.TimedOut;
             i_Args.Completed     += delegate(Object o_Sender, SocketAsyncEventArgs i_EvArgs)
             {
@@ -254,10 +290,29 @@ namespace Transfer
 
             if (mi_TcpSocket.ConnectAsync(i_Args) &&  // returns true if connection is pending
                !i_Event.WaitOne(TCP_CONNECT_TIMEOUT)) // returns false on timeout
-                throw new Exception("Could not connect to " + i_Args.RemoteEndPoint + "  (Timeout)");
+                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (Timeout)");
 
             if (i_Args.SocketError != SocketError.Success)
-                throw new Exception("Could not connect to " + i_Args.RemoteEndPoint + "  (" + i_Args.SocketError + ")");
+                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (" + i_Args.SocketError + ")");
+        }
+
+        /// <summary>
+        /// Parse enpoint string "192.168.0.240 : 618" into IP Address and port.
+        /// If the port is missing or invalid --> return u16_Port = 0.
+        /// If the IP Address is invalid --> throw exception
+        /// </summary>
+        IPAddress ParseEndpoint(String s_Endpoint, out UInt16 u16_Port)
+        {
+            u16_Port = 0;
+            String[] s_Parts = s_Endpoint.Split(':');
+
+            String s_IpAddress = s_Endpoint.Trim();
+            if (s_Parts.Length == 2)
+            {
+                s_IpAddress =   s_Parts[0].Trim();
+                UInt16.TryParse(s_Parts[1].Trim(), out u16_Port);
+            }
+            return IPAddress.Parse(s_IpAddress);
         }
 
         /// <summary>
@@ -278,7 +333,6 @@ namespace Transfer
                 #if TRACE_OUTPUT
                     Debug.Print("Close USB device");
                 #endif
-
                 mi_UsbDevice.Dispose();
                 mi_UsbDevice = null;
             }
@@ -288,9 +342,17 @@ namespace Transfer
                 #if TRACE_OUTPUT
                     Debug.Print("Close TCP connection");
                 #endif
-
                 mi_TcpSocket.Dispose();
                 mi_TcpSocket = null;
+            }
+
+            if (mi_VxiClient != null)
+            {
+                #if TRACE_OUTPUT
+                    Debug.Print("Close VXI connection");
+                #endif
+                mi_VxiClient.Dispose();
+                mi_VxiClient = null;
             }
 
             if (mp_HeaderMem != IntPtr.Zero)
@@ -341,10 +403,7 @@ namespace Transfer
                     if (mi_UsbDevice != null)
                         mi_UsbDevice.CancelTransfer();
 
-                    #if TRACE_OUTPUT
-                        Debug.Print("No response to OPC Command");
-                    #endif
-                    throw new TimeoutException("The SCPI command did not execute within the timeout.");
+                    Throw("The SCPI command did not execute within the timeout.", true);
                 }
 
                 String s_Status = SendStringCommand("*OPC?", s32_Timeout);
@@ -367,7 +426,7 @@ namespace Transfer
             // On a German Windows doubles and floats use comma instead of dot!
             double d_Value;
             if (!Double.TryParse(s_Float, NumberStyles.Float, CultureInfo.InvariantCulture, out d_Value))
-                throw new Exception("The oscilloscope has returned an invalid floating point value: " + s_Float);
+                Throw("The oscilloscope has returned an invalid floating point value: " + s_Float);
 
             return d_Value;
         }
@@ -406,9 +465,13 @@ namespace Transfer
                 Debug.Print(">> SendByteCommand() timeout= "+s32_Timeout);
             #endif
 
-            Byte[] u8_Data;
-            if (mi_TcpSocket != null) u8_Data = ReceiveTcp(e_BinaryTcp, s32_BlockSize, s32_Timeout);
-            else                      u8_Data = ReceiveUsb(s32_BlockSize, s32_Timeout);
+            Byte[] u8_Data = null;
+            switch (me_Mode)
+            {
+                case eConnectMode.VXI: u8_Data = mi_VxiClient.DeviceRead(s32_Timeout);   break;
+                case eConnectMode.USB: u8_Data = ReceiveUsb(s32_BlockSize, s32_Timeout); break;
+                case eConnectMode.TCP: u8_Data = ReceiveTcp(e_BinaryTcp, s32_BlockSize, s32_Timeout); break;
+            }
 
             #if TRACE_OUTPUT
                 Debug.Print("<< SendByteCommand() response= {0:N0} byte", u8_Data.Length);
@@ -426,11 +489,12 @@ namespace Transfer
             #endif
 
             Byte[] u8_TxCommand = Encoding.ASCII.GetBytes(s_Command + '\n');
-
-            if (mi_TcpSocket != null)
-                mi_TcpSocket.Send(u8_TxCommand, 0, u8_TxCommand.Length, SocketFlags.None);
-            else
-                SendUsbPacket(u8_TxCommand, 0, s32_Timeout);
+            switch (me_Mode)
+            {
+                case eConnectMode.VXI: mi_VxiClient.DeviceWrite(u8_TxCommand); break;
+                case eConnectMode.USB: SendUsbPacket    (u8_TxCommand, 0, s32_Timeout); break;
+                case eConnectMode.TCP: mi_TcpSocket.Send(u8_TxCommand, 0, u8_TxCommand.Length, SocketFlags.None); break;
+            }
         
             #if TRACE_OUTPUT
                 Debug.Print("<< TransmitString() finished");
@@ -443,10 +507,13 @@ namespace Transfer
                 Debug.Print(">> ReceiveString() timeout= "+s32_Timeout);
             #endif
 
-            Byte[] u8_RxData;
-            if (mi_TcpSocket != null) u8_RxData = ReceiveTcp(eBinaryTCP.Linefeed, 0, s32_Timeout);
-            else                      u8_RxData = ReceiveUsb(BUF_SIZE_ASCII, s32_Timeout);
-
+            Byte[] u8_RxData = null;
+            switch (me_Mode)
+            {
+                case eConnectMode.VXI: u8_RxData = mi_VxiClient.DeviceRead(s32_Timeout); break;
+                case eConnectMode.USB: u8_RxData = ReceiveUsb(BUF_SIZE_ASCII, s32_Timeout); break;
+                case eConnectMode.TCP: u8_RxData = ReceiveTcp(eBinaryTCP.Linefeed, 0, s32_Timeout); break;
+            }
             String s_Response = Encoding.ASCII.GetString(u8_RxData);
 
             // ATTENTION: There may be garbage behind the response: "1.000000e+09\nO"
@@ -490,13 +557,9 @@ namespace Transfer
                 int s32_BytesRead = mi_UsbDevice.Receive(u8_RxBuffer, s32_Timeout);
                 if (s32_BytesRead < SIZE_OF_TMC_HEADER)
                 {
-                    #if TRACE_OUTPUT
-                        Debug.Print("  << Receive() *** CRIPPLED RESPONSE ***");
-                    #endif
-                    throw new Exception("The USB device has sent a crippled response of " + s32_BytesRead + " bytes.\n"
-                                      + "This may happen if the receive buffer is too small.");
+                    Throw("The USB device has sent a crippled response of " + s32_BytesRead + " bytes.\n"
+                        + "This may happen if the receive buffer is too small.");
                 }
-
                 // Copy the first bytes of u8_RxBuffer into k_Header
                 Marshal.Copy(u8_RxBuffer, 0, mp_HeaderMem, SIZE_OF_TMC_HEADER);
                 kTmcHeader k_Header = (kTmcHeader)Marshal.PtrToStructure(mp_HeaderMem, typeof(kTmcHeader));
@@ -512,10 +575,7 @@ namespace Transfer
                     k_Header.u8_TagInverse != (Byte)(~mu8_Tag)                 ||
                     k_Header.s32_DataLen   > s32_MaxRxData)
                 {
-                    #if TRACE_OUTPUT
-                        Debug.Print("  << Receive() *** INVALID DATA IN RESPONSE HEADER ***");
-                    #endif
-                    throw new Exception("The USB device has sent an invalid response header");
+                    Throw("The USB device has sent an invalid response header");
                 }
 
                 i_Stream.Write(u8_RxBuffer, SIZE_OF_TMC_HEADER, s32_BytesRead - SIZE_OF_TMC_HEADER);
@@ -622,11 +682,12 @@ namespace Transfer
                 catch (SocketException Ex)
                 {
                     // In case of Timeout the SocketException must be converted into a TimeoutException. 
-                    // This is captured in PanelRigol.SendManualCommand() when manually sending an invalid command.
-                    const int WSAETIMEDOUT = 10060;
                     if (Ex.ErrorCode == WSAETIMEDOUT)
-                        throw new TimeoutException("Timeout. No response from the oscilloscope.\nRead the Help file!");
+                        Throw("Timeout. No response from the oscilloscope.\nRead the Help file!", true);
 
+                    #if TRACE_OUTPUT
+                        Debug.Print("*** " + Ex.Message);
+                    #endif
                     throw Ex;
                 }
 
@@ -657,6 +718,22 @@ namespace Transfer
                 Debug.Print("  << ReceiveTcp() --> received {0:N0} bytes", i_Stream.Length);
             #endif
             return i_Stream.ToArray();
+        }
+
+        // ================================== Helper ====================================
+
+        /// <summary>
+        /// The TimeoutException has a sepcial treatment: 
+        /// It is is handled in PanelRigol.SendManualCommand() when manually sending an invalid command.
+        /// </summary>
+        static void Throw(String s_Message, bool b_Timeout = false)
+        {
+            #if TRACE_OUTPUT
+                Debug.Print("*** " + s_Message);
+            #endif
+
+            if (b_Timeout) throw new TimeoutException(s_Message);
+            else           throw new Exception(s_Message);
         }
     }
 }
