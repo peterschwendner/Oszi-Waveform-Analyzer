@@ -648,9 +648,9 @@ namespace Platform
         /// and loads them into the ComboBox
         /// The ComboBox Items are ScpiCombo classes.
         /// </summary>
-        public void EnumerateScpiDevices(ComboBox i_ComboUsbDevice)
+        public void EnumerateUsbDevices(ComboBox i_ComboDevices)
         {
-            i_ComboUsbDevice.Items.Clear();
+            i_ComboDevices.Items.Clear();
 
             using (ManagementClass i_Entity = new ManagementClass("Win32_PnPEntity"))
             {
@@ -669,14 +669,14 @@ namespace Platform
                     String[] s_Parts = s_DeviceID.Split('\\');
                     String  s_Serial = s_Parts[s_Parts.Length -1].ToUpper(); // DS1ZC204807063
                     
-                    i_ComboUsbDevice.Items.Add(new ScpiCombo(s_Serial, s_SymbolicLink));
+                    i_ComboDevices.Items.Add(new ScpiCombo(s_Serial, s_SymbolicLink));
                 }
             }
 
-            Utils.ComboAdjustDropDownWidth(i_ComboUsbDevice);
+            Utils.ComboAdjustDropDownWidth(i_ComboDevices);
 
-            if (i_ComboUsbDevice.Items.Count > 0)
-                i_ComboUsbDevice.SelectedIndex = 0;
+            if (i_ComboDevices.Items.Count > 0)
+                i_ComboDevices.SelectedIndex = 0;
         }
 
         /// <summary>

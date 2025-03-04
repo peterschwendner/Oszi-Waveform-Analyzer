@@ -117,7 +117,7 @@ namespace Platform
         /// Load the combobox with all SCPI devices currently connected over USB.
         /// The ComboBox Items must be ScpiCombo classes.
         /// </summary>
-        public void EnumerateScpiDevices(ComboBox i_ComboUsbDevice)
+        public void EnumerateUsbDevices(ComboBox i_ComboUsbDevice)
         {
             throw new NotImplementedException();
         }
