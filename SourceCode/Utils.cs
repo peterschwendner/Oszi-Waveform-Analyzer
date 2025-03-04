@@ -70,9 +70,11 @@ namespace OsziWaveformAnalyzer
             SeparateChannel,
             CaptureMemory,
             SendCommand,
+            ConnectMode,
+            ConnectUSB,
             ConnectTCP,
-            ConnectIpAddr,
-            ConnectPort,
+            ConnectVXI,
+            LinkVXI,
             // ------------
             RasterInterval,
             RasterUnit,
@@ -398,7 +400,7 @@ namespace OsziWaveformAnalyzer
 
         #endregion
 
-        public  const  String     APP_VERSION       = "v1.7"; // displayed in Main Window Title
+        public  const  String     APP_VERSION       = "v1.8"; // displayed in Main Window Title
         public  const  int        MIN_VALID_SAMPLES = 100;    // Error if loaded file contains less samples
         public  const  String     ERR_MIN_SAMPLES   = "The minimum amount of samples is 100.";
         public  const  String     NO_SAMPLES_LOADED = "No samples loaded. Use button 'Capture' or select an Input file.";

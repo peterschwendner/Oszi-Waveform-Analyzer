@@ -153,6 +153,7 @@
     <Compile Include="RtfViewer.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Transfer\VxiClient.cs" />
     <Compile Include="Utils.cs" />
     <EmbeddedResource Include="Transfer\PanelRigol.resx">
       <DependentUpon>PanelRigol.cs</DependentUpon>
