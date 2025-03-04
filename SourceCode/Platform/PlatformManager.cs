@@ -89,7 +89,7 @@ namespace Platform
 
             // Load the combobox with all SCPI devices connected over USB
             // The ComboBox Items must be ScpiCombo classes.
-            void EnumerateScpiDevices(ComboBox i_ComboUsbDevice);
+            void EnumerateUsbDevices(ComboBox i_ComboUsbDevice);
 
             // Create a new instance of the class that is derived from IDevice and open the device
             IDevice OpenUsbDevice(ScpiCombo i_Combo);
