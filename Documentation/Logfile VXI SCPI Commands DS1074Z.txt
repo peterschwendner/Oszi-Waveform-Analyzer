@@ -1,0 +1,910 @@
+> AsyncConnect(192.168.0.240 : 111) 
+< AsyncConnect() 
+> GetControlPort() 
+    Write      4 byte Header            80000038 
+    Write     40 byte cRmtPrcCallParam  02B15732 00000000 00000002 000186A0 00000002 00000003 00000000 00000000 00000000 00000000 
+    Write     16 byte cGetPortParam     000607AF 00000001 00000006 00000000 
+    Send      60 byte TX Packet          
+    Recv       4 byte Header            8000001C (Last) 
+    Recv      28 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15732 00000001 00000000 00000000 00000000 00000000 
+    Read       4 byte Port              0000026A 
+< GetControlPort() --> Port= 618 
+> AsyncConnect(192.168.0.240 : 618) 
+< AsyncConnect() 
+> CreateLink(Device= 'inst0') 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15733 00000000 00000002 000607AF 00000001 0000000A 00000000 00000000 00000000 00000000 
+    Write     24 byte cCreateLinkParam  4F737A69 00000000 00000000 00000005 696E7374 30000000 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15733 00000001 00000000 00000000 00000000 00000000 
+    Read      16 byte cCreateLinkReply  00000000 00000000 0000026B 000005DC 
+< CreateLink() --> LinkID= 0, MaxRecvSize= 1500, AbortPort= 619 
+> DeviceWrite(Data= 6 byte, Ascii= "*IDN?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15734 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A49444E 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15734 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15735 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000060 (Last) 
+    Recv      96 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15735 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000003C 
+    Read      60 byte Data              "RIGOL TECHNOLOGIES,DS1074Z Plus,DS1ZC204807063,00.04.04.SP4<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 60 
+> DeviceWrite(Data= 16 byte, Ascii= ":ACQUIRE:SRATE?<LF>") 
+    Write      4 byte Header            8000004C 
+    Write     40 byte cRmtPrcCallParam  02B15736 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     36 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000010 3A414351 55495245 3A535241 54453F0A 
+    Send      80 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15736 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000010 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15737 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15737 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000D 
+    Read      13 byte Data              "1.000000e+09<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 13 
+> DeviceWrite(Data= 22 byte, Ascii= ":WAVEFORM:MODE NORMAL<LF>") 
+    Write      4 byte Header            80000054 
+    Write     40 byte cRmtPrcCallParam  02B15738 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     44 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000016 3A574156 45464F52 4D3A4D4F 4445204E 4F524D41 4C0A0000 
+    Send      88 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15738 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000016 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15739 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15739 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1573A 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1573A 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 20 byte, Ascii= ":WAVEFORM:PREAMBLE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B1573B 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000014 3A574156 45464F52 4D3A5052 45414D42 4C453F0A 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1573B 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000014 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1573C 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000064 (Last) 
+    Recv     100 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1573C 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000003D 
+    Read      61 byte Data              "0,0,1200,1,2.000000e-06,-1.200000e-03,0,2.000000e-02,-63,127<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 61 
+> DeviceWrite(Data= 17 byte, Ascii= ":TIMEBASE:SCALE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B1573D 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000011 3A54494D 45424153 453A5343 414C453F 0A000000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1573D 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000011 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1573E 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1573E 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000E 
+    Read      14 byte Data              "2.0000000e-04<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 14 
+> DeviceWrite(Data= 16 byte, Ascii= ":ACQUIRE:SRATE?<LF>") 
+    Write      4 byte Header            8000004C 
+    Write     40 byte cRmtPrcCallParam  02B1573F 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     36 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000010 3A414351 55495245 3A535241 54453F0A 
+    Send      80 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1573F 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000010 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15740 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15740 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000D 
+    Read      13 byte Data              "1.000000e+09<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 13 
+> DeviceWrite(Data= 22 byte, Ascii= ":WAVEFORM:MODE NORMAL<LF>") 
+    Write      4 byte Header            80000054 
+    Write     40 byte cRmtPrcCallParam  02B15741 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     44 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000016 3A574156 45464F52 4D3A4D4F 4445204E 4F524D41 4C0A0000 
+    Send      88 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15741 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000016 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15742 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15742 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15743 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15743 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 20 byte, Ascii= ":WAVEFORM:PREAMBLE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15744 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000014 3A574156 45464F52 4D3A5052 45414D42 4C453F0A 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15744 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000014 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15745 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000064 (Last) 
+    Recv     100 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15745 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000003D 
+    Read      61 byte Data              "0,0,1200,1,2.000000e-06,-1.200000e-03,0,2.000000e-02,-63,127<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 61 
+> DeviceWrite(Data= 17 byte, Ascii= ":TIMEBASE:SCALE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15746 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000011 3A54494D 45424153 453A5343 414C453F 0A000000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15746 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000011 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15747 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15747 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000E 
+    Read      14 byte Data              "2.0000000e-04<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 14 
+> DeviceWrite(Data= 17 byte, Ascii= ":TRIGGER:STATUS?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15748 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000011 3A545249 47474552 3A535441 5455533F 0A000000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15748 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000011 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15749 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            8000002C (Last) 
+    Recv      44 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15749 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000005 
+    Read       5 byte Data              "STOP<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 5 
+> DeviceWrite(Data= 16 byte, Ascii= ":ACQUIRE:SRATE?<LF>") 
+    Write      4 byte Header            8000004C 
+    Write     40 byte cRmtPrcCallParam  02B1574A 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     36 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000010 3A414351 55495245 3A535241 54453F0A 
+    Send      80 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1574A 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000010 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1574B 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1574B 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000D 
+    Read      13 byte Data              "1.000000e+09<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 13 
+> DeviceWrite(Data= 22 byte, Ascii= ":WAVEFORM:MODE NORMAL<LF>") 
+    Write      4 byte Header            80000054 
+    Write     40 byte cRmtPrcCallParam  02B1574C 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     44 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000016 3A574156 45464F52 4D3A4D4F 4445204E 4F524D41 4C0A0000 
+    Send      88 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1574C 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000016 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B1574D 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1574D 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1574E 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1574E 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 20 byte, Ascii= ":WAVEFORM:PREAMBLE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B1574F 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000014 3A574156 45464F52 4D3A5052 45414D42 4C453F0A 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1574F 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000014 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15750 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000064 (Last) 
+    Recv     100 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15750 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000003D 
+    Read      61 byte Data              "0,0,1200,1,2.000000e-06,-1.200000e-03,0,2.000000e-02,-63,127<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 61 
+> DeviceWrite(Data= 17 byte, Ascii= ":TIMEBASE:SCALE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15751 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000011 3A54494D 45424153 453A5343 414C453F 0A000000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15751 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000011 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15752 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15752 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000E 
+    Read      14 byte Data              "2.0000000e-04<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 14 
+> DeviceWrite(Data= 19 byte, Ascii= ":CHANNEL1:DISPLAY?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15753 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000013 3A434841 4E4E454C 313A4449 53504C41 593F0A00 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15753 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000013 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15754 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15754 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 22 byte, Ascii= ":WAVEFORM:MODE NORMAL<LF>") 
+    Write      4 byte Header            80000054 
+    Write     40 byte cRmtPrcCallParam  02B15755 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     44 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000016 3A574156 45464F52 4D3A4D4F 4445204E 4F524D41 4C0A0000 
+    Send      88 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15755 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000016 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15756 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15756 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15757 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15757 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 26 byte, Ascii= ":WAVEFORM:SOURCE CHANNEL1<LF>") 
+    Write      4 byte Header            80000058 
+    Write     40 byte cRmtPrcCallParam  02B15758 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     48 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 0000001A 3A574156 45464F52 4D3A534F 55524345 20434841 4E4E454C 310A0000 
+    Send      92 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15758 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 0000001A 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15759 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15759 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1575A 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1575A 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 22 byte, Ascii= ":WAVEFORM:FORMAT BYTE<LF>") 
+    Write      4 byte Header            80000054 
+    Write     40 byte cRmtPrcCallParam  02B1575B 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     44 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000016 3A574156 45464F52 4D3A464F 524D4154 20425954 450A0000 
+    Send      88 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1575B 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000016 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B1575C 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1575C 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1575D 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1575D 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 20 byte, Ascii= ":WAVEFORM:PREAMBLE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B1575E 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000014 3A574156 45464F52 4D3A5052 45414D42 4C453F0A 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1575E 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000014 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1575F 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000064 (Last) 
+    Recv     100 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1575F 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000003D 
+    Read      61 byte Data              "0,0,1200,1,2.000000e-06,-1.200000e-03,0,2.000000e-02,-63,127<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 61 
+> DeviceWrite(Data= 18 byte, Ascii= ":WAVEFORM:START 1<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15760 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000012 3A574156 45464F52 4D3A5354 41525420 310A0000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15760 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000012 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15761 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15761 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15762 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15762 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 20 byte, Ascii= ":WAVEFORM:STOP 1200<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15763 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000014 3A574156 45464F52 4D3A5354 4F502031 3230300A 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15763 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000014 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15764 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15764 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15765 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15765 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 16 byte, Ascii= ":WAVEFORM:DATA?<LF>") 
+    Write      4 byte Header            8000004C 
+    Write     40 byte cRmtPrcCallParam  02B15766 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     36 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000010 3A574156 45464F52 4D3A4441 54413F0A 
+    Send      80 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15766 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000010 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15767 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            0000018C (Fragment) 
+    Recv     396 byte RX Data            
+    Recv       4 byte Header            0000018C (Fragment) 
+    Recv     396 byte RX Data            
+    Recv       4 byte Header            0000018C (Fragment) 
+    Recv     396 byte RX Data            
+    Recv       4 byte Header            8000003C (Last) 
+    Recv      60 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15767 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 000004BC 
+    Read    1212 byte Data              "#9000001200?AA??AA??AB>A??AA??AA??AA?A??AA>?A?AA?A??AA?A?A??AA??AA??A?AA??AA?A?A??A?AA??AA?A?A?A??AA ...." 
+    Reason= End 
+< DeviceRead() --> total bytes= 1212 
+> DeviceWrite(Data= 19 byte, Ascii= ":CHANNEL2:DISPLAY?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15768 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000013 3A434841 4E4E454C 323A4449 53504C41 593F0A00 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15768 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000013 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15769 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15769 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "0<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 19 byte, Ascii= ":CHANNEL3:DISPLAY?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B1576A 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000013 3A434841 4E4E454C 333A4449 53504C41 593F0A00 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1576A 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000013 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1576B 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1576B 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "0<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 19 byte, Ascii= ":CHANNEL4:DISPLAY?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B1576C 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000013 3A434841 4E4E454C 343A4449 53504C41 593F0A00 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1576C 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000013 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1576D 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1576D 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "0<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 18 byte, Ascii= ":LA:DISPLAY? POD1<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B1576E 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000012 3A4C413A 44495350 4C41593F 20504F44 310A0000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1576E 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000012 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1576F 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1576F 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "0<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 18 byte, Ascii= ":LA:DISPLAY? POD2<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15770 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000012 3A4C413A 44495350 4C41593F 20504F44 320A0000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15770 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000012 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15771 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15771 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "0<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 16 byte, Ascii= ":ACQUIRE:SRATE?<LF>") 
+    Write      4 byte Header            8000004C 
+    Write     40 byte cRmtPrcCallParam  02B15772 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     36 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000010 3A414351 55495245 3A535241 54453F0A 
+    Send      80 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15772 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000010 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15773 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15773 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000D 
+    Read      13 byte Data              "1.000000e+09<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 13 
+> DeviceWrite(Data= 22 byte, Ascii= ":WAVEFORM:MODE NORMAL<LF>") 
+    Write      4 byte Header            80000054 
+    Write     40 byte cRmtPrcCallParam  02B15774 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     44 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000016 3A574156 45464F52 4D3A4D4F 4445204E 4F524D41 4C0A0000 
+    Send      88 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15774 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000016 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B15775 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15775 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15776 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15776 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 20 byte, Ascii= ":WAVEFORM:PREAMBLE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15777 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000014 3A574156 45464F52 4D3A5052 45414D42 4C453F0A 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15777 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000014 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15778 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000064 (Last) 
+    Recv     100 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15778 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000003D 
+    Read      61 byte Data              "0,0,1200,1,2.000000e-06,-1.200000e-03,0,2.000000e-02,-63,127<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 61 
+> DeviceWrite(Data= 17 byte, Ascii= ":TIMEBASE:SCALE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15779 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000011 3A54494D 45424153 453A5343 414C453F 0A000000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15779 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000011 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1577A 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1577A 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000E 
+    Read      14 byte Data              "2.0000000e-04<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 14 
+> DeviceWrite(Data= 16 byte, Ascii= ":ACQUIRE:SRATE?<LF>") 
+    Write      4 byte Header            8000004C 
+    Write     40 byte cRmtPrcCallParam  02B1577B 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     36 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000010 3A414351 55495245 3A535241 54453F0A 
+    Send      80 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1577B 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000010 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1577C 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1577C 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000D 
+    Read      13 byte Data              "1.000000e+09<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 13 
+> DeviceWrite(Data= 22 byte, Ascii= ":WAVEFORM:MODE NORMAL<LF>") 
+    Write      4 byte Header            80000054 
+    Write     40 byte cRmtPrcCallParam  02B1577D 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     44 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000016 3A574156 45464F52 4D3A4D4F 4445204E 4F524D41 4C0A0000 
+    Send      88 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1577D 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000016 
+< DeviceWrite() 
+> DeviceWrite(Data= 6 byte, Ascii= "*OPC?<LF>") 
+    Write      4 byte Header            80000044 
+    Write     40 byte cRmtPrcCallParam  02B1577E 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     28 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000006 2A4F5043 3F0A0000 
+    Send      72 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1577E 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000006 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B1577F 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000028 (Last) 
+    Recv      40 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B1577F 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 00000002 
+    Read       2 byte Data              "1<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 2 
+> DeviceWrite(Data= 20 byte, Ascii= ":WAVEFORM:PREAMBLE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15780 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000014 3A574156 45464F52 4D3A5052 45414D42 4C453F0A 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15780 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000014 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15781 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000064 (Last) 
+    Recv     100 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15781 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000003D 
+    Read      61 byte Data              "0,0,1200,1,2.000000e-06,-1.200000e-03,0,2.000000e-02,-63,127<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 61 
+> DeviceWrite(Data= 17 byte, Ascii= ":TIMEBASE:SCALE?<LF>") 
+    Write      4 byte Header            80000050 
+    Write     40 byte cRmtPrcCallParam  02B15782 00000000 00000002 000607AF 00000001 0000000B 00000000 00000000 00000000 00000000 
+    Write     40 byte cDeviceWriteParam 00000000 000007D0 00000000 00000008 00000011 3A54494D 45424153 453A5343 414C453F 0A000000 
+    Send      84 byte TX Packet          
+    Recv       4 byte Header            80000020 (Last) 
+    Recv      32 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15782 00000001 00000000 00000000 00000000 00000000 
+    Read       8 byte cDeviceWriteReply 00000000 00000011 
+< DeviceWrite() 
+> DeviceRead() 
+    Write      4 byte Header            80000040 
+    Write     40 byte cRmtPrcCallParam  02B15783 00000000 00000002 000607AF 00000001 0000000C 00000000 00000000 00000000 00000000 
+    Write     24 byte cDeviceReadParam  00000000 05F5E100 000007D0 00000000 00000000 0000000A 
+    Send      68 byte TX Packet          
+    Recv       4 byte Header            80000034 (Last) 
+    Recv      52 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15783 00000001 00000000 00000000 00000000 00000000 
+    Read      12 byte cDeviceReadReply  00000000 00000004 0000000E 
+    Read      14 byte Data              "2.0000000e-04<LF>" 
+    Reason= End 
+< DeviceRead() --> total bytes= 14 
+> DestroyLink(LinkID= 0) 
+    Write      4 byte Header            8000002C 
+    Write     40 byte cRmtPrcCallParam  02B15784 00000000 00000002 000607AF 00000001 00000017 00000000 00000000 00000000 00000000 
+    Write      4 byte cIntParam         00000000 
+    Send      48 byte TX Packet          
+    Recv       4 byte Header            8000001C (Last) 
+    Recv      28 byte RX Data            
+    Read      24 byte cRmtPrcCallReply  02B15784 00000001 00000000 00000000 00000000 00000000 
+    Read       4 byte ErrorFlags        00000000 
+< DestroyLink() 
