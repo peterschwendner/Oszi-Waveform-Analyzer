@@ -176,8 +176,9 @@ namespace Transfer
         eOsziSerie    me_Serie;
         SCPI          mi_Scpi;
         bool          mb_Abort;
-        int           ms32_Tick;
         OsziModel     mi_OsziModel;
+        int           ms32_LastTick;
+        int           ms32_StartTick;
 
         /// <summary>
         /// returns null if no valid response to *IDN?
@@ -334,7 +335,7 @@ namespace Transfer
             mi_Scpi.OpcReplaceDelay = mi_FixData.ms32_OpcReplaceDelay;
 
             // Important: Execute the command *IDN? immediatley here.
-            // If the USB communication fails, the connection cannot be used and an error must be displayed to the user.
+            // If the communication fails, the connection cannot be used and an error must be displayed to the user.
             // After the computer was in sleep mode the following command may fail with error 31 (ERROR_GEN_FAILURE)
             String s_IDN = mi_Scpi.SendStringCommand(GetCmd(eCmd.GetIdent)); // throws
 
@@ -529,7 +530,7 @@ namespace Transfer
             if (s_Status != "STOP")
                 throw new ArgumentException("The oscilloscope is not able to transfer multiple channels at once "
                                           + "while in RUN mode. The oscilloscope must be in STOP mode otherwise you see all channels "
-                                          + "out of sync because the stupid Chinese capture one life channel, transfer it over USB, "
+                                          + "out of sync because the stupid Chinese capture one life channel, transfer it, "
                                           + "then capture the next life channel and transfer it, etc.");
 
             if (b_Memory && mi_Scpi.SendBoolCommand(GetCmd(eCmd.GetMathDisplay)))
@@ -912,6 +913,8 @@ namespace Transfer
         Byte[] ReadRawByteDataStartStop(String s_DispChan, int s32_Samples)
         {
             MemoryStream i_RawData = new MemoryStream(s32_Samples);
+            ms32_StartTick = Environment.TickCount;
+
             while (i_RawData.Length < s32_Samples)
             {
                 int s32_Remain = Math.Min(mi_FixData.ms32_Blocksize, s32_Samples - (int)i_RawData.Length);
@@ -923,9 +926,9 @@ namespace Transfer
                 // Request binary data (BYTE mode) from the oscilloscope memory.
                 // For USB it is extremely important that the buffer is not too small to hold the ENTIRE response from the device!
                 // For TCP add 11 bytes for the Rigol header.
-                Byte[] u8_UsbData = mi_Scpi.SendByteCommand(eBinaryTCP.MinSize, s32_Remain + 11, GetCmd(eCmd.GetWaveData));
+                Byte[] u8_Data = mi_Scpi.SendByteCommand(eBinaryTCP.MinSize, s32_Remain + 11, GetCmd(eCmd.GetWaveData));
 
-                ExtractRigolHeader_Serie_1000Z(u8_UsbData, i_RawData);
+                ExtractRigolHeader_Serie_1000Z(u8_Data, i_RawData);
                
                 UpdateStatus(s_DispChan, (int)i_RawData.Length);
                 if (mb_Abort)
@@ -982,11 +985,17 @@ namespace Transfer
         /// </summary>
         void UpdateStatus(String s_DispChan, int s32_Samples)
         {
-            if (Math.Abs(Environment.TickCount - ms32_Tick) > 330)
+            int s32_Now = Environment.TickCount;
+            if (Math.Abs(s32_Now - ms32_LastTick) > 250)
             {
-                String s_Msg = String.Format("Transfer Channel {0}, Sample {1:N0}  Please wait.", s_DispChan, s32_Samples);
+                String s_Msg = String.Format("Transfer Channel {0}, Sample {1:N0}", s_DispChan, s32_Samples);
+
+                int s32_Interval = s32_Now - ms32_StartTick; // time in ms --> speed in kB/s
+                if (s32_Interval > 200)
+                    s_Msg += String.Format(", Speed {0} kB/s",  s32_Samples / s32_Interval);
+
                 mi_Form.PrintStatus(s_Msg, Color.Black);
-                ms32_Tick = Environment.TickCount;
+                ms32_LastTick = Environment.TickCount;
             }
         }
 

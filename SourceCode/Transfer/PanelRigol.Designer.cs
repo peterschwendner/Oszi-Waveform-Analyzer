@@ -89,7 +89,7 @@
             this.groupCapture.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
             this.groupCapture.Location = new System.Drawing.Point(5, 2);
             this.groupCapture.Name = "groupCapture";
-            this.groupCapture.Size = new System.Drawing.Size(540, 161);
+            this.groupCapture.Size = new System.Drawing.Size(540, 154);
             this.groupCapture.TabIndex = 6;
             this.groupCapture.TabStop = false;
             this.groupCapture.Text = "  Rigol  Only  ";
@@ -160,7 +160,7 @@
             this.btnTransfer.Location = new System.Drawing.Point(463, 114);
             this.btnTransfer.Name = "btnTransfer";
             this.btnTransfer.Size = new System.Drawing.Size(65, 23);
-            this.btnTransfer.TabIndex = 19;
+            this.btnTransfer.TabIndex = 20;
             this.btnTransfer.Text = "Transfer";
             this.btnTransfer.UseVisualStyleBackColor = true;
             this.btnTransfer.Click += new System.EventHandler(this.btnTransfer_Click);
@@ -173,7 +173,7 @@
             this.radioMemory.Location = new System.Drawing.Point(298, 126);
             this.radioMemory.Name = "radioMemory";
             this.radioMemory.Size = new System.Drawing.Size(132, 17);
-            this.radioMemory.TabIndex = 18;
+            this.radioMemory.TabIndex = 11;
             this.radioMemory.TabStop = true;
             this.radioMemory.Text = "Capture Entire Memory";
             this.radioMemory.UseVisualStyleBackColor = true;
@@ -186,7 +186,7 @@
             this.radioScreen.Location = new System.Drawing.Point(298, 108);
             this.radioScreen.Name = "radioScreen";
             this.radioScreen.Size = new System.Drawing.Size(132, 17);
-            this.radioScreen.TabIndex = 17;
+            this.radioScreen.TabIndex = 10;
             this.radioScreen.Text = "Capture Visible Screen";
             this.radioScreen.UseVisualStyleBackColor = true;
             // 
@@ -216,7 +216,7 @@
             this.btnReset.Location = new System.Drawing.Point(16, 19);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(55, 23);
-            this.btnReset.TabIndex = 14;
+            this.btnReset.TabIndex = 1;
             this.btnReset.Text = "Reset";
             this.btnReset.UseVisualStyleBackColor = true;
             this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
@@ -227,7 +227,7 @@
             this.btnForceTrig.Location = new System.Drawing.Point(443, 19);
             this.btnForceTrig.Name = "btnForceTrig";
             this.btnForceTrig.Size = new System.Drawing.Size(84, 23);
-            this.btnForceTrig.TabIndex = 13;
+            this.btnForceTrig.TabIndex = 7;
             this.btnForceTrig.Text = "Force Trigger";
             this.btnForceTrig.UseVisualStyleBackColor = true;
             this.btnForceTrig.Click += new System.EventHandler(this.btnForceTrig_Click);
@@ -238,7 +238,7 @@
             this.btnSingle.Location = new System.Drawing.Point(373, 19);
             this.btnSingle.Name = "btnSingle";
             this.btnSingle.Size = new System.Drawing.Size(55, 23);
-            this.btnSingle.TabIndex = 12;
+            this.btnSingle.TabIndex = 6;
             this.btnSingle.Text = "Single";
             this.btnSingle.UseVisualStyleBackColor = true;
             this.btnSingle.Click += new System.EventHandler(this.btnSingle_Click);
@@ -249,7 +249,7 @@
             this.btnStop.Location = new System.Drawing.Point(300, 19);
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(55, 23);
-            this.btnStop.TabIndex = 11;
+            this.btnStop.TabIndex = 5;
             this.btnStop.Text = "Stop";
             this.btnStop.UseVisualStyleBackColor = true;
             this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
@@ -260,7 +260,7 @@
             this.btnRun.Location = new System.Drawing.Point(227, 19);
             this.btnRun.Name = "btnRun";
             this.btnRun.Size = new System.Drawing.Size(55, 23);
-            this.btnRun.TabIndex = 10;
+            this.btnRun.TabIndex = 4;
             this.btnRun.Text = "Run";
             this.btnRun.UseVisualStyleBackColor = true;
             this.btnRun.Click += new System.EventHandler(this.btnRun_Click);
@@ -271,7 +271,7 @@
             this.btnAuto.Location = new System.Drawing.Point(156, 19);
             this.btnAuto.Name = "btnAuto";
             this.btnAuto.Size = new System.Drawing.Size(55, 23);
-            this.btnAuto.TabIndex = 9;
+            this.btnAuto.TabIndex = 3;
             this.btnAuto.Text = "Auto";
             this.btnAuto.UseVisualStyleBackColor = true;
             this.btnAuto.Click += new System.EventHandler(this.btnAuto_Click);
@@ -282,7 +282,7 @@
             this.btnClear.Location = new System.Drawing.Point(86, 19);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(55, 23);
-            this.btnClear.TabIndex = 8;
+            this.btnClear.TabIndex = 2;
             this.btnClear.Text = "Clear";
             this.btnClear.UseVisualStyleBackColor = true;
             this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
@@ -374,7 +374,7 @@
             this.BackColor = System.Drawing.Color.DimGray;
             this.Controls.Add(this.groupCapture);
             this.Name = "PanelRigol";
-            this.Size = new System.Drawing.Size(549, 171);
+            this.Size = new System.Drawing.Size(549, 165);
             this.groupCapture.ResumeLayout(false);
             this.groupCapture.PerformLayout();
             this.ResumeLayout(false);

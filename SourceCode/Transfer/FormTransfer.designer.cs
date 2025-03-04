@@ -30,10 +30,10 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormTransfer));
-            this.comboUsbDevice = new System.Windows.Forms.ComboBox();
-            this.lblUsbIP = new System.Windows.Forms.Label();
+            this.comboDevices = new System.Windows.Forms.ComboBox();
+            this.lblUsbEndp = new System.Windows.Forms.Label();
             this.btnInstallDriver = new System.Windows.Forms.Button();
-            this.btnRefreshUSB = new System.Windows.Forms.Button();
+            this.btnSearch = new System.Windows.Forms.Button();
             this.btnOpen = new System.Windows.Forms.Button();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -48,61 +48,61 @@
             this.linkHelp = new System.Windows.Forms.LinkLabel();
             this.radioUSB = new System.Windows.Forms.RadioButton();
             this.radioTCP = new System.Windows.Forms.RadioButton();
-            this.textIpAddr = new System.Windows.Forms.TextBox();
-            this.lblPort = new System.Windows.Forms.Label();
-            this.textPort = new System.Windows.Forms.TextBox();
+            this.radioVXI = new System.Windows.Forms.RadioButton();
+            this.textVxiLink = new System.Windows.Forms.TextBox();
+            this.lblVxiLink = new System.Windows.Forms.Label();
             this.statusStrip.SuspendLayout();
             this.groupCommand.SuspendLayout();
             this.SuspendLayout();
             // 
-            // comboUsbDevice
+            // comboDevices
             // 
-            this.comboUsbDevice.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboUsbDevice.FormattingEnabled = true;
-            this.comboUsbDevice.Location = new System.Drawing.Point(66, 25);
-            this.comboUsbDevice.Name = "comboUsbDevice";
-            this.comboUsbDevice.Size = new System.Drawing.Size(142, 21);
-            this.comboUsbDevice.TabIndex = 0;
+            this.comboDevices.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboDevices.FormattingEnabled = true;
+            this.comboDevices.Location = new System.Drawing.Point(62, 25);
+            this.comboDevices.Name = "comboDevices";
+            this.comboDevices.Size = new System.Drawing.Size(128, 21);
+            this.comboDevices.TabIndex = 10;
             // 
-            // lblUsbIP
+            // lblUsbEndp
             // 
-            this.lblUsbIP.AutoSize = true;
-            this.lblUsbIP.Location = new System.Drawing.Point(65, 9);
-            this.lblUsbIP.Name = "lblUsbIP";
-            this.lblUsbIP.Size = new System.Drawing.Size(100, 13);
-            this.lblUsbIP.TabIndex = 1;
-            this.lblUsbIP.Text = "TMC USB Devices:";
+            this.lblUsbEndp.AutoSize = true;
+            this.lblUsbEndp.Location = new System.Drawing.Point(61, 9);
+            this.lblUsbEndp.Name = "lblUsbEndp";
+            this.lblUsbEndp.Size = new System.Drawing.Size(66, 13);
+            this.lblUsbEndp.TabIndex = 1;
+            this.lblUsbEndp.Text = "USB Device";
             // 
             // btnInstallDriver
             // 
             this.btnInstallDriver.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnInstallDriver.ForeColor = System.Drawing.Color.Black;
-            this.btnInstallDriver.Location = new System.Drawing.Point(429, 24);
+            this.btnInstallDriver.Location = new System.Drawing.Point(433, 24);
             this.btnInstallDriver.Name = "btnInstallDriver";
-            this.btnInstallDriver.Size = new System.Drawing.Size(125, 23);
-            this.btnInstallDriver.TabIndex = 2;
+            this.btnInstallDriver.Size = new System.Drawing.Size(121, 23);
+            this.btnInstallDriver.TabIndex = 60;
             this.btnInstallDriver.Text = "Install Driver (64 bit)";
             this.btnInstallDriver.UseVisualStyleBackColor = true;
             this.btnInstallDriver.Click += new System.EventHandler(this.btnInstallDriver_Click);
             // 
-            // btnRefreshUSB
+            // btnSearch
             // 
-            this.btnRefreshUSB.ForeColor = System.Drawing.Color.Black;
-            this.btnRefreshUSB.Location = new System.Drawing.Point(214, 24);
-            this.btnRefreshUSB.Name = "btnRefreshUSB";
-            this.btnRefreshUSB.Size = new System.Drawing.Size(65, 23);
-            this.btnRefreshUSB.TabIndex = 3;
-            this.btnRefreshUSB.Text = "Refresh";
-            this.btnRefreshUSB.UseVisualStyleBackColor = true;
-            this.btnRefreshUSB.Click += new System.EventHandler(this.btnRefreshUSB_Click);
+            this.btnSearch.ForeColor = System.Drawing.Color.Black;
+            this.btnSearch.Location = new System.Drawing.Point(193, 24);
+            this.btnSearch.Name = "btnSearch";
+            this.btnSearch.Size = new System.Drawing.Size(56, 23);
+            this.btnSearch.TabIndex = 20;
+            this.btnSearch.Text = "Search";
+            this.btnSearch.UseVisualStyleBackColor = true;
+            this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
             // 
             // btnOpen
             // 
             this.btnOpen.ForeColor = System.Drawing.Color.Black;
-            this.btnOpen.Location = new System.Drawing.Point(284, 24);
+            this.btnOpen.Location = new System.Drawing.Point(305, 24);
             this.btnOpen.Name = "btnOpen";
-            this.btnOpen.Size = new System.Drawing.Size(52, 23);
-            this.btnOpen.TabIndex = 4;
+            this.btnOpen.Size = new System.Drawing.Size(48, 23);
+            this.btnOpen.TabIndex = 40;
             this.btnOpen.Text = "Open";
             this.btnOpen.UseVisualStyleBackColor = true;
             this.btnOpen.Click += new System.EventHandler(this.btnOpen_Click);
@@ -132,7 +132,7 @@
             // 
             this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(430, 9);
+            this.label5.Location = new System.Drawing.Point(434, 9);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(105, 13);
             this.label5.TabIndex = 7;
@@ -157,7 +157,7 @@
             this.groupCommand.Location = new System.Drawing.Point(13, 56);
             this.groupCommand.Name = "groupCommand";
             this.groupCommand.Size = new System.Drawing.Size(541, 114);
-            this.groupCommand.TabIndex = 8;
+            this.groupCommand.TabIndex = 100;
             this.groupCommand.TabStop = false;
             this.groupCommand.Text = "  Any SCPI Device  ";
             // 
@@ -216,10 +216,10 @@
             // 
             this.linkHelp.AutoSize = true;
             this.linkHelp.LinkColor = System.Drawing.Color.Lime;
-            this.linkHelp.Location = new System.Drawing.Point(339, 29);
+            this.linkHelp.Location = new System.Drawing.Point(362, 28);
             this.linkHelp.Name = "linkHelp";
             this.linkHelp.Size = new System.Drawing.Size(59, 13);
-            this.linkHelp.TabIndex = 9;
+            this.linkHelp.TabIndex = 50;
             this.linkHelp.TabStop = true;
             this.linkHelp.Text = "Show Help";
             this.linkHelp.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkHelp_LinkClicked);
@@ -227,48 +227,51 @@
             // radioUSB
             // 
             this.radioUSB.AutoSize = true;
-            this.radioUSB.Checked = true;
-            this.radioUSB.Location = new System.Drawing.Point(14, 13);
+            this.radioUSB.Location = new System.Drawing.Point(14, 5);
             this.radioUSB.Name = "radioUSB";
             this.radioUSB.Size = new System.Drawing.Size(47, 17);
-            this.radioUSB.TabIndex = 10;
-            this.radioUSB.TabStop = true;
+            this.radioUSB.TabIndex = 1;
             this.radioUSB.Text = "USB";
             this.radioUSB.UseVisualStyleBackColor = true;
-            this.radioUSB.CheckedChanged += new System.EventHandler(this.radioUSB_CheckedChanged);
+            this.radioUSB.CheckedChanged += new System.EventHandler(this.OnRadioButton_CheckedChanged);
             // 
             // radioTCP
             // 
             this.radioTCP.AutoSize = true;
-            this.radioTCP.Location = new System.Drawing.Point(14, 30);
+            this.radioTCP.Location = new System.Drawing.Point(14, 35);
             this.radioTCP.Name = "radioTCP";
             this.radioTCP.Size = new System.Drawing.Size(46, 17);
-            this.radioTCP.TabIndex = 11;
+            this.radioTCP.TabIndex = 3;
             this.radioTCP.Text = "TCP";
             this.radioTCP.UseVisualStyleBackColor = true;
+            this.radioTCP.CheckedChanged += new System.EventHandler(this.OnRadioButton_CheckedChanged);
             // 
-            // textIpAddr
+            // radioVXI
             // 
-            this.textIpAddr.Location = new System.Drawing.Point(67, 25);
-            this.textIpAddr.Name = "textIpAddr";
-            this.textIpAddr.Size = new System.Drawing.Size(25, 20);
-            this.textIpAddr.TabIndex = 12;
+            this.radioVXI.AutoSize = true;
+            this.radioVXI.Location = new System.Drawing.Point(14, 20);
+            this.radioVXI.Name = "radioVXI";
+            this.radioVXI.Size = new System.Drawing.Size(42, 17);
+            this.radioVXI.TabIndex = 2;
+            this.radioVXI.Text = "VXI";
+            this.radioVXI.UseVisualStyleBackColor = true;
+            this.radioVXI.CheckedChanged += new System.EventHandler(this.OnRadioButton_CheckedChanged);
             // 
-            // lblPort
+            // textVxiLink
             // 
-            this.lblPort.AutoSize = true;
-            this.lblPort.Location = new System.Drawing.Point(214, 9);
-            this.lblPort.Name = "lblPort";
-            this.lblPort.Size = new System.Drawing.Size(29, 13);
-            this.lblPort.TabIndex = 13;
-            this.lblPort.Text = "Port:";
+            this.textVxiLink.Location = new System.Drawing.Point(253, 25);
+            this.textVxiLink.Name = "textVxiLink";
+            this.textVxiLink.Size = new System.Drawing.Size(48, 20);
+            this.textVxiLink.TabIndex = 30;
             // 
-            // textPort
+            // lblVxiLink
             // 
-            this.textPort.Location = new System.Drawing.Point(216, 25);
-            this.textPort.Name = "textPort";
-            this.textPort.Size = new System.Drawing.Size(25, 20);
-            this.textPort.TabIndex = 14;
+            this.lblVxiLink.AutoSize = true;
+            this.lblVxiLink.Location = new System.Drawing.Point(253, 9);
+            this.lblVxiLink.Name = "lblVxiLink";
+            this.lblVxiLink.Size = new System.Drawing.Size(47, 13);
+            this.lblVxiLink.TabIndex = 15;
+            this.lblVxiLink.Text = "VXI Link";
             // 
             // FormTransfer
             // 
@@ -276,20 +279,20 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
             this.ClientSize = new System.Drawing.Size(566, 206);
-            this.Controls.Add(this.textPort);
-            this.Controls.Add(this.lblPort);
+            this.Controls.Add(this.lblVxiLink);
+            this.Controls.Add(this.textVxiLink);
+            this.Controls.Add(this.radioVXI);
             this.Controls.Add(this.radioTCP);
             this.Controls.Add(this.radioUSB);
-            this.Controls.Add(this.textIpAddr);
             this.Controls.Add(this.linkHelp);
             this.Controls.Add(this.groupCommand);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.btnOpen);
-            this.Controls.Add(this.btnRefreshUSB);
+            this.Controls.Add(this.btnSearch);
             this.Controls.Add(this.btnInstallDriver);
-            this.Controls.Add(this.lblUsbIP);
-            this.Controls.Add(this.comboUsbDevice);
+            this.Controls.Add(this.lblUsbEndp);
+            this.Controls.Add(this.comboDevices);
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -311,10 +314,10 @@
 
         #endregion
 
-        private System.Windows.Forms.ComboBox comboUsbDevice;
-        private System.Windows.Forms.Label lblUsbIP;
+        private System.Windows.Forms.ComboBox comboDevices;
+        private System.Windows.Forms.Label lblUsbEndp;
         private System.Windows.Forms.Button btnInstallDriver;
-        private System.Windows.Forms.Button btnRefreshUSB;
+        private System.Windows.Forms.Button btnSearch;
         private System.Windows.Forms.Button btnOpen;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
@@ -329,9 +332,9 @@
         private System.Windows.Forms.LinkLabel linkHelp;
         private System.Windows.Forms.RadioButton radioUSB;
         private System.Windows.Forms.RadioButton radioTCP;
-        private System.Windows.Forms.TextBox textIpAddr;
-        private System.Windows.Forms.Label lblPort;
-        private System.Windows.Forms.TextBox textPort;
+        private System.Windows.Forms.RadioButton radioVXI;
+        private System.Windows.Forms.TextBox textVxiLink;
+        private System.Windows.Forms.Label lblVxiLink;
 
     }
 }
