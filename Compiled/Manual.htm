@@ -2,8 +2,8 @@
 <html lang="en-GB">
 <head>
     <title>Oszi Waveform Analyzer</title>
-    <meta name="description" content="The open source 'Oszi Waveform Analyzer' from ElmüSoft transfers oscilloscope analog and digital channel data over USB to the computer, displays the waveforms and has lots of decoders like SPI, I2C, UART, CAN Bus.">
-    <meta name="keywords" content="Oscilloscope, SCPI Transfer, SPI decoder, I2C decoder, UART decoder, CAN FD decoder, RS232 decoder, RS422 decoder, RS485 decoder, ISO7816 decoder, ISO14230 decoder, A/D Converter, Magnetic Stripe decoder, Noise suppression, logic analyzer, open source">
+    <meta name="description" content="The open source 'Oszi Waveform Analyzer' from ElmüSoft transfers oscilloscope analog and digital signals over USB or TCP to the computer, displays the waveforms, decodes SPI, I2C, UART, CAN Bus and has more features that you find nowhere else.">
+    <meta name="keywords" content="Oscilloscope, SCPI Transfer, SPI decoder, VXI-11, I2C decoder, UART decoder, CAN FD decoder, RS232 decoder, RS422 decoder, RS485 decoder, ISO7816 decoder, ISO14230 decoder, A/D Converter, Magnetic Stripe decoder, Noise suppression, logic analyzer, open source">
     <link rel="SHORTCUT ICON" href="../favicon.ico">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
@@ -182,13 +182,17 @@
         <div><a href="#DecodeCAN"        class="MenuLink" onClick="ShowMenu(false)">Decode CAN Bus</a></div>
         <div><a href="#DecodeMagStripe"  class="MenuLink" onClick="ShowMenu(false)">Decode Magnetic Stripe Tracks</a></div>
         <div><a href="#DecodeIR"         class="MenuLink" onClick="ShowMenu(false)">Decode Infrared Remote Control</a></div>
-        <div><a href="#TransferUSB"      class="MenuLink" onClick="ShowMenu(false)">Waveform Transfer over USB</a></div>
-        <div><a href="#TransferTCP"      class="MenuLink" onClick="ShowMenu(false)">Waveform Transfer over TCP</a></div>
+        <div><a href="#WaveformTransfer" class="MenuLink" onClick="ShowMenu(false)">Waveform Transfer to Computer</a></div>
         <div>— &nbsp; <a href="#Ultrascope"       class="MenuLink" onClick="ShowMenu(false)">Rigol UltraScope</a></div>
-        <div>— &nbsp; <a href="#SCPI"             class="MenuLink" onClick="ShowMenu(false)">SCPI</a></div>
+        <div>— &nbsp; <a href="#SCPI"             class="MenuLink" onClick="ShowMenu(false)">SCPI Protocol</a></div>
         <div>— &nbsp; <a href="#Prerequisites"    class="MenuLink" onClick="ShowMenu(false)">Prerequisites</a></div>
-        <div>— &nbsp; <a href="#TransferSpeed"    class="MenuLink" onClick="ShowMenu(false)">Transfer Speed</a></div>
+        <div>— &nbsp; <a href="#TransferWindow"   class="MenuLink" onClick="ShowMenu(false)">Transfer Window</a></div>
         <div>— &nbsp; <a href="#ImplementOszi"    class="MenuLink" onClick="ShowMenu(false)">Implemented Oscilloscopes</a></div>
+        <div><a href="#ConnectionModes"  class="MenuLink" onClick="ShowMenu(false)">Connection over USB, VXI, TCP</a></div>        
+        <div>— &nbsp; <a href="#USBConnection"    class="MenuLink" onClick="ShowMenu(false)">USB Connection</a></div>
+        <div>— &nbsp; <a href="#VXIConnection"    class="MenuLink" onClick="ShowMenu(false)">VXI-11 Connection</a></div>
+        <div>— &nbsp; <a href="#TCPConnection"    class="MenuLink" onClick="ShowMenu(false)">TCP Connection</a></div>
+        <div>— &nbsp; <a href="#TransferSpeed"    class="MenuLink" onClick="ShowMenu(false)">Transfer Speed</a></div>
         <div><a href="#StoreDisk"        class="MenuLink" onClick="ShowMenu(false)">Storing Waveforms on Disk</a></div>
         <div>— &nbsp; <a href="#CsvFiles"         class="MenuLink" onClick="ShowMenu(false)">CSV Files</a></div>
         <div>— &nbsp; <a href="#WfmFiles"         class="MenuLink" onClick="ShowMenu(false)">WFM Files</a></div>
@@ -218,7 +222,7 @@
 <a name="Features"></a>
 <h3>Features</h3>
 <ul>
-<li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB using the <b>SCPI</b> protocol.</div>
+<li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB or TCP using the <b>SCPI</b> protocol.</div>
 <li><div>Oszi Waveform Analyzer does <span class="Error">NOT</span> require any huge installations like NI-VISA (1 GB), TekVISA (100 MB), IVI, UltraSigma (500 MB).</div>
 <li><div>Oszi Waveform Analyzer requires only the .NET framework 4.0 or higher.</div>
 <li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>. Support for Linux and Mac can be added (see <a href="#Download">below</a>).</div>
@@ -583,40 +587,33 @@
 <img src="Images/GrundigRemoteControl.png" width="422" height="229" alt="Oszi Waveform Analyzer - Grundig Remote Control decoded">
 
 
-<a name="TransferUSB"></a>
-<h1>Waveform Transfer over USB (recommended)</h1>
+<a name="WaveformTransfer"></a>
+<h1>Waveform Transfer to the Computer</h1>
 
 <a name="Ultrascope"></a>
 <h3>Rigol UltraScope</h3>
 
-<div>Once upon a time I used <b>Rigol UltraScope</b> to transfer captures to the computer.</div>
+<div>Once upon a time I used <b>UltraScope</b> to transfer captures to the computer.</div>
 <p>
 <table class="TblImage">
     <tr><td><img src="Images/RigolUltraScope.png" alt="Rigol UltraScope" width="335" height="210"></td></tr>
-    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'RigolUltraScope.png')">Show Full Size</span></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/RigolUltraScope.png')">Show Full Size</span></td></tr>
 </table>
-<ul>
-    <li><div><b>UltraScope</b> requires that you first install the huge <b>UltraSigma</b> (<b>530 Megabyte</b> installer).</div>
-    <li><div>The user interface of UltraSigma is a <b>shame</b>.</div>
-    <li><div>And UltraScope is nothing more than a remote control of the oscillosope.</div>
-    <li><div>It shows nothing more than you see on the oscilloscope.</div>
-    <li><div>It has absolutely no analysis or decoder functionality.</div>
-    <li><div>It is not able to transfer the capture that your oscilloscope has currently in memory.</div>
-    <li><div>It captures each time anew before transferring over USB. You have no control what you get.</div>
-    <li><div>If you know the trick how to save a signal to disk, the only option is to save a <b>CSV file</b>.</div>
-    <li><div>A 24 Megasample capture is stored in a CSV file of <b>300 Megabyte</b>.</div>
-    <li><div>This software is useless.</div>
-</ul>
+<div><b>Rigol UltraScope</b> requires that you first install the huge <b>UltraSigma</b> (<b>530 Megabyte</b> installer).</div>
+<div>UltraScope is nothing more than a remote control of the oscillosope.</div>
+<div>It has absolutely no analysis or decoder functionality.</div>
+<div>You can only save waveforms as <b>CSV files</b>. A 24 Megasample capture occupies <b>300 Megabyte</b> on the disk.</div>
+<div>This huge software is completely useless.</div>
 
 <a name="SCPI"></a>
-<h3>SCPI</h3>
+<h3>SCPI Protocol</h3>
 
-<div>Most oscilloscopes implement the <b>SCPI</b> protocol (Standard Command for Programmable Instruments).</div>
-<div>It is a <b>very primitive</b> text based protocol that can remote control a device and also transfer waveforms to a computer.</div>
+<div>Most oscilloscopes implement the <b>SCPI</b> protocol (<b>S</b>tandard <b>C</b>ommand for <b>P</b>rogrammable <b>I</b>nstruments).</div>
+<div>It is a <b>very primitive</b> text based protocol that can remote control an instrument and transfer waveforms to a computer.</div>
 <div>If an invalid command is sent to the device, the protocol defines that the device should not respond.</div>
-<div>This results in a timeout without knowing what went wrong. (SCPI was designed by very intelligent people)</div>
+<div>This results in a timeout without knowing what went wrong. (SCPI was designed by very smart people!)</div>
 <div>The text based commands are not standardized at all. Each manufacturer uses his own commands and parameters.</div>
-<div>It is <b>impossible</b> to write a universal class that communicates with all oscilloscopes.</div>
+<div>It is <b>impossible</b> to write universal code that communicates with all oscilloscopes.</div>
 <div>Additionally many SCPI devices have ugly bugs that require specific workarounds.</div>
 <p>
 <div>I have implemented the SCPI commands for the <b>Rigol</b> series DS1000Z and DS1000DE.</div>
@@ -631,26 +628,30 @@
     <li><div>Rigol and Siglent tell you to install the <b>NI-VISA runtime</b>. Alone the installer is <b>1 Gigabyte</b>!</div>
     <li><div>Tektronix tells you to install <b>TekVISA</b>. Alone the installer is 100 MB.</div>
 </ul>
-<div>Really? Fill your harddisk with hundreds of Megabytes and lots of <b>services</b> that run permanently</div>
-<div>in the background, just to send simple text commands over a USB cable?</div>
-<div>That is <b>ridiculous</b>!</div>
+<div>These will fill your harddisk with hundreds of Megabytes and you will have 12 (twelve!) <b>services</b></div>
+<div>that run permanently in the background!. Really? All this just to transfer simple text commands?</div>
+<div>That is <b>ridiculous</b>! This is like throwing an atomic bomb to kill a bug.</div>
 <p>
-<div>You need <span class="Error">NOTHING</span> of this when you use Oszi Waveform Analyzer, because it connects <b>directly</b> to your scope.</div>
+<div>You need <span class="Error">NO RUNTIME</span> when you use Oszi Waveform Analyzer, because it connects <b>directly</b> to your scope.</div>
 <div>The only required installation is the tiny <b>TMC</b> (Test and Measurement Class) <b>USB driver</b> of 24 kilobyte.</div>
 <Div>After installing this driver from the IVI Foundation you see your oscilloscope in the <b>Device Manager</b>:</div>
 <p>
 <img src="Images/IviDriver.png" width="278" height="60" class="Img" alt="Oszi Waveform Analyzer - IVI Driver in Device Manager">
 <p>
-<div>You can install the driver in this window:</div>
+<div>You can install the USB driver with the button <b>Install Driver</b>:</div>
+
+<a name="TransferWindow"></a>
+<h3>Transfer Window</h3>
+
 <p>
-<img src="Images/ScpiTransferWindow.png" width="582" height="408" alt="Oszi Waveform Analyzer - SCPI USB Transfer">
+<img src="Images/ScpiTransferWindow.png" width="582" height="408" alt="Oszi Waveform Analyzer - SCPI USB VXI TCP Transfer">
 <p>
 <div>This window has two parts:</div>
 <ol>
-<li><div>The <b>upper part</b> sends Rigol-specific commands and will only work if you have selected the correct Rigol serie.</div>
+<li><div>The <b>upper part</b> sends Rigol-specific commands that will only work if you have selected the correct Rigol serie.</div>
     <div>With the buttons Run, Stop, Single, etc you can remote control the oscilloscope from the computer.</div>
     <div>Also the display of samplerate, samplepoints, etc requires Rigol-specific commands.</div>
-    <div>With the button <b>Transfer</b> you can transfer the stored signals of all enabled channels to the computer over USB.</div>
+    <div>With the button <b>Transfer</b> you can transfer the stored signals of all enabled channels to the computer.</div>
     <div>You can chose to copy only the visible screen of 1200 samples or the entire memory of 24 Mega samples.</div>
     <div>The Rigol serie DS1000DE has only memory for 1 Mega samples, so you will see other values here.</div>    
 <li><div>The <b>lower part</b> works with <b>any</b> SCPI device (oscilloscopes, function generators, multimeters, spectrum analyzers,...)</div>
@@ -658,25 +659,8 @@
     <div>For example <b>:CHANNEL1:SCALE?</b> asks the vertical scale of analog channel 1. The response is: 2 Volt/raster unit.</div>
 </ol>
 
-<a name="TransferSpeed"></a>
-<h3>Transfer Speed</h3>
-
-<div>The USB transfer itself is very fast because High Speed USB runs at 480 MBit/sec.</div>
-<div>Although SCPI is an entirely text based protocol, the command <b>:WAVEFORM:DATA?</b> is an exception: It sends binary data.</div>
-<div>My Rigol oscilloscope has an 8 bit A/D converter, so one analog sample is transferred in one byte.</div>
-<div>For digital channels Rigol packs 1 to 8 channels into one byte.</div>
-<p>
-<div>However at least my Rigol oscilloscope transfers far below the possible USB speed, because the scope is very slow.</div>
-<div>The waveform data must be transferred in blocks of max. 250 kB. Before each block the commands <code>:WAVEFORM:START</code> and <code>:WAVEFORM:STOP</code></div>
-<div>define which part of the memory to transfer. Alone executing <code>:WAVEFORM:STOP</code> takes between 60 ms and 100 ms!</div>
-<div>And this command does nothing else than telling the scope where in memory to start the next transfer with <code>:WAVEFORM:DATA?</code></div>
-<p>
-<div>So forget it to transfer a live stream from the scope. This is impossible over USB and would require a PCIe digitizer card.</div>
-<div>And the processor in the oscilloscope is far too slow to capture and display signals and at the same time stream them over USB.</div>
-<div>By the way, live streaming was never the purpose of Oszi Waveform Analyzer.</div>
-
 <a name="ImplementOszi"></a>
-<h3>Currently Implemented Oszilloscopes</h3>
+<h3>Current Implementation of SCPI Commands</h3>
 
 <table class="DataTable">
 <tr><th>Oscilloscope Brand</th><th>Serie</th><th>Status</th></tr>
@@ -699,40 +683,103 @@
 <div>Then clone the Rigol classes, modify them and register the new oscilloscope serie in the <b>TransferManager</b>.</div>
 <div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
 <div>In the subfolder 'Documentation' in the source code you find a <b>logfile</b> of the SCPI commands and responses of my scope.</div>
-<div>In the class SCPI you can enable <code>TRACE_OUTPUT</code> to see the communication over USB.</div>
+<div>In the class SCPI you can enable <code>TRACE_OUTPUT</code> to see the SCPI commands and responses.</div>
 
 
-<a name="TransferTCP"></a>
-<h1>Waveform Transfer over TCP (deprecated)</h1>
+<a name="ConnectionModes"></a>
+<h1>Connection over USB, VXI, TCP</h1>
 
-<div>Modern oscilloscopes also have a RJ-45 connector over which Oszi Waveform Analyzer can connect.</div>
-<div>However, at least for my Rigol I <b>cannot recommend</b> TCP transfer for various reasons:</div>
-<ol>
-<li><div>TCP transfer is <b>significantly slower</b> (four times slower!) if the scope has 100 Mbit LAN and 480 MBit USB speed.</div>
-<li><div>You have to find out and <b>configure</b> the IP address and the port, while USB does not need any configuration.</div>
-<li><div>My Rigol uses a very <b>stupid IP address</b> by default: 168.254.109.240</div>
-<li><div>My Rigol is so buggy that DHCP mode does not work (see <a href="#BugDHCP">bug report</a>)</div>
-<li><div>My Rigol uses port 5555 which is <b>completely undocumented</b>. Your scope may use another unknown port.</div>
-<li><div>My Rigol will not connect over TCP anymore if the USB cable was once connected. (see <a href="#BugTCP_USB">bug report</a>)</div>
-</ol>
+<div>Oszi Waveform Analyzer offers 3 options to connect to your oscilloscope:</div>
 
-<h3>Configure TCP</h3>
+<a name="USBConnection"></a>
+<h3>Option 1: USB Connection</h3>
 
-<div>On a Rigol oscilloscope press button <b>Utility</b>, then <b>IO Settings</b>, then <b>Lan Config</b> and you see this:</div>
+<div>USB is the easiest connection with the fastest transfer.</div>
+<div>All you have to do is connect the USB cable and install the IVI driver.</div>
+<p>
+<div>But if you have an oscilloscope that implements a proprietary USB interface the IVI standard may not be supported.</div>
+<div>Then Oszi Waveform Analyzer will tell you that no USB device of type 'Test and Measurement Class' was found.</div>
+<p>
+<div>The following 2 chapters explain how to connect over ethernet.</div>
+<div><span class="Error">ATTENTION:</span> If you have an oscilloscope from a stupid brand like Rigol you may have an ugly bug:</div>
+<div>My Rigol will not connect over ethernet anymore if the USB cable was once connected. (see <a href="#BugTCP_USB">bug report</a>)</div>
+
+<a name="VXIConnection"></a>
+<h3>Option 2: VXI-11 Connection</h3>
+
+<div>If your oscilloscope has an ethernet RJ-45 plug, it probably supports the VXI-11 protocol.</div>
+<div>VXI (<b>V</b>ME e<b>X</b>tensions for <b>I</b>nstrumentation) is a standard for network communication between instruments and controllers.</div>
+<div>The implementation of the VXI protocol was quite complex: 1100 lines of source code.</div>
+<div>VXI-11 is a well designed protocol that has a <b>port mapper</b> on TCP and UDP port 111.</div>
+<div>When you click the button <b>Search</b>, Oszi Waveform Analyzer sends a broadcast request to port 111.</div>
+<div>If a VXI-11 capable device is connected, it will send a response that informs which is core TCP port.</div>
+<div>So with one click you get instantly the IP address and the TCP port of your oscilloscope.</div>
+<div>My Rigol listens on the core <b>port 618</b> for SCPI commands wrapped into VXI-11 packets.</div>
+<p>
+<div><span class="Error">ATTENTION:</span> If you have an oscilloscope from a stupid brand like Rigol that uses the default IP address </div>
+<div>169.254.109.240 and your network is 192.168.XXX.YYY, the broadcast request will be blocked by the network mask.</div>
+<div>I recommend to configure a <b>static IP</b> address. Also DHCP mode does <a href="#BugDHCP">not work</a> correctly in a Rigol oscilloscope.</div>
+<p>
+<div>The VXI-11 protocol allows an 'Instrument' (oscilloscope) to contain multiple logical 'Devices':</div>
+<p>
+<img src="Images/VxiInstrument.png" width="435" height="219" class="Img" alt="Oszi Waveform Analyzer - VXI Instrument Server with device links">
+<p>
+<div>Each device has a <b>logical name</b> that you must know, otherwise you cannot connect.</div>
+<div>Rigol, Agilent, Keysight and other brands use the device name <code>inst0</code> which is case sensitive.</div>
+<div>But it may also be <code>inst1</code> or <code>inst2</code> or <code>gpib0</code> or <code>gpib1</code> or <code>gpib0,4</code> or <code>gpib0,6</code>, ....</div>
+<p>
+<div>If you have tried all these names and none works, search the <b>VISA Address</b> of your oscilloscope.</div>
+<div>After pressing the buttons Utility, IO Settings and Lan Config my Rigol shows this information:</div>
 <p>
 <img src="Images/TcpSettings.png" width="400" height="260" alt="Oszi Waveform Analyzer - Rigol TCP Settings">
 <p>
-<div>The only option that works correctly for my scope is to define a static IP address.</div>
+<div>Here the VISA address does not contain the logical device name, which indicates that the default name <code>inst0</code> has to be used.</div>
+<div>But in other cases you may find:</div>
+<div><b>TCPIP::A-52230A-04585.local::<span class="Red">inst1</span>::INSTR</b> where the device name is <code>inst1</code>.</div>
+<div><b>TCPIP0::DK78192::<span class="Red">gpib0,2</span>::INSTR</b> where the device name is <code>gpib0,2</code>.</div>
+<p>
+<div>If nothing of this works you must run a software from the manufacturer that can communicate with your scope.</div>
+<div>Then use <a href="https://www.wireshark.org/" target="_blank">Wireshark</a> to sniff the network traffic and search for the VXI-11 command <code>CREATE_LINK Call</code>:</div>
+<p>
+<img src="Images/WiresharkCreateLink.png" width="1017" height="125" class="Img" alt="Oszi Waveform Analyzer - Wireshark XPI-11 protocol">
+<p>
+<div>Here you see that a link is created to the logical device with the name <code>inst0</code>.</div>
+<div>Make sure that the <code>CREATE_LINK Reply</code> does not return an error. Some software tests multiple names until one works.</div>
+<div>Enter the <b>case sensitive</b> name in Oszi Waveform Analzyer under <b>VXI Link</b> and you are ready to connect.</div>
 
-<h3>Test the TCP Connection</h3>
 
-<ul>
-<li><div>On your computer enter <code>PING 192.168.0.240</code>. The scope should respond.</div>
-<li><div>On your computer enter the same IP into your <b>browser</b>. You should see a HTML page from your scope.</div>
-<li><div>Enter IP and port into Oszi Waveform Analyzer and you should be able to connect.</div>
-</ul>
-<div>If it does not work you surely have the wrong port. Use a port scanner or Google to find it.</div>
-<div>Send me an email with your oscilloscope model and your port and I will add this information here.</div>
+<a name="TCPConnection"></a>
+<h3>Option 3: TCP Connection</h3>
+
+<div>Some oscilloscopes additionally accept SCPI commands over a plain TCP connection.</div>
+<div>In this case no complex protocol like VXI-11 is used. The SCPI text commands are simply put into TCP packets.</div>
+<div>My Rigol listens on TCP <b>port 5555</b> for SCPI commands. But this port is completely <b>undocumented</b>.</div>
+<div>Your scope may use another port or not support this communication at all.</div>
+<div>You can use a <b>port scanner</b> to find all listening ports.</div>
+
+
+<a name="TransferSpeed"></a>
+<h3>Transfer Speed</h3>
+
+<div><b><u>USB</u>:</b></div>
+<div>If your scope implements Full speed USB, the maximum transfer rate is 12 MBit/sec.</div>
+<div>If your scope implements High speed USB, the maximum transfer rate is 480 MBit/sec.</div>
+<div><b><u>Ethernet</u>:</b></div>
+<div>If your scope implements Fast Ethernet, the maximum transfer rate is 100 MBit/sec.</div>
+<div>If your scope, router and computer support Gigabit Ethernet, the maximum transfer rate is 1 GBit/sec.</div>
+<div>If your computer connects over WIFI you will have a significantly worse performance.</div>
+<p>
+<div>My Rigol has 480 MBit USB and 100 MBit ethernet and a waveform transfer is 4 times faster over USB.</div>
+<div>And plain TCP transfer is approx 30% faster than VXI transfer.</div>
+<p>
+<div>But the speed depends on many factors.</div>
+<div>Oscilloscope manufacturers use <b>cheap processors</b> too keep the price low.</div>
+<div>The processor has to control the entire oscilloscope and often does not have much power left for data transfer.</div>
+<div>When you enable <code>TRACE_OUTPUT</code> in the SCPI class you see how slow the processor responds to some commands.</div>
+<div>A primitive command like <code>:WAVEFORM:STOP</code>, which only stores a value in the scope, may takes 60 ms to execute!</div>
+<div>And over the VXI protocol my Rigol sends 24 Megabyte sample data in chunks of 396 bytes!</div>
+<div>This is an incredibly <b>stupid implementation</b>. The theoretically possible network speed is wasted.</div>
+<div>You find a logfile of VXI transfer in the subfolder 'Documentation' in the source code.</div>
 
 <a name="StoreDisk"></a>
 <h1>Storing Waveforms on Disk</h1>
@@ -801,7 +848,7 @@ etc....</td></tr>
 <div>Each Rigol serie uses a <b>completely different</b> file header and content.</div>
 <p>
 <div>I found a WFM file format description from Tektronix, but they say it was developed for internal use.</div>
-<div>Apart from the waveform data it stores all the hundreds of oscilloscope settings, that you will never need.</div>
+<div>Apart from the waveform data they store all the hundreds of oscilloscope settings, that you will never need.</div>
 <div>They store for example the trigger voltage, trigger mode, AC/DC coupling, probe ratio, etc...</div>
 <div>All this useless information makes a WFM file parser extremely complex.</div>
 <div>I will not implement a dozen of complicated parsers for undocumented WFM file formats into Oszi Waveform Analyzer.</div>
@@ -994,7 +1041,7 @@ Others have confirmed to observe the same even on other oscilloscope models.</di
 <h3>Bug in DS1074Z</h3>
 <div>If the <b>USB</b> cable was once plugged in, a connection over <b>TCP</b> is impossible.</div>
 <div>After disconnecting the USB cable the scope will still not respond over TCP.</div>
-<div>To use TCP the scope must be turned off and on again without USB cable. What an <b>INCREDIBLE GARBAGE</b>!</div>
+<div>To use TCP or VXI the scope must be turned off and on again without USB cable. What an <b>INCREDIBLE GARBAGE</b>!</div>
 
 <h3>Bug in RPL1116</h3>
 <p>
