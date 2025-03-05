@@ -199,7 +199,7 @@ namespace Transfer
         const int BUF_SIZE_ASCII = 128;
 
         // The default timeout for TCP connection is 20 seconds which is much too long.
-        const int TCP_CONNECT_TIMEOUT = 2000;
+        const int TCP_CONNECT_TIMEOUT = 1500;
         const int WSAETIMEDOUT        = 10060; // SocketException
 
         eConnectMode me_Mode;
@@ -222,6 +222,8 @@ namespace Transfer
         {
             set { ms32_OpcReplaceDelay = value; }
         }
+
+        // =============================================================================================
 
         /// <summary>
         /// i_Combo comes from EnumerateScpiDevices()
@@ -267,33 +269,13 @@ namespace Transfer
             #endif
 
             UInt16 u16_TcpPort;
-            IPAddress i_IpAddr = ParseEndpoint(s_Endpoint, out u16_TcpPort);
+            IPAddress i_IpAddress = ParseEndpoint(s_Endpoint, out u16_TcpPort);
 
             if (u16_TcpPort == 0)
                 Throw("Enter IP address and port separated by colon like: \"192.168.0.240 : 1234\"");
 
             me_Mode      = eConnectMode.TCP;
-            mi_TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            mi_TcpSocket.ReceiveTimeout = 2000; // changed later
-            mi_TcpSocket.SendTimeout    = 1000; // all commands are very short (< 50 byte)
-
-            // Microsoft did not implement a function Socket.Connect(int Timeout)
-            // The deault timeout is 20 seconds which is much too long --> Use CONNECT_TIMEOUT instead.
-            ManualResetEvent     i_Event = new ManualResetEvent(false);
-            SocketAsyncEventArgs i_Args  = new SocketAsyncEventArgs();
-            i_Args.RemoteEndPoint = new IPEndPoint(i_IpAddr, u16_TcpPort);
-            i_Args.SocketError    = SocketError.TimedOut;
-            i_Args.Completed     += delegate(Object o_Sender, SocketAsyncEventArgs i_EvArgs)
-            {
-                i_Event.Set();
-            };
-
-            if (mi_TcpSocket.ConnectAsync(i_Args) &&  // returns true if connection is pending
-               !i_Event.WaitOne(TCP_CONNECT_TIMEOUT)) // returns false on timeout
-                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (Timeout)");
-
-            if (i_Args.SocketError != SocketError.Success)
-                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (" + i_Args.SocketError + ")");
+            mi_TcpSocket = ConnectTcpSocketAsync(i_IpAddress, u16_TcpPort);
         }
 
         /// <summary>
@@ -314,6 +296,8 @@ namespace Transfer
             }
             return IPAddress.Parse(s_IpAddress);
         }
+
+        // =============================================================================================
 
         /// <summary>
         /// Finalizer (called on garbage collection)
@@ -651,6 +635,35 @@ namespace Transfer
         }
 
         // ================================== TCP ===================================
+
+        /// <summary>
+        /// Microsoft forgot to implement a function Socket.Connect(int Timeout)
+        /// The default connect timeout is 20 seconds which is much too long --> Use TCP_CONNECT_TIMEOUT instead.
+        /// </summary>
+        public static Socket ConnectTcpSocketAsync(IPAddress i_IpAddress, UInt16 u16_TcpPort)
+        {
+            Socket i_TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            i_TcpSocket.ReceiveTimeout = 2000; // changed later
+            i_TcpSocket.SendTimeout    = 1000; // all commands are very short (< 50 byte)
+
+            ManualResetEvent     i_Event = new ManualResetEvent(false);
+            SocketAsyncEventArgs i_Args  = new SocketAsyncEventArgs();
+            i_Args.RemoteEndPoint = new IPEndPoint(i_IpAddress, u16_TcpPort);
+            i_Args.SocketError    = SocketError.TimedOut;
+            i_Args.Completed     += delegate(Object o_Sender, SocketAsyncEventArgs i_EvArgs)
+            {
+                i_Event.Set();
+            };
+
+            if (i_TcpSocket.ConnectAsync(i_Args) &&   // returns true if connection is pending
+               !i_Event.WaitOne(TCP_CONNECT_TIMEOUT)) // returns false on timeout
+                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (Timeout)");
+
+            if (i_Args.SocketError != SocketError.Success)
+                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (" + i_Args.SocketError + ")");
+
+            return i_TcpSocket;
+        }
 
         /// <summary>
         /// While for USB the struct kTmcHeader has a flag indicating the last packet,
