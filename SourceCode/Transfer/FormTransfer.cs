@@ -231,8 +231,8 @@ namespace Transfer
                 lblUsbEndp  .Text = "IP Address";
             }
 
-            lblVxiLink .Enabled = radioVXI.Checked;
-            textVxiLink.Enabled = radioVXI.Checked;
+            lblVxiLink .Visible = radioVXI.Checked;
+            textVxiLink.Visible = radioVXI.Checked;
         }
 
         // ==========================================================
