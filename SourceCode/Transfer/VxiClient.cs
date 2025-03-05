@@ -548,15 +548,15 @@ namespace Transfer
 
         #endregion
 
-        const int CONNECT_TIMEOUT     = 1500; // normally connecting takes less than 15 ms
-        const int PORT_MAPPER_PORT    = 111;
-        const int RPC_VERSION         = 2;
-        const int PORT_MAPPER_PROGRAM = 100000;
-        const int PORT_MAPPER_VERSION = 2;
-        const int DEVICE_CORE_PROGRAM = 0x607AF;
-        const int DEVICE_CORE_VERSION = 1;
-        const int FLAG_LAST_FRAGMENT  = int.MinValue; // 0x80000000
-        const int WSAETIMEDOUT        = 10060;        // SocketException
+        const int UDP_RESPONSE_TIMEOUT = 1500; // normally responses come in less than 15 ms
+        const int PORT_MAPPER_PORT     = 111;
+        const int RPC_VERSION          = 2;
+        const int PORT_MAPPER_PROGRAM  = 100000;
+        const int PORT_MAPPER_VERSION  = 2;
+        const int DEVICE_CORE_PROGRAM  = 0x607AF;
+        const int DEVICE_CORE_VERSION  = 1;
+        const int FLAG_LAST_FRAGMENT   = int.MinValue; // 0x80000000
+        const int WSAETIMEDOUT         = 10060;        // SocketException
 
         Socket    mi_Socket;
         VxiStream mi_RxStream    = new VxiStream();
@@ -596,7 +596,7 @@ namespace Transfer
             }
 
             mi_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            mi_Socket.ReceiveTimeout  = CONNECT_TIMEOUT; // UDP response delay is less than 15 ms
+            mi_Socket.ReceiveTimeout  = UDP_RESPONSE_TIMEOUT; // UDP response delay is less than 15 ms
             mi_Socket.SendTimeout     = 1000;
             mi_Socket.EnableBroadcast = true;
 
@@ -660,20 +660,17 @@ namespace Transfer
         /// IP = "192.168.0.240", Port = 618 --> Connect directly to the control port 618.
         /// IP = "192.168.0.240", Port = 0   --> Request the control port from the portmapper and connect to it.
         /// </summary>
-        public void ConnectDevice(IPAddress i_IpAddress, UInt16 u16_Port)
+        public void ConnectDevice(IPAddress i_IpAddress, UInt16 u16_TcpPort)
         {
-            if (u16_Port == 0 || u16_Port == PORT_MAPPER_PORT)
+            if (u16_TcpPort == 0 || u16_TcpPort == PORT_MAPPER_PORT)
             {
                 AsyncConnect(i_IpAddress, PORT_MAPPER_PORT);
-                u16_Port = GetControlPort();
+                u16_TcpPort = GetControlPort();
             }
-            AsyncConnect(i_IpAddress, u16_Port);
+            AsyncConnect(i_IpAddress, u16_TcpPort);
         }
 
-        /// <summary>
-        /// This function normally finishes in 1 millisecond
-        /// </summary>
-        void AsyncConnect(IPAddress i_IpAddress, int s32_Port)
+        void AsyncConnect(IPAddress i_IpAddress, UInt16 u16_TcpPort)
         {
             #if TRACE_OUTPUT
                 Debug.Print("> AsyncConnect({0} : {1})", i_IpAddress, s32_Port);
@@ -681,27 +678,7 @@ namespace Transfer
 
             Dispose(); // disconnect if connected
 
-            mi_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            mi_Socket.ReceiveTimeout = 1000;
-            mi_Socket.SendTimeout    = 1000;
-
-            // Microsoft did not implement a function Socket.Connect(int Timeout)
-            // The deault timeout is 20 seconds which is much too long --> Use s32_Timeout instead.
-            ManualResetEvent     i_Event = new ManualResetEvent(false);
-            SocketAsyncEventArgs i_Args  = new SocketAsyncEventArgs();
-            i_Args.RemoteEndPoint = new IPEndPoint(i_IpAddress, s32_Port);
-            i_Args.SocketError    = SocketError.TimedOut;
-            i_Args.Completed     += delegate(Object o_Sender, SocketAsyncEventArgs i_EvArgs)
-            {
-                i_Event.Set();
-            };
-
-            if (mi_Socket.ConnectAsync(i_Args) &&  // returns true if connection is pending
-               !i_Event.WaitOne(CONNECT_TIMEOUT))  // returns false on timeout
-                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (Timeout)");
-
-            if (i_Args.SocketError != SocketError.Success)
-                Throw("Could not connect to " + i_Args.RemoteEndPoint + "  (" + i_Args.SocketError + ")");
+            mi_Socket = SCPI.ConnectTcpSocketAsync(i_IpAddress, u16_TcpPort);
 
             #if TRACE_OUTPUT
                 Debug.Print("< AsyncConnect()");
