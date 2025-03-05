@@ -989,7 +989,6 @@ namespace Transfer
         /// <summary>
         /// Does not throw. Returns a string with an error message
         /// </summary>
-        /// <returns></returns>
         String CheckRpcRxPacket()
         {
             mi_RxStream.Position = 0;

@@ -66,7 +66,6 @@ namespace Transfer
         SCPI           mi_Scpi;
         ITransferPanel mi_Panel;
         WForms.Timer   mi_StatusTimer;
-        RadioButton[]  mi_RadioBtn = new RadioButton[3];
 
         /// <summary>
         /// Constructor
@@ -77,10 +76,6 @@ namespace Transfer
             mi_Panel     = i_Panel;
 
             InitializeComponent();
-
-            mi_RadioBtn[(int)eConnectMode.USB] = radioUSB;
-            mi_RadioBtn[(int)eConnectMode.TCP] = radioTCP;
-            mi_RadioBtn[(int)eConnectMode.VXI] = radioVXI;
 
             Control i_Ctrl = (Control)i_Panel;
             i_Ctrl.Top  = btnInstallDriver.Bottom + 5;
@@ -106,11 +101,16 @@ namespace Transfer
             statusLabel .Width = ClientSize.Width - 4;           
 
             // Load Combobox with USB devices
-            try { PlatformManager.Instance.EnumerateUsbDevices(comboDevices); }               // FIRST
+            try { PlatformManager.Instance.EnumerateUsbDevices(comboDevices); }                  // FIRST
             catch {}
 
             int s32_Mode = Utils.RegReadInteger(eRegKey.ConnectMode, (int)eConnectMode.USB) % 3; // AFTER
-            mi_RadioBtn[s32_Mode].Checked = true; // fires OnRadioButton_CheckedChanged()
+            switch ((eConnectMode)s32_Mode)
+            {
+                case eConnectMode.USB: radioUSB.Checked = true; break; // fires OnRadioButton_CheckedChanged()
+                case eConnectMode.VXI: radioVXI.Checked = true; break; // fires OnRadioButton_CheckedChanged()
+                case eConnectMode.TCP: radioTCP.Checked = true; break; // fires OnRadioButton_CheckedChanged()
+            }
 
             textVxiLink.Text = Utils.RegReadString(eRegKey.LinkVXI, "inst0");
 
@@ -270,7 +270,7 @@ namespace Transfer
                         if (i_Combo == null)
                             throw new Exception("Please connect the oscilloscope over USB, turn it on and click 'Search'.\n"
                                               + "If it does not appear, click 'Install Diver'.\n"
-                                              + "Check if there is an error in the Device Manager.");
+                                              + "If it still does not work read the help file.");
 
                         mi_Scpi.ConnectUsb(i_Combo); // opens USB device, throws
                         Utils.RegWriteString(eRegKey.ConnectUSB, comboDevices.Text);
