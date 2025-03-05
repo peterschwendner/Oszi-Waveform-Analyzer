@@ -188,6 +188,7 @@
         <div>— &nbsp; <a href="#Prerequisites"    class="MenuLink" onClick="ShowMenu(false)">Prerequisites</a></div>
         <div>— &nbsp; <a href="#TransferWindow"   class="MenuLink" onClick="ShowMenu(false)">Transfer Window</a></div>
         <div>— &nbsp; <a href="#ImplementOszi"    class="MenuLink" onClick="ShowMenu(false)">Implemented Oscilloscopes</a></div>
+        <div>— &nbsp; <a href="#ScpiLibrary"      class="MenuLink" onClick="ShowMenu(false)">The SCPI Library in C#</a></div>
         <div><a href="#ConnectionModes"  class="MenuLink" onClick="ShowMenu(false)">Connection over USB, VXI, TCP</a></div>        
         <div>— &nbsp; <a href="#USBConnection"    class="MenuLink" onClick="ShowMenu(false)">USB Connection</a></div>
         <div>— &nbsp; <a href="#VXIConnection"    class="MenuLink" onClick="ShowMenu(false)">VXI-11 Connection</a></div>
@@ -222,7 +223,7 @@
 <a name="Features"></a>
 <h3>Features</h3>
 <ul>
-<li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB or TCP using the <b>SCPI</b> protocol.</div>
+<li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB, VXI or TCP using the <b>SCPI</b> protocol.</div>
 <li><div>Oszi Waveform Analyzer does <span class="Error">NOT</span> require any huge installations like NI-VISA (1 GB), TekVISA (100 MB), IVI, UltraSigma (500 MB).</div>
 <li><div>Oszi Waveform Analyzer requires only the .NET framework 4.0 or higher.</div>
 <li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>. Support for Linux and Mac can be added (see <a href="#Download">below</a>).</div>
@@ -418,7 +419,7 @@
 <div>After the pinpad has pulled the Reset line the card sends autonomously the ATR (Answer to Reset) packet.</div>
 <div>The pinpad sends a clock of 4.76 MHz and both start communication with a baudrate of 1/372 of the clock = 12795 baud.</div>
 <div>Then pinpad and card switch to a baudrate of 4/372 of the clock = 51182 Baud which the card requests in it's ATR packet.</div>
-<div>See <b>ISO 7816-03.pdf</b> in subfolder 'Documentation' in the source code.</div>
+<div>See <b>ISO 7816-03.pdf</b> in subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a>.</div>
 <div>You must enable the post decoder ISO7618 which calculates and switches the baudrate otherwise you will see a lot of errors.</div>
 
 <a name="PostISO14230"></a>
@@ -506,7 +507,7 @@
 <p>
 <img src="Images/CanFdSamplepoint.png" width="625" height="158" class="Img" alt="Oszi Waveform Analyzer - CAN Bus Samplepoint">
 <p>
-<div>This image is from the file <b>Bosch CAN FD.pdf</b> that you find in subfolder 'Documentation' in the source code.</div>
+<div>This image is from the file <b>Bosch CAN FD.pdf</b> that you find in subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a>.</div>
 <div>In this example one bit of a CAN packet is divided into 15 time quantums.</div>
 <div>The samplepoint is after the eleventh quantum which results in a samplepoint at 11/15 = 73.33%</div>
 <div>The BRS bit uses the standard baudrate until the samplepoint and the rest of the bit uses the CAN FD baudrate.</div>
@@ -680,10 +681,17 @@
 <div>Now it is up to you to implement further oscilloscope models.</div>
 <div>Download the programming manual that explains the SCPI commands.</div>
 <div>Open the above Transfer window and send the SCPI commands manually to see what your scope responds.</div>
-<div>Then clone the Rigol classes, modify them and register the new oscilloscope serie in the <b>TransferManager</b>.</div>
 <div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
-<div>In the subfolder 'Documentation' in the source code you find a <b>logfile</b> of the SCPI commands and responses of my scope.</div>
+<div>Clone the Rigol classes, rename and modify them and register the new oscilloscope serie in the <b>TransferManager</b>.</div>
+
+<a name="ScpiLibrary"></a>
+<h3>The SCPI Library for C# Programmers</h3>
+
+<div>As this project is open source you can use the <b>class SCPI</b> also in your own C# project.</div>
+<div>It allows you to communicate with any SCPI device over USB, VXI or TCP.</div>
+<div>My code will keep your harddisk clean. You do not need to install the NI-VISA monster of 1 Gigabyte.</div>
 <div>In the class SCPI you can enable <code>TRACE_OUTPUT</code> to see the SCPI commands and responses.</div>
+<div>In the subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a> you find a <b>logfile</b> of the SCPI commands and responses of my scope.</div>
 
 
 <a name="ConnectionModes"></a>
@@ -711,10 +719,11 @@
 <div>VXI (<b>V</b>ME e<b>X</b>tensions for <b>I</b>nstrumentation) is a standard for network communication between instruments and controllers.</div>
 <div>The implementation of the VXI protocol was quite complex: 1100 lines of source code.</div>
 <div>VXI-11 is a well designed protocol that has a <b>port mapper</b> on TCP and UDP port 111.</div>
+<p>
 <div>When you click the button <b>Search</b>, Oszi Waveform Analyzer sends a broadcast request to port 111.</div>
-<div>If a VXI-11 capable device is connected, it will send a response that informs which is core TCP port.</div>
-<div>So with one click you get instantly the IP address and the TCP port of your oscilloscope.</div>
-<div>My Rigol listens on the core <b>port 618</b> for SCPI commands wrapped into VXI-11 packets.</div>
+<div>If a VXI-11 capable device is connected, it will send a response that informs which is the core TCP port.</div>
+<div>So with one click you get instantly the IP address and the VXI port of your oscilloscope.</div>
+<div>My Rigol listens on <b>port 618</b> for SCPI commands wrapped into VXI-11 packets.</div>
 <p>
 <div><span class="Error">ATTENTION:</span> If you have an oscilloscope from a stupid brand like Rigol that uses the default IP address </div>
 <div>169.254.109.240 and your network is 192.168.XXX.YYY, the broadcast request will be blocked by the network mask.</div>
@@ -728,13 +737,13 @@
 <div>Rigol, Agilent, Keysight and other brands use the device name <code>inst0</code> which is case sensitive.</div>
 <div>But it may also be <code>inst1</code> or <code>inst2</code> or <code>gpib0</code> or <code>gpib1</code> or <code>gpib0,4</code> or <code>gpib0,6</code>, ....</div>
 <p>
-<div>If you have tried all these names and none works, search the <b>VISA Address</b> of your oscilloscope.</div>
+<div>If you have tried to connect with <code>inst0</code> and get an error, search the <b>VISA Address</b> of your oscilloscope.</div>
 <div>After pressing the buttons Utility, IO Settings and Lan Config my Rigol shows this information:</div>
 <p>
 <img src="Images/TcpSettings.png" width="400" height="260" alt="Oszi Waveform Analyzer - Rigol TCP Settings">
 <p>
 <div>Here the VISA address does not contain the logical device name, which indicates that the default name <code>inst0</code> has to be used.</div>
-<div>But in other cases you may find:</div>
+<div>But in other instruments you may get:</div>
 <div><b>TCPIP::A-52230A-04585.local::<span class="Red">inst1</span>::INSTR</b> where the device name is <code>inst1</code>.</div>
 <div><b>TCPIP0::DK78192::<span class="Red">gpib0,2</span>::INSTR</b> where the device name is <code>gpib0,2</code>.</div>
 <p>
@@ -776,10 +785,10 @@
 <div>Oscilloscope manufacturers use <b>cheap processors</b> too keep the price low.</div>
 <div>The processor has to control the entire oscilloscope and often does not have much power left for data transfer.</div>
 <div>When you enable <code>TRACE_OUTPUT</code> in the SCPI class you see how slow the processor responds to some commands.</div>
-<div>A primitive command like <code>:WAVEFORM:STOP</code>, which only stores a value in the scope, may takes 60 ms to execute!</div>
-<div>And over the VXI protocol my Rigol sends 24 Megabyte sample data in chunks of 396 bytes!</div>
-<div>This is an incredibly <b>stupid implementation</b>. The theoretically possible network speed is wasted.</div>
-<div>You find a logfile of VXI transfer in the subfolder 'Documentation' in the source code.</div>
+<div>A primitive command like <code>:WAVEFORM:STOP</code>, which only stores a value in the scope, may takes 80 ms to execute!</div>
+<div>And over the VXI protocol my Rigol sends 24 Megabyte sample data in ridiculous chunks of 396 bytes!</div>
+<div>This shows how <b>stupid</b> Rigol engineers are. The theoretically possible network speed is wasted.</div>
+<div>You find a logfile of VXI transfer in the subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a>.</div>
 
 <a name="StoreDisk"></a>
 <h1>Storing Waveforms on Disk</h1>
