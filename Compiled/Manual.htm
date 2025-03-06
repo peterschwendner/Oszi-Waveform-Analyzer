@@ -711,7 +711,7 @@
 <div>Then Oszi Waveform Analyzer will tell you that no USB device of type 'Test and Measurement Class' was found.</div>
 <p>
 <div>The following 2 chapters explain how to connect over ethernet.</div>
-<div><span class="Error">ATTENTION:</span> If you have an oscilloscope from a stupid brand like Rigol you may have an ugly bug:</div>
+<div><span class="Error">ATTENTION:</span> If you have an oscilloscope from a sloppy brand like Rigol you may have an ugly bug:</div>
 <div>My Rigol will not connect over ethernet anymore if the USB cable was once connected. (see <a href="#BugTCP_USB">bug report</a>)</div>
 
 <a name="VXIConnection"></a>
@@ -720,14 +720,14 @@
 <div>If your oscilloscope has an ethernet RJ-45 plug, it probably supports the VXI-11 protocol.</div>
 <div>VXI (<b>V</b>ME e<b>X</b>tensions for <b>I</b>nstrumentation) is a standard for network communication between instruments and controllers.</div>
 <div>The implementation of the VXI protocol was quite complex: 1100 lines of source code.</div>
-<div>VXI-11 is a well designed protocol that has a <b>port mapper</b> on TCP and UDP port 111.</div>
 <p>
+<div>VXI-11 is a well designed protocol that has a <b>port mapper</b> on TCP and UDP port 111.</div>
 <div>When you click the button <b>Search</b>, Oszi Waveform Analyzer sends a broadcast request to port 111.</div>
-<div>If a VXI-11 capable device is connected, it will send a response that informs which is the core TCP port.</div>
-<div>So with one click you get instantly the IP address and the VXI port of your oscilloscope.</div>
+<div>If a VXI-11 capable device is connected, it will send a response that contains the core VXI port of the device.</div>
+<div>So with one click you get instantly the IP address and the listening TCP port of your oscilloscope.</div>
 <div>My Rigol listens on <b>port 618</b> for SCPI commands wrapped into VXI-11 packets.</div>
 <p>
-<div><span class="Error">ATTENTION:</span> If you have an oscilloscope from a stupid brand like Rigol that uses the default IP address </div>
+<div><span class="Error">ATTENTION:</span> If you have an oscilloscope from Rigol that uses the unintelligent default IP address </div>
 <div>169.254.109.240 and your network is 192.168.XXX.YYY, the broadcast request will be blocked by the network mask.</div>
 <div>I recommend to configure a <b>static IP</b> address. Also DHCP mode does <a href="#BugDHCP">not work</a> correctly in a Rigol oscilloscope.</div>
 <p>
@@ -789,7 +789,7 @@
 <div>When you enable <code>TRACE_OUTPUT</code> in the SCPI class you see how slow the processor responds to some commands.</div>
 <div>A primitive command like <code>:WAVEFORM:STOP</code>, which only stores a value in the scope, may takes 80 ms to execute!</div>
 <div>And over the VXI protocol my Rigol sends 24 Megabyte sample data in ridiculous chunks of 396 bytes!</div>
-<div>This shows how <b>stupid</b> Rigol engineers are. The theoretically possible network speed is wasted.</div>
+<div>This shows how intelligent Rigol engineers are. The theoretically possible network speed is wasted.</div>
 <div>You find a logfile of VXI transfer in the subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a>.</div>
 
 <a name="StoreDisk"></a>
@@ -819,11 +819,11 @@
 etc....</td></tr>
 </table>
 <p>
-<div>This is a very stupid format because in each sample they need 15 ASCII characters for the timestamp.</div>
+<div>This is not an intelligent format because in each sample they need 15 ASCII characters for the timestamp.</div>
 <div>With 1 Megasamples they store <b>15 Megabyte</b> only for the useless timestamps.</div>
 <div>In the first 2 rows they send the channel names and other stuff which is undocumented.</div>
 <div>The <span class="Green">long floating point voltages</span> are a waste of disk space because the A/D converter in the scope has only 8 bit resolution.</div>
-<div>Rigol developers are so stupid that they don't even remove the useless trailing zeroes.</div>
+<div>Rigol developers are not smart enough to remove the useless trailing zeroes.</div>
 <div>Instead of "<span class="Green">-0.00000e+00</span>" they could easily send "<span class="Green">0</span>" and reduce the file size significantly.</div>
 <p>
 <div>And the <b>Rigol DS1000Z serie</b> stores a completely <b>useless</b> <span class="Blue"> counter</span> in the first column:</div>
@@ -1045,8 +1045,8 @@ Others have confirmed to observe the same even on other oscilloscope models.</di
 <a name="BugDHCP"></a>
 <h3>Bug in DS1074Z</h3>
 <div>After configuring the <b>LAN settings</b>, enabling DHCP mode and clicking <b>Apply</b> the scope gets an IP address from DHCP.</div>
-<div>After turning the scope off and on, it will be back in mode "Auto IP" with a useless IP of 168.254.109.240</div>
-<div>The scope is so stupid that DHCP mode works only once and only manually.</div>
+<div>After turning the scope off and on, it will be back in mode "Auto IP" with a useless IP of 169.254.109.240</div>
+<div>The scope is so sloppy that DHCP mode works only once and only manually.</div>
 
 <a name="BugTCP_USB"></a>
 <h3>Bug in DS1074Z</h3>
