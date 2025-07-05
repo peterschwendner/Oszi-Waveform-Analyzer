@@ -74,6 +74,10 @@ namespace Operations
                     i_Remove.ms_MenuText  = "Remove the cursor";
                     i_Remove.ms_ImageFile = "CursorRemove.ico";
                     i_Remove.mo_Tag       = "Remove";
+
+                    if (Utils.OsziPanel.RasterON)
+                        i_Remove.ms_MenuText  = "Remove the cursor and the raster";
+
                     i_Items.Add(i_Remove);
                 }
                 return;
@@ -175,7 +179,7 @@ namespace Operations
             Utils.RegWriteString(eRegKey.RasterUnit,     comboUnit.Text);
             Utils.RegWriteString(eRegKey.RasterInterval, textInterval.Text);
 
-            Utils.OsziPanel.SetCursor(ms32_Sample, d_Interval / OsziPanel.CurCapture.ms64_SampleDist);
+            Utils.OsziPanel.SetCursor(ms32_Sample, d_Interval);
             Utils.OsziPanel.Invalidate();
 
             DialogResult = DialogResult.OK;

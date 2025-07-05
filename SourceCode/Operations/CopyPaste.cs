@@ -103,6 +103,8 @@ namespace Operations
         /// </summary>
         public String Execute(Channel i_Channel, int s32_Sample, bool b_Analog, Object o_Tag)
         {
+            Capture i_Capt = OsziPanel.CurCapture;
+
             String s_Status = "Error";
             String s_Action = (String)o_Tag;
             switch (s_Action)
@@ -119,10 +121,10 @@ namespace Operations
                     int s32_Count = s32_End - s32_Start;
 
                     mi_Copy = new Capture();
-                    mi_Copy.ms64_SampleDist = OsziPanel.CurCapture.ms64_SampleDist;
+                    mi_Copy.ms64_SampleDist = i_Capt.ms64_SampleDist;
                     mi_Copy.ms32_Samples    = s32_Count;
 
-                    foreach (Channel i_Src in OsziPanel.CurCapture.mi_Channels)
+                    foreach (Channel i_Src in i_Capt.mi_Channels)
                     {
                         if (s_Action == "CopyOne" && i_Src != i_Channel)
                             continue; // copy only the channel that the user has clicked
@@ -142,20 +144,29 @@ namespace Operations
                         mi_Copy.mi_Channels.Add(i_Dest);
                     }
 
+                    // Copy separators
+                    List<int> i_SepList = new List<int>();
+                    foreach (int s32_Sep in i_Capt.ms32_Separators)
+                    {
+                        if (s32_Sep >= s32_Start && s32_Sep < s32_End)
+                            i_SepList.Add(s32_Sep - s32_Start);
+                    }
+                    mi_Copy.ms32_Separators = i_SepList.ToArray();
+
                     s_Status = s32_Count.ToString("N0") + " samples copied";
                     break;
                 }
                 case "PasteOver":
                 {
-                    if (OsziPanel.CurCapture.ms64_SampleDist != mi_Copy.ms64_SampleDist)
+                    if (i_Capt.ms64_SampleDist != mi_Copy.ms64_SampleDist)
                         throw new Exception("The sample distance of the Copy capture and the Paste capture must be identical.");
 
                     if (mi_Copy.mi_Channels.Count > 1) // previous action was "CopyAll"
                         CheckChannelsMatch();
 
-                    for (int C=0; C<OsziPanel.CurCapture.mi_Channels.Count; C++)
+                    for (int C=0; C<i_Capt.mi_Channels.Count; C++)
                     {
-                        Channel i_Dest = OsziPanel.CurCapture.mi_Channels[C];
+                        Channel i_Dest = i_Capt.mi_Channels[C];
                         Channel i_Src;
                         if (mi_Copy.mi_Channels.Count == 1) // previous action was "CopyOne"
                         {
@@ -196,14 +207,14 @@ namespace Operations
                 }
                 case "PasteInsert":
                 {
-                    if (OsziPanel.CurCapture.ms64_SampleDist != mi_Copy.ms64_SampleDist)
+                    if (i_Capt.ms64_SampleDist != mi_Copy.ms64_SampleDist)
                         throw new Exception("The sample distance of the Copy capture and the Paste capture must be identical.");
 
                     CheckChannelsMatch();
 
-                    for (int C=0; C<OsziPanel.CurCapture.mi_Channels.Count; C++)
+                    for (int C=0; C<i_Capt.mi_Channels.Count; C++)
                     {
-                        Channel i_Dest = OsziPanel.CurCapture.mi_Channels[C];
+                        Channel i_Dest = i_Capt .mi_Channels[C];
                         Channel i_Src  = mi_Copy.mi_Channels[C];
 
                         if (i_Src.mf_Analog != null)
@@ -226,7 +237,29 @@ namespace Operations
                         }     
                     }
 
-                    OsziPanel.CurCapture.ms32_Samples += mi_Copy.ms32_Samples;
+                    // ----------- Separators -------------
+
+                    List<int> i_SepList = new List<int>();
+                    foreach (int s32_Sep in i_Capt.ms32_Separators)
+                    {
+                        if (s32_Sep < s32_Sample)
+                            i_SepList.Add(s32_Sep); // copy
+
+                        if (s32_Sep >= s32_Sample)
+                            i_SepList.Add(s32_Sep + mi_Copy.ms32_Samples); // move right
+                    }
+
+                    foreach (int s32_Sep in mi_Copy.ms32_Separators)
+                    {
+                        i_SepList.Add(s32_Sep + s32_Sample);
+                    }
+
+                    i_SepList.Sort();
+                    i_Capt.ms32_Separators = i_SepList.ToArray();
+
+                    // -----------------------------
+
+                    i_Capt.ms32_Samples += mi_Copy.ms32_Samples;
                     s_Status = mi_Copy.ms32_Samples.ToString("N0") + " samples pasted";
 
                     Utils.OsziPanel.RecalculateEverything();
@@ -238,12 +271,14 @@ namespace Operations
 
         void CheckChannelsMatch()
         {
-            bool b_Match = OsziPanel.CurCapture.mi_Channels.Count == mi_Copy.mi_Channels.Count;
+            Capture i_Capt = OsziPanel.CurCapture;
+
+            bool b_Match = i_Capt.mi_Channels.Count == mi_Copy.mi_Channels.Count;
             if (b_Match)
             {
-                for (int C=0; C<OsziPanel.CurCapture.mi_Channels.Count; C++)
+                for (int C=0; C<i_Capt.mi_Channels.Count; C++)
                 {
-                    Channel i_Dest = OsziPanel.CurCapture.mi_Channels[C];
+                    Channel i_Dest = i_Capt.mi_Channels[C];
                     Channel i_Src  = mi_Copy.mi_Channels[C];
 
                     if ((i_Dest.mf_Analog != null) != (i_Src.mf_Analog != null))

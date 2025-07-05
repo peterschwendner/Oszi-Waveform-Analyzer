@@ -128,6 +128,18 @@ namespace Operations
                     i_Channel.mi_MarkRows  = null;
                     i_Channel.mb_Threshold = false;
                 }
+
+                // Delete and adjust separators
+                List<int> i_SepList = new List<int>();
+                foreach (int s32_Sep in i_Capt.ms32_Separators)
+                {
+                    if (s32_Sep < s32_Before)
+                        i_SepList.Add(s32_Sep); // copy unchanged
+
+                    if (s32_Sep > s32_After)
+                        i_SepList.Add(s32_Sep - s32_Delete); // move left
+                }
+                i_Capt.ms32_Separators = i_SepList.ToArray();
             }
             else // Before / After
             {
@@ -140,6 +152,7 @@ namespace Operations
                     default: throw new ArgumentException();
                 }
 
+                // Either Begin or End is zero here.
                 s32_Delete = s32_Begin + s32_End;
                 i_Capt.ms32_Samples -= s32_Delete;
 
@@ -163,9 +176,26 @@ namespace Operations
                     i_Channel.mi_MarkRows  = null;
                     i_Channel.mb_Threshold = false;
                 }
+
+                // Delete and adjust separators
+                List<int> i_SepList = new List<int>();
+                foreach (int s32_Sep in i_Capt.ms32_Separators)
+                {
+                    if (s32_Begin > 0 && s32_Sep > s32_Sample)
+                        i_SepList.Add(s32_Sep - s32_Delete); // move left
+
+                    if (s32_End > 0 && s32_Sep < s32_Sample)
+                        i_SepList.Add(s32_Sep); // copy
+                }
+                i_Capt.ms32_Separators = i_SepList.ToArray();
             }
 
-            i_Capt.ResetSampleMinMax(); // force recalculation of all Min/Max values of all channels
+            // force recalculation of all Min/Max values of all channels
+            i_Capt.ResetSampleMinMax(); 
+
+            // Remove cursor if behind the waveform
+            if (Utils.OsziPanel.CursorSample >= i_Capt.ms32_Samples)
+                Utils.OsziPanel.SetCursor(-1, -1m); 
 
             Utils.OsziPanel.RecalculateEverything();
 
