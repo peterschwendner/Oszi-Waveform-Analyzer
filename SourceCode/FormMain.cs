@@ -328,6 +328,7 @@ namespace OsziWaveformAnalyzer
             mi_ExImport.ms32_SaveSteps = checkSaveFactor.Checked ? i_Factor.ms32_DispSteps : 1;
             tabControl.SelectedTab = tabOszi;
             osziPanel.RecalculateEverything(true);
+            osziPanel.Focus();
         }
 
         private void checkSaveFactor_CheckedChanged(object sender, EventArgs e)
@@ -657,8 +658,15 @@ namespace OsziWaveformAnalyzer
 
             textFileName.Text = "";
 
-            // Shows a modal Form
-            TransferManager.Transfer(comboOsziModel);
+            try
+            {
+                // Shows a modal Form
+                TransferManager.Transfer(comboOsziModel);
+            }
+            catch (Exception Ex)
+            {
+                Utils.ShowExceptionBox(this, Ex);
+            }
         }
 
         // -----------------------------------------------------

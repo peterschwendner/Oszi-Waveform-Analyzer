@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExImport\BigEndianReader.cs" />
     <Compile Include="ExImport\OsziFile.cs" />
     <Compile Include="Operations\Digitizer.cs" />
     <Compile Include="Platform\PlfMono.cs" />
@@ -57,6 +58,7 @@
     <Compile Include="Platform\PlfMicrosoft.cs" />
     <Compile Include="PostDecoder\ISO14230.cs" />
     <Compile Include="PostDecoder\ISO7816.cs" />
+    <Compile Include="ExImport\Owon.cs" />
     <Compile Include="Transfer\PanelRigol.cs">
       <SubType>UserControl</SubType>
     </Compile>
