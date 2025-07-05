@@ -1044,10 +1044,10 @@ namespace Transfer
         /// </summary>
         public static Capture ParseCsvFile(String s_Path, eOsziSerie e_Serie, ref bool b_Abort)
         {
+          // It would be wrong to use System.IO.File.ReadAllLines() here and load a 300 Megabyte file to memory.
+          using(StreamReader i_Reader = new StreamReader(s_Path))
+          {
             Rigol i_Rigol = new Rigol(e_Serie);
-
-            // It would be wrong to use System.IO.File.ReadAllLines() here and load a 300 Megabyte file to memory.
-            StreamReader i_Reader = new StreamReader(s_Path);
 
             // --------------- Parse CSV Header ---------------
 
@@ -1065,13 +1065,17 @@ namespace Transfer
 
             // ------------------------------------------------
 
+            // Other brands start with data in the second line. Rigol stores 2 header lines.
+            if (!s_SecndLine.Contains("Volt"))
+                throw new Exception("The CSV file is not in the expected Rigol format.");
+
             if (s_FirstParts.Length != s_SecndParts.Length)
                 throw new Exception("Invalid column count in CSV line 2");
 
             // The third line contains the counter/timestamp column and one column per channel
             int s32_Channels = s_ThirdParts.Length - 1;
             if (s32_Channels < 1)
-                throw new Exception("The input file must contain at least 1 channel.");
+                throw new Exception("The CSV file must contain at least 1 channel.");
 
             eCsvFormat e_Format = eCsvFormat.Counter; // DS1000Z format
             if (s_FirstParts[0].ToUpper() == "TIME")
@@ -1218,6 +1222,7 @@ namespace Transfer
 
             i_Capture.ms64_SampleDist = (Int64)((decimal)d_Increment * Utils.PICOS_PER_SECOND);
             return i_Capture;
+          }
         }
     }
 }
