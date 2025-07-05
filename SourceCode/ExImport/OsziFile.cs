@@ -64,7 +64,7 @@ namespace ExImport
     ------------------------------------------------------
     ZIP  Magic        : UInt32  [4 Byte] 0xA53D9FBC  (optional, only if the following data is ZIP compressed)
     File Magic        : UInt32  [4 Byte] 0x6D801FA9
-    Oszi File Version : integer [4 Byte] currently only version 1 exists, allows future expansions
+    Oszi File Version : integer [4 Byte] currently only version 1 and 2 exist, allows future expansions
     Sample Count      : integer [4 Byte] the count of samples in the file
     Sample Rate       : Int64   [8 Byte] the samplerate in pico seconds
     Analog Resolution : integer [4 Byte] the A/D resolution of the oscilloscope in bits (e.g. 8, 10, 12 bit)
@@ -109,8 +109,10 @@ namespace ExImport
     ================================================================================================================================
     */        
     public class OsziFile
-    {       
-        const UInt32 OSZI_FILE_VERSION = 1;
+    {   
+        // In OSZI_FILE_VERSION 2 saving and loading Capture.ms32_Separators has been added
+
+        const UInt32 OSZI_FILE_VERSION = 2;
         const UInt32 OSZI_PLAIN_MAGIC  = 0x6D801FA9; // first 32 bit in a plain OSZI file
         const UInt32 OSZI_ZIP_MAGIC    = 0xA53D9FBC; // first 32 bit in a zipped OSZI file
         const UInt32 OSZI_ANALOG_CHAN  = 0xDA0D153F;
@@ -209,6 +211,14 @@ namespace ExImport
                 {
                     Byte u8_Order = (Byte)i_Capture.mi_Channels.IndexOf(i_Digi);
                     i_Writer.Write(u8_Order);
+                }
+
+                // ------ Separators (added in version 2) --------
+
+                i_Writer.Write(i_Capture.ms32_Separators.Length);
+                foreach (int s32_Sep in i_Capture.ms32_Separators)
+                {
+                    i_Writer.Write(s32_Sep);
                 }
 
                 // ------------ Write Analog Channels ------------
@@ -314,12 +324,24 @@ namespace ExImport
                         throw new Exception("The OSZI file has invalid order information"); 
                 }
 
-                if (u32_Version != OSZI_FILE_VERSION)
-                    throw new Exception("The OSZI file version "+u32_Version+" is not implemented.");
+                if (u32_Version > OSZI_FILE_VERSION)
+                    throw new Exception("Please install the latest version of Oszi Waveform Analyzer to read this file.");
 
                 String[] s_SplitNames = s_Names.Split('\n');
                 if (s_SplitNames.Length != s32_TotChannels)
                     throw new Exception("The OSZI file has invalid channel names"); 
+
+                // ------ Separators (added in version 2) --------
+
+                List<int> i_Separators = new List<int>();
+                if (u32_Version >= 2)
+                {
+                    int s32_Count = i_Reader.ReadInt32();
+                    for (int i=0; i<s32_Count; i++)
+                    {
+                        i_Separators.Add(i_Reader.ReadInt32());
+                    }
+                }
               
                 // ---------- Read Channels ----------
 
@@ -376,6 +398,7 @@ namespace ExImport
                 i_Capture.ms32_Samples    = s32_Samples;
                 i_Capture.ms64_SampleDist = s64_Samplerate;
                 i_Capture.ms32_AnalogRes  = s32_AnalogRes;
+                i_Capture.ms32_Separators = i_Separators.ToArray();
 
                 foreach (Channel i_Channel in i_ChanOrder)
                 {

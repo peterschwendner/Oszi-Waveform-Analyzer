@@ -147,8 +147,10 @@ namespace ExImport
             String s_Ext = Path.GetExtension(s_Path).ToLower();
             switch (s_Ext)
             {
-                case ".oszi": return OsziFile.Load(s_Path, ref b_Abort); // fast
-                case ".csv":  return TransferManager.ParseCsvFile(s_Path, mi_ComboOsziModel, ref b_Abort); // slow
+                case ".bin":
+                case ".cap":
+                case ".csv":  return TransferManager.ParseVendorFile(s_Path, mi_ComboOsziModel, ref b_Abort);
+                case ".oszi": return OsziFile.Load(s_Path, ref b_Abort);
                 case ".wfm":  ShowWfmErrorBox(); return null;
 
                 // TODO: You can implement further file formats here
@@ -231,7 +233,7 @@ namespace ExImport
         {
             try
             {
-                List<String> i_Extensions = new List<String>(new String[]{".csv", ".oszi", ".wfm"});
+                List<String> i_Extensions = new List<String>(new String[]{ ".bin", ".cap", ".csv", ".oszi", ".wfm"});
 
                 i_ComboInput.Items.Clear();
                 foreach (String s_Path in Directory.EnumerateFiles(Utils.SampleDir))
