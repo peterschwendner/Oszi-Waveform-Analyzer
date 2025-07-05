@@ -77,6 +77,9 @@ namespace Transfer
             [Description("Rigol DS1000Z / MSO1000Z Series")] // for example DS1074Z
             Rigol_1000Z,  
 
+            [Description("OWON VDS 1022 and VDS 2052")]
+            OWON_1022,  
+
             // TODO: Add more oscilloscope brands like Tektronix, Rhode & Schwarz, Siglent, ...
         }
 
@@ -120,6 +123,7 @@ namespace Transfer
 
         /// <summary>
         /// Opens a Form that allows to capture from the selected oscilloscope over the USB SCPI protocol
+        /// Throws
         /// </summary>
         public static void Transfer(ComboBox i_ComboOsziModel)
         {
@@ -130,7 +134,12 @@ namespace Transfer
             switch (e_OsziSerie)
             {
                 case eOsziSerie.Rigol_1000DE:
-                case eOsziSerie.Rigol_1000Z:  i_Panel = new PanelRigol(); break;
+                case eOsziSerie.Rigol_1000Z:  
+                    i_Panel = new PanelRigol(); 
+                    break;
+                
+                case eOsziSerie.OWON_1022:
+                    throw new Exception("For OWON the SCPI transfer is not yet implemented.\nBut you can import a CSV, BIN or CAP file.");
 
                 // TODO: Add Tektronix, Rhode & Schwarz, Siglent, ...
 
@@ -143,16 +152,29 @@ namespace Transfer
             i_Form.ShowDialog(Utils.FormMain);
         }
 
-        public static Capture ParseCsvFile(String s_Path, ComboBox i_ComboOsziModel, ref bool b_Abort)
+        /// <summary>
+        /// Parse proprietary vendor-specific CSV or BIN files
+        /// Throws
+        /// </summary>
+        public static Capture ParseVendorFile(String s_Path, ComboBox i_ComboOsziModel, ref bool b_Abort)
         {
             Utils.RegWriteString(eRegKey.OsziSerie, i_ComboOsziModel.Text);
+
+            String s_FileExt = Path.GetExtension(s_Path).ToLower();
 
             eOsziSerie e_OsziSerie = (eOsziSerie)i_ComboOsziModel.SelectedIndex;
             switch (e_OsziSerie)
             {
                 case eOsziSerie.Rigol_1000DE:
                 case eOsziSerie.Rigol_1000Z:
-                    return Rigol.ParseCsvFile(s_Path, e_OsziSerie, ref b_Abort);
+                    if (s_FileExt == ".csv") return Rigol.ParseCsvFile(s_Path, e_OsziSerie, ref b_Abort);
+                    throw new Exception("For " + i_ComboOsziModel.Text + " only CSV file import is implemented.");
+
+                case eOsziSerie.OWON_1022:
+                    if (s_FileExt == ".csv") return ExImport.OWON.ParseCsvFile   (s_Path, ref b_Abort);
+                    if (s_FileExt == ".cap") return ExImport.OWON.ParseBinaryFile(s_Path, ref b_Abort);
+                    if (s_FileExt == ".bin") return ExImport.OWON.ParseBinaryFile(s_Path, ref b_Abort);
+                    throw new Exception("For " + i_ComboOsziModel.Text + " only CSV, BIN and CAP file import is implemented.");
 
                 // TODO: Add Tektronix, Rhode & Schwarz, Siglent, ... which probably use their own proprietary CSV format
 
