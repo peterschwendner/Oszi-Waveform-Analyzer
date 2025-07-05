@@ -191,7 +191,7 @@
         <div>— &nbsp; <a href="#TransferWindow"   class="MenuLink" onClick="ShowMenu(false)">Transfer Window</a></div>
         <div>— &nbsp; <a href="#ImplementOszi"    class="MenuLink" onClick="ShowMenu(false)">Implemented Oscilloscopes</a></div>
         <div>— &nbsp; <a href="#ScpiLibrary"      class="MenuLink" onClick="ShowMenu(false)">The SCPI Library in C#</a></div>
-        <div><a href="#ConnectionModes"  class="MenuLink" onClick="ShowMenu(false)">Connection over USB, VXI, TCP</a></div>        
+        <div><a href="#ConnectionModes"  class="MenuLink" onClick="ShowMenu(false)">Connection over USB, VXI, TCP</a></div>
         <div>— &nbsp; <a href="#USBConnection"    class="MenuLink" onClick="ShowMenu(false)">USB Connection</a></div>
         <div>— &nbsp; <a href="#VXIConnection"    class="MenuLink" onClick="ShowMenu(false)">VXI-11 Connection</a></div>
         <div>— &nbsp; <a href="#TCPConnection"    class="MenuLink" onClick="ShowMenu(false)">TCP Connection</a></div>
@@ -201,7 +201,8 @@
         <div>— &nbsp; <a href="#WfmFiles"         class="MenuLink" onClick="ShowMenu(false)">WFM Files</a></div>
         <div>— &nbsp; <a href="#OsziFiles"        class="MenuLink" onClick="ShowMenu(false)">OSZI Files</a></div>
         <div>— &nbsp; <a href="#OtherFiles"       class="MenuLink" onClick="ShowMenu(false)">Other File Formats</a></div>
-        <div>— &nbsp; <a href="#SaveOptions"      class="MenuLink" onClick="ShowMenu(false)">Save File Options</a></div>                
+        <div>— &nbsp; <a href="#SaveOptions"      class="MenuLink" onClick="ShowMenu(false)">Save File Options</a></div>
+        <div><a href="#Frames"           class="MenuLink" onClick="ShowMenu(false)">Display of Multiple Frames</a></div>
         <div><a href="#Download"         class="MenuLink" onClick="ShowMenu(false)">Download &amp; New Versions</a></div>
         <div><a href="#BuyRigol"         class="MenuLink" onClick="ShowMenu(false)">Should I buy a Rigol Oscilloscope?</a></div>
         <div>— &nbsp; <a href="#LackQuality"      class="MenuLink" onClick="ShowMenu(false)">Lack of Quality</a></div>
@@ -225,11 +226,13 @@
 <a name="Features"></a>
 <h3>Features</h3>
 <ul>
+<li><div><span class="Error">NEW</span>: Added BIN, CSV and CAP file import for <b>OWON</b> oscilloscopes VDS 1021, VDS 1022, VDS 2052.</div>
 <li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB, VXI or TCP using the <b>SCPI</b> protocol.</div>
 <li><div>Oszi Waveform Analyzer does <span class="Error">NOT</span> require any huge installations like NI-VISA (1 GB), TekVISA (100 MB), IVI, UltraSigma (500 MB).</div>
 <li><div>Oszi Waveform Analyzer requires only the .NET framework 4.0 or higher.</div>
-<li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>. Support for Linux and Mac can be added (see <a href="#Download">below</a>).</div>
-<li><div>Oszi Waveform Analyzer includes the installer for the small 64 bit <b>USB TMC driver</b> (24 kB).</div>
+<li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>.</div>
+<li><div>Oszi Waveform Analyzer can run on Mono on <b>Linux</b> and <b>Mac</b>. If you want to use USB transfer a small class must be added (see <a href="#Download">below</a>).</div>
+<li><div>Oszi Waveform Analyzer includes the installer for the small 64 bit Windows <b>USB TMC driver</b> (24 kB). Linux has the driver already in the kernel.</div>
 <li><div>Oszi Waveform Analyzer supports up to 255 channels that may have analog or digital data or both.</div>
 <li><div>Oszi Waveform Analyzer can <b>zoom</b> the signal horizontally and vertically.</div>
 <li><div>Oszi Waveform Analyzer shows <b>signal details</b> in a tooltip, can measure voltages and precise timing and show a measure raster.</div>
@@ -303,14 +306,17 @@
 <img src="Images/CanBusRaster.png" width="741" height="392" alt="Oszi Waveform Analyzer - CAN Bus with raster">
 <p>
 <div>You can also select the menu option <b>Set cursor and show raster lines</b>.</div>
-<div>Here you see a 2 µs raster which corresponds to the CAN bus baudrate of 500 kBaud.</div>
-<div>You can move the raster with keys 'Arrow Left' and 'Arrow Right'.</div>
+<div>Here you see dotted vertical raster lines every 2 µs which corresponds to the CAN bus baudrate of 500 kBaud.</div>
 <p>
-<div>If you want to <b>remove</b> the cursor and the raster right-click the black background outside the channels.</div>
+<div>You can <b>remove</b> the cursor and raster by right-clicking the black background outside the channels.</div>
 <p>
-<div>In the <b>vertical</b> direction a raster is not required because the tooltip shows anywhere the exact voltage under the mouse pointer.</div>
-<div>And you always see the <b>peak voltages</b> of the signal in the legend (here: CAN High from 1.98V to 3.48V)</div>
+<div>A <b>vertical</b> voltage-related raster is not required because the tooltip shows anywhere the exact voltage under the mouse pointer.</div>
+<div>And you always see the <b>peak voltages</b> of the signal in the legend at the left (here: CAN High from 1.98V to 3.48V)</div>
 
+<h3>Keyboard</h3>
+<div>You can move the cursor and the raster with keys <b>Arrow Left</b> and <b>Arrow Right</b>.</div>
+<div>If you additionally press the SHIFT key the moving is faster.</div>
+<div>If you turn off the cursor in the menu you can move the entire signal with the arrow keys (and SHIFT).</div>
 
 <a name="AD_Conversion"></a>
 <h1>A/D Conversion</h1>
@@ -656,7 +662,7 @@
     <div>Also the display of samplerate, samplepoints, etc requires Rigol-specific commands.</div>
     <div>With the button <b>Transfer</b> you can transfer the stored signals of all enabled channels to the computer.</div>
     <div>You can chose to copy only the visible screen of 1200 samples or the entire memory of 24 Mega samples.</div>
-    <div>The Rigol serie DS1000DE has only memory for 1 Mega samples, so you will see other values here.</div>    
+    <div>The Rigol serie DS1000DE has only memory for 1 Mega samples, so you will see other values here.</div>
 <li><div>The <b>lower part</b> works with <b>any</b> SCPI device (oscilloscopes, function generators, multimeters, spectrum analyzers,...)</div>
     <div>The button <b>Send</b> sends any SCPI command to any SCPI device and shows the response.</div>
     <div>For example <b>:CHANNEL1:SCALE?</b> asks the vertical scale of analog channel 1. The response is: 2 Volt/raster unit.</div>
@@ -666,18 +672,20 @@
 <h3>Current Implementation of SCPI Commands</h3>
 
 <table class="DataTable">
-<tr><th>Oscilloscope Brand</th><th>Serie</th><th>Status</th></tr>
-<tr><td class="Green">Rigol</td><td>DS1000Z</td> <td>Implemented and tested</td></tr>
-<tr><td class="Green">Rigol</td><td>MSO1000Z</td><td>Implemented and tested</td></tr>
-<tr><td class="Green">Rigol</td><td>DS1000D</td> <td>Implemented and tested</td></tr>
-<tr><td class="Green">Rigol</td><td>DS1000E</td> <td>Implemented and tested</td></tr>
-<tr><td class="Red">Tektronix</td>           <td>TODO</td><td>Download <a href="https://download.tek.com/manual/MSO-DPO5000-B-DPO7000-C-DPO70000-B-C-D-DX-SX-DSA70000-B-C-D-and-MSO70000-C-DX-077001019.pdf" target="_blank">Manual</a></td></tr>
-<tr><td class="Red">Rhode &amp; Schwarz</td> <td>TODO</td><td>Download <a href="https://www.batronix.com/files/Rohde-&-Schwarz/Oscilloscope/HMO1xx2/HMO1002_1202_ProgrammingManual_en.pdf" target="_blank">Manual</a></td></tr>
-<tr><td class="Red">Agilent</td>             <td>TODO</td><td>Download <a href="https://ridl.cfd.rit.edu/products/manuals/Agilent/oscilloscopes/6000_series_prog_guide.pdf" target="_blank">Manual</a></td></tr>
-<tr><td class="Red">Siglent</td>             <td>TODO</td><td>Download <a href="https://www.siglent.com/upload_file/document/SDS1000%20Series&SDS2000X&SDS2000X-E_ProgrammingGuide_PG01-E02D.pdf" target="_blank">Manual</a></td></tr>
-<tr><td class="Red">Keysight</td>            <td>TODO</td><td>Download <a href="https://www.keysight.com/us/en/assets/9018-07141/programming-guides/9018-07141.pdf?success=true" target="_blank">Manual</a></td></tr>
-<tr><td class="Red">Hantek</td>              <td>TODO</td><td>Download <a href="https://www.hantek.com/Product/DSO4000BC/DSO4000BC_SCPI_EN.pdf" target="_blank">Manual</a></td></tr>
-<tr><td class="Red">Other Brands</td>        <td>TODO</td><td>Use Google ...</td></tr>
+<tr><th>Oscilloscope Brand</th><th>Serie</th><th>Import</th><th>SCPI Transfer</th></tr>
+<tr><td class="Green">Rigol</td><td>DS1000Z</td> <td>CSV</td><td>YES</td></tr>
+<tr><td class="Green">Rigol</td><td>MSO1000Z</td><td>CSV</td><td>YES</td></tr>
+<tr><td class="Green">Rigol</td><td>DS1000D</td> <td>CSV</td><td>YES</td></tr>
+<tr><td class="Green">Rigol</td><td>DS1000E</td> <td>CSV</td><td>YES</td></tr>
+<tr><td class="Green">OWON</td><td>VDS1022</td> <td>CSV, BIN, CAP&nbsp;</td><td>NO</td></tr>
+<tr><td class="Green">OWON</td><td>VDS2052</td> <td>CSV, BIN, CAP</td><td>NO</td></tr>
+<tr><td class="Red">Tektronix</td>           <td>TODO</td><td colspan="2">Download <a href="https://download.tek.com/manual/MSO-DPO5000-B-DPO7000-C-DPO70000-B-C-D-DX-SX-DSA70000-B-C-D-and-MSO70000-C-DX-077001019.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Rhode &amp; Schwarz</td> <td>TODO</td><td colspan="2">Download <a href="https://www.batronix.com/files/Rohde-&-Schwarz/Oscilloscope/HMO1xx2/HMO1002_1202_ProgrammingManual_en.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Agilent</td>             <td>TODO</td><td colspan="2">Download <a href="https://ridl.cfd.rit.edu/products/manuals/Agilent/oscilloscopes/6000_series_prog_guide.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Siglent</td>             <td>TODO</td><td colspan="2">Download <a href="https://www.siglent.com/upload_file/document/SDS1000%20Series&SDS2000X&SDS2000X-E_ProgrammingGuide_PG01-E02D.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Keysight</td>            <td>TODO</td><td colspan="2">Download <a href="https://www.keysight.com/us/en/assets/9018-07141/programming-guides/9018-07141.pdf?success=true" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Hantek</td>              <td>TODO</td><td colspan="2">Download <a href="https://www.hantek.com/Product/DSO4000BC/DSO4000BC_SCPI_EN.pdf" target="_blank">Manual</a></td></tr>
+<tr><td class="Red">Other Brands</td>        <td>TODO</td><td colspan="2">Use Google ...</td></tr>
 </table>
 <p>
 <div>Now it is up to you to implement further oscilloscope models.</div>
@@ -931,6 +939,24 @@ etc....</td></tr>
 <div>For example the UART and CAN bus decoders need at least 12 samples per bit for a reliable detection.</div>
 
 
+<a name="Frames"></a>
+<h1>Display of Multiple Frames</h1>
+<p>
+<img src="Images/OWON VDS1022 MultiFrame.png" width="803" height="295" alt="Oszi Waveform Analyzer - OWON VDS1022 multiple frames">
+
+<div>This is a capture from a running motorbike. Above the crankshaft sensor, below the spark coil.</div>
+<div>You find this in the sample file "Yamaha XTZ 250 CKP + Spark Coil OWON VDS 1022.cap".</div>
+<div>Files with extension CAP are a proprietary and undocumented OWON format, that Oszi Waveform Analyzer can import.</div>
+<div>As you see the signal is <b>crippled</b>. Large parts are simply missing.</div>
+<p>
+<div>This capture has been recroded by a very primitive Chinese oscilloscope: the OWON VDS 1022.</div>
+<div>This oscilloscope has a <b>ridiculous</b> capture buffer of 5 kilobyte!</b>
+<div>Never buy such a crap! Also the software from OWON is very low quality.</div>
+<p>
+<div>OWON offers the possiblity to capture frames continuously. It fills the tiny hardware buffer and sends it over USB.</div>
+<div>The problem is that this is not a real time capture because USB is too slow.</div>
+<div>So you see only snippets (frames) from the original signal, the parts between the snippets are lost.</div>
+<div>Oszi Waveform Analyzer draws a <b>red line</b> each time one capture frame ends and the next frame starts.</div>
 
 <a name="Download"></a>
 <h1>Download &amp; New Versions</h1>
@@ -941,7 +967,7 @@ etc....</td></tr>
 <li><div>New operations in the right-click menu (e.g. <b>decoders</b>) can be added to the class OperationManager.</div>
 <li><div>New <b>file formats</b> for export and import can be added to the class ExImportManager.</div>
 <li><div>New <b>post decoders</b> for UART, SPI, I²C data can be added to the class PostDecoderManager.</div>
-<li><div>Support for <b>Mac, Linux</b> can be added to the class PlatformManager.</div>
+<li><div>For <b>Linux</b> and <b>Mac</b> a small class for USB transfer must be added to the PlatformManager. See comments in source code.</div>
 </ul>
 <div>If you have problems with the communication over USB you can enable debugging with <code>TRACE_OUTPUT</code> in the class SCPI.</div>
 <div>When you add new features I recommend to clone an existing class and make all the required adaptions.</div>
