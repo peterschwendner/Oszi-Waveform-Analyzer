@@ -251,6 +251,7 @@ namespace OsziWaveformAnalyzer
         int              ms32_DispEnd;       // sample at right of display area
         int              ms32_CursorSpl;     // sample of the user's cursor
         decimal          md_RasterSamples;   // samples between 2 raster lines
+        String           ms_RasterLegend;    // displayed at bottom left
         int              ms32_DispSteps;     // samples between 2 pixels on the screen
         int              ms32_Zoom;          // zoom mode (1 sample is stretched over ms32_Zoom pixels)
         int              ms32_AnalogHeight;  // set by trackbar "Analog Height"
@@ -293,6 +294,11 @@ namespace OsziWaveformAnalyzer
         public int CursorSample
         {
             get { return ms32_CursorSpl; }
+        }
+
+        public bool RasterON
+        {
+            get { return md_RasterSamples > 0; }
         }
 
         // ----------------------------------------
@@ -465,14 +471,24 @@ namespace OsziWaveformAnalyzer
         }
 
         /// <summary>
-        /// Sets the sample position of the cursor and the interval of raster lines in samples.
+        /// Sets the sample position of the cursor and the interval of raster lines in pico seconds.
         /// Set -1 to turn off the Cursor / Raster lines.
         /// If the current resolution results in more raster lines than one line per 10 pixels, the raster lines are not drawn.
         /// </summary>
-        public void SetCursor(int s32_Cursor, decimal d_Raster)
+        public void SetCursor(int s32_Cursor, decimal d_Interval)
         {
-            ms32_CursorSpl   = s32_Cursor;
-            md_RasterSamples = d_Raster;
+            ms32_CursorSpl = s32_Cursor;
+
+            if (d_Interval > 0)
+            {
+                md_RasterSamples = d_Interval / mi_Capture.ms64_SampleDist;
+                ms_RasterLegend  = "Raster: " + Utils.FormatTimePico(d_Interval);
+            }
+            else
+            {
+                md_RasterSamples = -1m;
+                ms_RasterLegend  = null;
+            }
         }
 
         public void JumpToSample(int s32_Sample)
@@ -793,7 +809,7 @@ namespace OsziWaveformAnalyzer
                 }
             } // for (Channel)
 
-            i_DrawPos.ms32_SignalBot = Math.Max(s32_AnalTop, s32_DigiTop) + MARGIN;
+            i_DrawPos.ms32_SignalBot = Math.Max(s32_AnalTop, s32_DigiTop);
             return i_DrawPos;
         }
 
@@ -946,32 +962,49 @@ namespace OsziWaveformAnalyzer
         /// IMPORTANT:
         /// Without this function the arrow keys never get through to OnKeyDown()
         /// </summary>
-        protected override bool IsInputKey(Keys keyData) 
+        protected override bool IsInputKey(Keys e_Key) 
         {
-            if (keyData == Keys.Left || keyData == Keys.Right) 
-                return true;
-
-            return base.IsInputKey(keyData);
+            switch (e_Key)
+            {
+                case Keys.Left:
+                case Keys.Left  | Keys.Shift:
+                case Keys.Right:
+                case Keys.Right | Keys.Shift:
+                    return true;
+            }
+            return base.IsInputKey(e_Key);
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
 
-            if (e.Alt || e.Control || e.Shift || mi_Capture == null)
+            if (e.Alt || e.Control || mi_Capture == null)
                 return;
 
             // Move the cursor horizontally with keys arrow right and arrow left.
             if (ms32_CursorSpl >= 0)
             {
-                     if (e.KeyCode == Keys.Left)  ms32_CursorSpl = Math.Max(ms32_CursorSpl - ms32_DispSteps, 0);
-                else if (e.KeyCode == Keys.Right) ms32_CursorSpl = Math.Min(ms32_CursorSpl + ms32_DispSteps, mi_Capture.ms32_Samples - 1 - ms32_DispSteps);
+                int s32_Offset = ms32_DispSteps;
+                if (e.Shift) s32_Offset *= 8;
+
+                     if (e.KeyCode == Keys.Left)  ms32_CursorSpl = Math.Max(ms32_CursorSpl - s32_Offset, 0);
+                else if (e.KeyCode == Keys.Right) ms32_CursorSpl = Math.Min(ms32_CursorSpl + s32_Offset, mi_Capture.ms32_Samples - 1 - ms32_DispSteps);
                 else return;
 
                 mk_LastTipPos.X--; // otherwise tooltip stays unchanged
                 OnMouseMove(null); // update tooltip
                 Invalidate();      // draw cursor
-                return;
+            }
+            else // no cursor --> forward arrow keys to horizontal scrollbar
+            {
+                int s32_Offset = ms32_DispSteps * 5;
+                if (e.Shift) s32_Offset *= 5;
+
+                if (e.KeyCode == Keys.Left)  ms32_DispStart -= s32_Offset;
+                if (e.KeyCode == Keys.Right) ms32_DispStart += s32_Offset;
+
+                RecalcHorizScrollPos(true);
             }
         }
 
@@ -1333,10 +1366,21 @@ namespace OsziWaveformAnalyzer
             int s32_GraphWidth = mi_Capture.ms32_Samples * ms32_Zoom / ms32_DispSteps;
             i_Pos.ms32_SignalWidth = Math.Min(r_Area.Width, s32_GraphWidth);
 
-            // --------------- Cursor & Raster -------------
+            // ----------------- Separators ----------------
 
-            int s32_VertTop = mi_DrawPos.ms32_SignalTop - 50;
-            int s32_VertBot = mi_DrawPos.ms32_SignalBot + 50;
+            int s32_VertTop = mi_DrawPos.ms32_SignalTop;
+            int s32_VertBot = mi_DrawPos.ms32_SignalBot;
+
+            foreach (int s32_SeparatorSpl in mi_Capture.ms32_Separators)
+            {
+                if (s32_SeparatorSpl > s32_FirstSpl && s32_SeparatorSpl < s32_LastSpl)
+                {
+                    int X = (s32_SeparatorSpl + s32_RoundOffX) * ms32_Zoom / ms32_DispSteps + s32_SigLeft;
+                    i_Graphics.DrawLine(Pens.Red, X, s32_VertTop, X, s32_VertBot);
+                }
+            }
+
+            // --------------- Cursor & Raster -------------
 
             // Draw a dashed vertical line at the cursor position
             if (ms32_CursorSpl >= s32_FirstSpl)
@@ -1346,8 +1390,11 @@ namespace OsziWaveformAnalyzer
             }
 
             // Draw dotted vertical raster lines
+            String s_RasterOff = "     (wrong interval)";
             if (ms32_CursorSpl >= 0 && md_RasterSamples >= ms32_DispSteps * 10)
             {
+                s_RasterOff = "";
+
                 // Calculate raster lines before cursor and after cursor
                 int s32_Before = (int)((ms32_CursorSpl - s32_FirstSpl) / md_RasterSamples);
                 int s32_After  = (int)((s32_LastSpl - ms32_CursorSpl)  / md_RasterSamples);
@@ -1383,6 +1430,9 @@ namespace OsziWaveformAnalyzer
                     }
                 }
             }
+
+            if (ms_RasterLegend != null)
+                i_Graphics.DrawString(ms_RasterLegend + s_RasterOff, Font, Brushes.Gray, 7, r_Area.Bottom - 20);
 
             // ---------------- Channel Loop ---------------
   

@@ -151,7 +151,8 @@ namespace OsziWaveformAnalyzer
             public int           ms32_Samples;      // total count of samples in this capture
             public Int64         ms64_SampleDist;   // the time between 2 neighboured samples in pico seconds
             public int           ms32_AnalogRes;    // the resolution of the A/D converter in the oscilloscope in bits (Rigol = 8 bit)
-            public List<Channel> mi_Channels = new List<Channel>();
+            public List<Channel> mi_Channels     = new List<Channel>();
+            public int[]         ms32_Separators = new int[0]; // Sample positions where to draw a red vertical line (used for OWON Frames)
             // -------------------------------
             // The following are assigned in CalcAnalogMinMax()
             public int           ms32_AnalogCount;  // count of channels with analog data 
@@ -400,7 +401,7 @@ namespace OsziWaveformAnalyzer
 
         #endregion
 
-        public  const  String     APP_VERSION       = "v1.8"; // displayed in Main Window Title
+        public  const  String     APP_VERSION       = "v1.9"; // displayed in Main Window Title
         public  const  int        MIN_VALID_SAMPLES = 100;    // Error if loaded file contains less samples
         public  const  String     ERR_MIN_SAMPLES   = "The minimum amount of samples is 100.";
         public  const  String     NO_SAMPLES_LOADED = "No samples loaded. Use button 'Capture' or select an Input file.";

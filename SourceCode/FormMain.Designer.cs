@@ -89,10 +89,10 @@
             this.statusStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Visible;
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 503);
+            this.statusStrip.Location = new System.Drawing.Point(0, 494);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.ShowItemToolTips = true;
-            this.statusStrip.Size = new System.Drawing.Size(873, 22);
+            this.statusStrip.Size = new System.Drawing.Size(881, 22);
             this.statusStrip.TabIndex = 4;
             this.statusStrip.Text = "statusStrip";
             // 
@@ -134,7 +134,7 @@
             // 
             this.checkSepChannels.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkSepChannels.AutoSize = true;
-            this.checkSepChannels.Location = new System.Drawing.Point(512, 4);
+            this.checkSepChannels.Location = new System.Drawing.Point(520, 4);
             this.checkSepChannels.Name = "checkSepChannels";
             this.checkSepChannels.Size = new System.Drawing.Size(152, 17);
             this.checkSepChannels.TabIndex = 31;
@@ -367,7 +367,7 @@
             // 
             this.checkLegend.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkLegend.AutoSize = true;
-            this.checkLegend.Location = new System.Drawing.Point(670, 4);
+            this.checkLegend.Location = new System.Drawing.Point(678, 4);
             this.checkLegend.Name = "checkLegend";
             this.checkLegend.Size = new System.Drawing.Size(62, 17);
             this.checkLegend.TabIndex = 33;
@@ -406,7 +406,7 @@
             this.tabControl.Margin = new System.Windows.Forms.Padding(0);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(846, 389);
+            this.tabControl.Size = new System.Drawing.Size(854, 380);
             this.tabControl.TabIndex = 100;
             // 
             // tabOszi
@@ -414,7 +414,7 @@
             this.tabOszi.Controls.Add(this.osziPanel);
             this.tabOszi.Location = new System.Drawing.Point(4, 22);
             this.tabOszi.Name = "tabOszi";
-            this.tabOszi.Size = new System.Drawing.Size(838, 363);
+            this.tabOszi.Size = new System.Drawing.Size(846, 354);
             this.tabOszi.TabIndex = 0;
             this.tabOszi.Text = "Oszi";
             this.tabOszi.UseVisualStyleBackColor = true;
@@ -429,7 +429,7 @@
             this.osziPanel.Location = new System.Drawing.Point(0, 0);
             this.osziPanel.Name = "osziPanel";
             this.osziPanel.SeparateChannels = false;
-            this.osziPanel.Size = new System.Drawing.Size(838, 363);
+            this.osziPanel.Size = new System.Drawing.Size(846, 354);
             this.osziPanel.TabIndex = 0;
             this.osziPanel.TabStop = true;
             this.osziPanel.Zoom = 0;
@@ -439,7 +439,7 @@
             this.tabDecoder.Controls.Add(this.rtfViewer);
             this.tabDecoder.Location = new System.Drawing.Point(4, 22);
             this.tabDecoder.Name = "tabDecoder";
-            this.tabDecoder.Size = new System.Drawing.Size(1009, 502);
+            this.tabDecoder.Size = new System.Drawing.Size(838, 363);
             this.tabDecoder.TabIndex = 1;
             this.tabDecoder.Text = "Decoder";
             this.tabDecoder.UseVisualStyleBackColor = true;
@@ -451,7 +451,7 @@
             this.rtfViewer.ForeColor = System.Drawing.Color.White;
             this.rtfViewer.Location = new System.Drawing.Point(0, 0);
             this.rtfViewer.Name = "rtfViewer";
-            this.rtfViewer.Size = new System.Drawing.Size(1009, 502);
+            this.rtfViewer.Size = new System.Drawing.Size(838, 363);
             this.rtfViewer.TabIndex = 1;
             this.rtfViewer.Text = "";
             // 
@@ -464,7 +464,7 @@
             this.panelHint.Controls.Add(this.checkLegend);
             this.panelHint.Location = new System.Drawing.Point(131, 108);
             this.panelHint.Name = "panelHint";
-            this.panelHint.Size = new System.Drawing.Size(730, 22);
+            this.panelHint.Size = new System.Drawing.Size(738, 22);
             this.panelHint.TabIndex = 0;
             // 
             // pictureLogo
@@ -529,7 +529,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
-            this.ClientSize = new System.Drawing.Size(873, 525);
+            this.ClientSize = new System.Drawing.Size(881, 516);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.trackDigitalHeight);
             this.Controls.Add(this.trackAnalogHeight);
@@ -542,7 +542,7 @@
             this.Controls.Add(this.statusStrip);
             this.ForeColor = System.Drawing.Color.White;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MinimumSize = new System.Drawing.Size(700, 350);
+            this.MinimumSize = new System.Drawing.Size(700, 474);
             this.Name = "FormMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Oszi";
