@@ -199,12 +199,13 @@ namespace OsziWaveformAnalyzer
         public const int MIN_DIGITAL_HEIGHT = 25;  // minimum pixel height of digital signals + 1 x 5 pixel margin
         public const int MAX_DIGITAL_HEIGHT = 200; // maximum pixel height of digital signals + 1 x 5 pixel margin
         
-        const int  SIGNAL_PEN_WIDTH = 1;   // pixel width of line pen for analog and digital signal
-        const Byte ALPHA            = 245; // Colors should not be 100% opaque. When Separate Channels is OFF, the bottom channels shine through.
-        const int  MARGIN           = 10;  // Leave a margin of 10 pixels above and below all signals.
-        const int  CHECKBOX_LEFT    =  6;  // Checkbox from left space
-        const int  LEGEND_HEIGHT    = 14;  // Height of Name String in pixels
-        const int  SCROLL_STEPS     = 25;  // The pixels for horizontal scrolling (SmallChange) when pressing the scollbar buttons
+        const int  SIGNAL_PEN_WIDTH  = 1;   // pixel width of line pen for analog and digital signal
+        const Byte ALPHA             = 245; // Colors should not be 100% opaque. When Separate Channels is OFF, the bottom channels shine through.
+        const int  MARGIN            = 10;  // Leave a margin of 10 pixels above and below all signals.
+        const int  CHECKBOX_LEFT     =  6;  // Checkbox from left space
+        const int  LEGEND_HEIGHT     = 14;  // Height of Name String in pixels
+        const int  SCROLL_STEPS      = 25;  // The pixels for horizontal scrolling (SmallChange) when pressing the scollbar buttons
+        const int  MIN_CURSOR_HEIGHT = 150; // For very snamll signals (e.g. one digital channel) show a minimum height of the cursor
 
         // ================================== STATIC ===================================
 
@@ -1366,10 +1367,18 @@ namespace OsziWaveformAnalyzer
             int s32_GraphWidth = mi_Capture.ms32_Samples * ms32_Zoom / ms32_DispSteps;
             i_Pos.ms32_SignalWidth = Math.Min(r_Area.Width, s32_GraphWidth);
 
-            // ----------------- Separators ----------------
+            // --------------- Vertical Lines --------------
 
-            int s32_VertTop = mi_DrawPos.ms32_SignalTop;
-            int s32_VertBot = mi_DrawPos.ms32_SignalBot;
+            int s32_VertTop  = mi_DrawPos.ms32_SignalTop;
+            int s32_VertBot  = mi_DrawPos.ms32_SignalBot;
+            int s32_VertDiff = MIN_CURSOR_HEIGHT - (s32_VertBot - s32_VertTop);
+            if (s32_VertDiff > 0)
+            {
+                s32_VertTop -= s32_VertDiff / 2;
+                s32_VertBot += s32_VertDiff / 2;
+            }
+
+            // ----------------- Separators ----------------
 
             foreach (int s32_SeparatorSpl in mi_Capture.ms32_Separators)
             {
