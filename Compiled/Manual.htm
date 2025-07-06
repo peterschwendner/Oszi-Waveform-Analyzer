@@ -949,12 +949,12 @@ etc....</td></tr>
 <div>Files with extension CAP are a proprietary and undocumented OWON format, that Oszi Waveform Analyzer can import.</div>
 <div>As you see the signal is <b>crippled</b>. Large parts are simply missing.</div>
 <p>
-<div>This capture has been recroded by a very primitive Chinese oscilloscope: the OWON VDS 1022.</div>
-<div>This oscilloscope has a <b>ridiculous</b> capture buffer of 5 kilobyte!</b>
-<div>Never buy such a crap! Also the software from OWON is very low quality.</div>
+<div>This capture has been recroded by a very cheap Chinese oscilloscope: the OWON VDS 1022.</div>
+<div>This oscilloscope has a ridiculous capture buffer of 5 kilobyte.</b>
+<div>For any professional use this is insufficient. Also the software from OWON is of poor quality.</div>
 <p>
 <div>OWON offers the possiblity to capture frames continuously. It fills the tiny hardware buffer and sends it over USB.</div>
-<div>The problem is that this is not a real time capture because USB is too slow.</div>
+<div>But this is not a real time capture and they use only Full speed USB (12 MHz) which is too slow.</div>
 <div>So you see only snippets (frames) from the original signal, the parts between the snippets are lost.</div>
 <div>Oszi Waveform Analyzer draws a <b>red line</b> each time one capture frame ends and the next frame starts.</div>
 
@@ -975,11 +975,6 @@ etc....</td></tr>
 <div>Please study the <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer" target="_blank">source code</a> <b>thoroughly</b> until you understand it before you write any new code.</div>
 <div>If you write a new <b>decoder</b> it is mandatory that you provide a good quality OSZI file for testing it.</div>
 <div>Please send me an <b>email</b> if you want to support this project. May be someone is already working on your task.</div>
-<p>
-<div><span class="Error">NOTE:</span> This project has been designed <b>by purpose</b> to run also on .NET framework 4.0</div>
-<div>Windows 7 was the best operating system that Microsoft has ever released. Many people are still using it (like me).</div>
-<div>Framework 4.0 supports also Windows 7 users. Please compile targeting to framework 4.0</div>
-
 
 <p>
 <form action="https://netcult.ch/elmue/Download.php" method="get" target="_blank">
