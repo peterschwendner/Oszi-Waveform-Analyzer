@@ -169,7 +169,7 @@
         <div><a href="#Features"         class="MenuLink" onClick="ShowMenu(false)">Features</a></div>
         <div><a href="#Decoders"         class="MenuLink" onClick="ShowMenu(false)">Implemented Decoders</a></div>
         <div><a href="#DemoFiles"        class="MenuLink" onClick="ShowMenu(false)">Demo Files</a></div>
-        <div><a href="#Menu"             class="MenuLink" onClick="ShowMenu(false)">Right-Click Menu</a></div>
+        <div><a href="#Menu"             class="MenuLink" onClick="ShowMenu(false)">Mouse, Menu and Keyboard</a></div>
         <div><a href="#MeasureTime"      class="MenuLink" onClick="ShowMenu(false)">Measure Timing</a></div>
         <div><a href="#AD_Conversion"    class="MenuLink" onClick="ShowMenu(false)">A/D Conversion</a></div>
         <div><a href="#NoiseSuppression" class="MenuLink" onClick="ShowMenu(false)">Noise Suppression</a></div>
@@ -279,11 +279,14 @@
 
 
 <a name="Menu"></a>
-<h1>Right-Click Menu</h1>
+<h1>Mouse, Menu and Keyboard</h1>
 
+<h3>Mouse</h3>
+<div>When you right-click on a channel a menu will open:</div>
+<p>
 <img src="Images/RightClickMenu.png" width="741" height="468" alt="Oszi Waveform Analyzer - The right-click menu">
 <p>
-<div>When you right-click on a channel you get a dynamic menu, which means that the menu items depend on what you click.</div>
+<div>The menu is dynamic, which means that the menu items depend on what you click.</div>
 <div>The <b>logic analyzer</b> functions require a digital channel, so you get less menu items when you click an analog channel.</div>
 <div>On the other hand there are menu items like the <b>Noise Suppression</b> which are only available for analog channels.</div>
 <div>You can easily create a digital channel from an analog channel with menu item <b>A/D Converter</b>.</div>
@@ -292,6 +295,19 @@
 <div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
 <div>You can expand this menu by writing a new class and registering it in the <b>OperationManager</b>.</div>
 
+<h3>Keyboard</h3>
+
+<table class="DataTable">
+<tr><th>Key</th><th>Function</th></tr>
+<tr><td>Arrow Left</td><td>Move the signal to the left</td></tr>
+<tr><td>Arrow Left + Shift</td><td>Move the signal fast to the left</td></tr>
+<tr><td>Arrow Right</td><td>Move the signal to the right</td></tr>
+<tr><td>Arrow Right + Shift</td><td>Move the signal fast to the right</td></tr>
+<tr><td>Arrow Up</td><td>Zoom in (Increase the display factor)</td></tr>
+<tr><td>Arrow Down</td><td>Zoom out (Decrease the display factor)</td></tr>
+</table>
+
+<div>If a cursor is set, the keys Arrow Right and Arrow Left move the cursor instead. See next chapter.</div>
 
 <a name="MeasureTime"></a>
 <h1>Measure Timing</h1>
@@ -309,15 +325,13 @@
 <div>You can also select the menu option <b>Set cursor and show raster lines</b>.</div>
 <div>Here you see dotted vertical raster lines every 2 µs which corresponds to the CAN bus baudrate of 500 kBaud.</div>
 <p>
+<div>You can move the cursor and the raster with keys <b>Arrow Left</b> and <b>Arrow Right</b>.</div>
+<div>If you additionally press the SHIFT key the moving is faster.</div>
+<p>
 <div>You can <b>remove</b> the cursor and raster by right-clicking the black background outside the channels.</div>
 <p>
 <div>A <b>vertical</b> voltage-related raster is not required because the tooltip shows anywhere the exact voltage under the mouse pointer.</div>
 <div>And you always see the <b>peak voltages</b> of the signal in the legend at the left (here: CAN High from 1.98V to 3.48V)</div>
-
-<h3>Keyboard</h3>
-<div>You can move the cursor and the raster with keys <b>Arrow Left</b> and <b>Arrow Right</b>.</div>
-<div>If you additionally press the SHIFT key the moving is faster.</div>
-<div>If you turn off the cursor in the menu you can move the entire signal with the arrow keys (and SHIFT).</div>
 
 <a name="AD_Conversion"></a>
 <h1>A/D Conversion</h1>
