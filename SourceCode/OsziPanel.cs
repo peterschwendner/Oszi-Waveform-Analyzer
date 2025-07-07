@@ -967,6 +967,8 @@ namespace OsziWaveformAnalyzer
         {
             switch (e_Key)
             {
+                case Keys.Up:   // handled in FormMain
+                case Keys.Down: // handled in FormMain
                 case Keys.Left:
                 case Keys.Left  | Keys.Shift:
                 case Keys.Right:
