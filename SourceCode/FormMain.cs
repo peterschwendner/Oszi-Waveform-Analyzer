@@ -96,6 +96,7 @@ namespace OsziWaveformAnalyzer
                 mi_ExImport   = new ExImportManager (textFileName, comboOsziModel);
 
                 osziPanel.Init(lblInfo, lblDispSamples, checkSepChannels);
+                osziPanel.KeyDown += new KeyEventHandler(OnOsziPanelKeyDown);
 
                 statusLabel   .Text = "";
                 lblDispSamples.Text = "";
@@ -262,6 +263,7 @@ namespace OsziWaveformAnalyzer
             Utils.RegWriteInteger(e_KeyAnalog, trackAnalogHeight.Value);
             UpdateTrackbars();
             osziPanel.RecalculateEverything();
+            osziPanel.Focus();
         }
 
         private void trackDigital_Scroll(object sender, EventArgs e)
@@ -269,6 +271,7 @@ namespace OsziWaveformAnalyzer
             Utils.RegWriteInteger(eRegKey.DigitalHeight, trackDigitalHeight.Value);
             UpdateTrackbars();
             osziPanel.RecalculateEverything();
+            osziPanel.Focus();
         }
 
         private void UpdateTrackbars()
@@ -312,6 +315,20 @@ namespace OsziWaveformAnalyzer
         }
 
         // -----------------------------------------------------
+
+        void OnOsziPanelKeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                // Arrow Left + Arrow Right are handled in OsziPanel
+                case Keys.Up:
+                    comboFactor.SelectedIndex = Math.Max(comboFactor.SelectedIndex - 1, 0);
+                    break;
+                case Keys.Down:
+                    comboFactor.SelectedIndex = Math.Min(comboFactor.SelectedIndex + 1, comboFactor.Items.Count - 1);
+                    break;
+            }
+        }
 
         private void comboFactor_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -424,6 +441,7 @@ namespace OsziWaveformAnalyzer
             }
 
             ImportFile(i_ComboPath.ms_Path);
+            osziPanel.Focus();
         }
 
         /// <summary>
