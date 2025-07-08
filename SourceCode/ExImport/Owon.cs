@@ -60,8 +60,8 @@ using BigEndianReader   = ExImport.BigEndianReader;
 namespace ExImport
 {
     /// <summary>
-    /// This class implements BIN file import for the OWON oscilloscopes VDS1022 and VDS2052.
-    /// The format of the proprietary BIN files from OWON is completely undocumented.
+    /// This class implements BIN, CAP and CSV file import for the OWON oscilloscopes VDS1022 and VDS2052.
+    /// The format of the proprietary BIN and CAP files from OWON is completely undocumented.
     /// This class is based on reverse engineering the OWON Java software owon-vds-tiny-1.1.5-cf19.jar
     /// Saving  BIN files see: com.owon.uppersoft.dso.model.DataSaverTiny.java
     /// Loading BIN files see: com.owon.uppersoft.dso.model.DataImporterTiny.java
@@ -455,9 +455,8 @@ namespace ExImport
         // ======================================================================================
 
         /// <summary>
-        /// Parse CAP files which contain multiple capture frames of 5 kilobyte each.
-        /// The oscilloscope has a ridiculous buffer of 5 KILO Byte / channel!
-        /// This does not work work for high sample rates and there are gaps between the frames due to USB delays.
+        /// Parse CAP files which contain multiple capture frames of 4000 samples each.
+        /// This does not work work for high sample rates and there are gaps between the frames due to USB transfer delays.
         /// </summary>
         private static Capture ParseCAP(BigEndianReader i_Reader, int[] s32_ProbeMultiply, int s32_FileVersion, ref bool b_Abort)
         {
@@ -546,13 +545,34 @@ namespace ExImport
 
         /// <summary>
         /// The stupid OWON CSV file has a DECREASING time!
-        /// The Voltage is in milli Volt
+        /// The Voltage is in milli Volt.
+        /// Each version of this CRAP software stores another format!
         /// 
+        /// This is version 1.1.5
+        /// -----------------------
         /// #,Time(ms),CH1(mV)
-        /// 0,3.0000000,10320.00
-        /// 1,2.9960000,10320.00
-        /// 2,2.9920000,10240.00
-        /// 3,2.9880000,10240.00
+        /// 0,3.0000000,10320.00              --> 3 ms
+        /// 1,2.9960000,10320.00              --> 2.996 ms
+        /// 2,2.9920000,10240.00              --> 2.992 ms
+        /// 3,2.9880000,10240.00              --> 2.988 ms
+        /// 
+        /// This is version 1.1.7
+        /// -----------------------
+        /// Unit:(mV)
+        /// ,CH1
+        /// Frequency,866.567 Hz
+        /// Period,1.154 ms
+        /// 1,10480.00
+        /// 2,10480.00
+        /// 3,10480.00
+        /// 
+        /// It is not anymore possible to import the CSV file from the garbage version 1.1.7
+        /// The time information is missing.
+        /// The values of Frequency and Period are complete garbage.
+        /// The above example is from a capture with 1 ms/div
+        /// The timing information is completely missing in the file.
+        /// This file cannot be imported.
+        /// Not even the CRAP application itself can load this file.
         /// </summary>
         public static Capture ParseCsvFile(String s_Path, ref bool b_Abort)
         {
