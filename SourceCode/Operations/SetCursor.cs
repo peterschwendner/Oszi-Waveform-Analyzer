@@ -65,22 +65,17 @@ namespace Operations
         /// </summary>
         public void GetMenuItems(Channel i_Channel, bool b_Analog, List<GraphMenuItem> i_Items)
         {
-            // if the user clicks outside a channel --> offer option to remove the cursor and raster.
-            if (i_Channel == null)
+            if (Utils.OsziPanel.CursorSample >= 0) // only if cursor exists
             {
-                if (Utils.OsziPanel.CursorSample >= 0)
-                {
-                    GraphMenuItem i_Remove = new GraphMenuItem();
-                    i_Remove.ms_MenuText  = "Remove the cursor";
-                    i_Remove.ms_ImageFile = "CursorRemove.ico";
-                    i_Remove.mo_Tag       = "Remove";
+                GraphMenuItem i_Remove = new GraphMenuItem();
+                i_Remove.ms_MenuText  = "Remove the cursor";
+                i_Remove.ms_ImageFile = "CursorRemove.ico";
+                i_Remove.mo_Tag       = "Remove";
 
-                    if (Utils.OsziPanel.RasterON)
-                        i_Remove.ms_MenuText  = "Remove the cursor and the raster";
+                if (Utils.OsziPanel.RasterON)
+                    i_Remove.ms_MenuText  = "Remove the cursor and the raster";
 
-                    i_Items.Add(i_Remove);
-                }
-                return;
+                i_Items.Add(i_Remove);
             }
 
             GraphMenuItem i_Cursor = new GraphMenuItem();
@@ -90,7 +85,7 @@ namespace Operations
             i_Items.Add(i_Cursor);
 
             GraphMenuItem i_Raster = new GraphMenuItem();
-            i_Raster.ms_MenuText  = "Set cursor and show raster lines";
+            i_Raster.ms_MenuText  = "Set cursor and show raster lines (move with arrow keys)";
             i_Raster.ms_ImageFile = "CursorRaster.ico";
             i_Raster.mo_Tag       = "Raster";
             i_Items.Add(i_Raster);
