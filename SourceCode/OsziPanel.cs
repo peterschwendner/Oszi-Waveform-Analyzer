@@ -251,6 +251,8 @@ namespace OsziWaveformAnalyzer
         int              ms32_DispStart;     // sample at left  of display area
         int              ms32_DispEnd;       // sample at right of display area
         int              ms32_CursorSpl;     // sample of the user's cursor
+        Point            mk_MouseDownLoc;    // Position of left-mouse down event
+        Point            mk_MouseDownStart;  // X = ms32_DispStart, Y = Autscroll.Y
         decimal          md_RasterSamples;   // samples between 2 raster lines
         String           ms_RasterLegend;    // displayed at bottom left
         int              ms32_DispSteps;     // samples between 2 pixels on the screen
@@ -441,7 +443,8 @@ namespace OsziWaveformAnalyzer
             mi_AlignBottomRight.Alignment     = StringAlignment.Far;
             mi_AlignBottomRight.LineAlignment = StringAlignment.Far;
 
-            ms32_DispSteps = 1; // must never be zero
+            ms32_DispSteps  = 1; // must never be zero
+            mk_MouseDownLoc = Point.Empty;
         }
 
         // =====================================================================================
@@ -580,9 +583,10 @@ namespace OsziWaveformAnalyzer
                 // But when SETTING a new value it must be positive!
                 Point k_Pos = AutoScrollPosition;
                 k_Pos.X  = (int)(d_ReverseFactor * s32_GraWidth); // pixels
+                k_Pos.Y  = -k_Pos.Y;
                 AutoScrollPosition = k_Pos;
                 
-                // If the scrolbar was far at the right and the screen area has become narrower by a higher division factor, 
+                // If the scrollbar was far at the right and the screen area has become narrower by a higher division factor, 
                 // the scollbar is shorter now and ms32_DispStart is wrong here.
                 // In the next step ms32_DispStart must be adapted to the real scroll position.
             }
@@ -1001,6 +1005,8 @@ namespace OsziWaveformAnalyzer
             }
             else // no cursor --> forward arrow keys to horizontal scrollbar
             {
+                // Do not send WM_HSCROLL here for compatibility with Linux / Mac
+
                 int s32_Offset = ms32_DispSteps * 5;
                 if (e.Shift) s32_Offset *= 5;
 
@@ -1014,12 +1020,57 @@ namespace OsziWaveformAnalyzer
         // =====================================================================================
 
         /// <summary>
+        /// Right button down: show the dynamic right-click menu
+        /// Left  button down: move the entire signal in OnMouseMove()
+        /// </summary>
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+
+            Focus(); // required for mouse wheel to work
+
+            mi_Tooltip.Hide(this);
+
+            mk_MouseDownLoc     = e.Location;
+            mk_MouseDownStart.X = ms32_DispStart;
+            mk_MouseDownStart.Y = -AutoScrollPosition.Y;
+           
+            Point k_Mouse;
+            int s32_Sample = GetSampleUnderMouse(out k_Mouse);
+
+            if (e.Button == MouseButtons.Right)
+                ShowMenu(k_Mouse, s32_Sample);
+        }
+
+        /// <summary>
         /// Show tooltip, update checkboxes
         /// </summary>
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            const String SEPARATOR = "—————————————\n";
             base.OnMouseMove(e);
+
+            if (mi_Capture == null || ms32_Zoom == 0)
+                return;
+
+            // Move the signal horizontally and vertically while the left mouse button is down
+            if (mk_MouseDownLoc != Point.Empty)
+            {
+                int s32_MoveX  = mk_MouseDownLoc.X - e.X;
+                int s32_MoveY  = mk_MouseDownLoc.Y - e.Y;
+
+                if (VerticalScroll.Visible)
+                {
+                    // ATTENTION: AutoScollPosition uses negative values for X and Y.
+                    // But when SETTING a new value it must be positive!
+                    AutoScrollPosition = new Point(-AutoScrollPosition.X, mk_MouseDownStart.Y + s32_MoveY);
+                }
+
+                ms32_DispStart = mk_MouseDownStart.X + s32_MoveX * ms32_DispSteps / ms32_Zoom;
+                RecalcHorizScrollPos(true);
+                return;
+            }
+
+            const String SEPARATOR = "—————————————\n";
 
             String s_Tooltip = null;
             Point  k_Mouse;
@@ -1179,24 +1230,13 @@ namespace OsziWaveformAnalyzer
         {
             base.OnMouseLeave(e);
             mi_Tooltip.Hide(this);
+            mk_MouseDownLoc = Point.Empty;
         }
 
-        /// <summary>
-        /// Show the dynamic right-click menu
-        /// </summary>
-        protected override void OnMouseDown(MouseEventArgs e)
+        protected override void OnMouseUp(MouseEventArgs e)
         {
-            base.OnMouseDown(e);
-
-            Focus(); // required for mouse wheel to work
-
-            mi_Tooltip.Hide(this);
-           
-            Point k_Mouse;
-            int s32_Sample = GetSampleUnderMouse(out k_Mouse);
-
-            if (e.Button == MouseButtons.Right)
-                ShowMenu(k_Mouse, s32_Sample);
+            base.OnMouseUp(e);
+            mk_MouseDownLoc = Point.Empty;
         }
 
         // --------------------------------------------------------
