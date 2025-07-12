@@ -226,8 +226,6 @@
 <a name="Features"></a>
 <h3>Features</h3>
 <ul>
-<li><div><span class="Error">NEW in v2.0</span>: Bugfix in mathematical operations if result channel was used as input.</div>
-<li><div><span class="Error">NEW in v1.9</span>: Added BIN, CSV and CAP file import for <b>OWON</b> oscilloscopes VDS 1021, VDS 1022, VDS 2052.</div>
 <li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB, VXI or TCP using the <b>SCPI</b> protocol.</div>
 <li><div>Oszi Waveform Analyzer does <span class="Error">NOT</span> require any huge installations like NI-VISA (1 GB), TekVISA (100 MB), IVI, UltraSigma (500 MB).</div>
 <li><div>Oszi Waveform Analyzer requires only the .NET framework 4.0 or higher.</div>
@@ -249,6 +247,8 @@
 <li><div>Oszi Waveform Analyzer allows you to analyze very specific signals that you cannot even analyze with most expensive commercial products.</div>
 <li><div>Oszi Waveform Analyzer is <b>high quality</b> software, written by a software and hardware developer with 40 years of programming and electronic experience.</div>
 <li><div>Oszi Waveform Analyzer is optimized for <b>maximum speed</b> in every line of it's very clean source code.</div>
+<li><div><span class="Error">NEW in v1.9</span>: Added BIN, CSV and CAP file import for <b>OWON</b> oscilloscopes VDS 1021, VDS 1022, VDS 2052.</div>
+<li><div><span class="Error">NEW in v2.0</span>: Bugfix in mathematical operations if result channel was used as input (thanks to Peter).</div>
 </ul>
 
 <a name="Decoders"></a>
@@ -608,7 +608,7 @@
 <a name="DecodeIR"></a>
 <h1>Decode Infrared Remote Control</h1>
 
-<div>I impemented this decoder because I already had the code ready in my project <a href="https://netcult.ch/elmue/IR-Computer-Remote-Control" target="_blank">Infrared Remote Control for the Computer</a></div>
+<div>I implemented this decoder because I already had the code ready in my project <a href="https://netcult.ch/elmue/IR-Computer-Remote-Control" target="_blank">Infrared Remote Control for the Computer</a></div>
 <div>which can control the MP3 player on the computer with the IR remote control of a TV, amplifier, DVD player, SAT tuner or whatever. </div>
 <div>It connects over USB to the computer and injects keystrokes which control any music player that can be controlled by the keyboard.</div>
 <p>
@@ -697,13 +697,13 @@
 <h3>Current Implementation of SCPI Commands</h3>
 
 <table class="DataTable">
-<tr><th>Oscilloscope Brand</th><th>Serie</th><th>Import</th><th>SCPI Transfer</th></tr>
-<tr><td class="Green">Rigol</td><td>DS1000Z</td> <td>CSV</td><td>YES</td></tr>
-<tr><td class="Green">Rigol</td><td>MSO1000Z</td><td>CSV</td><td>YES</td></tr>
-<tr><td class="Green">Rigol</td><td>DS1000D</td> <td>CSV</td><td>YES</td></tr>
-<tr><td class="Green">Rigol</td><td>DS1000E</td> <td>CSV</td><td>YES</td></tr>
-<tr><td class="Green">OWON</td><td>VDS1022</td> <td>CSV, BIN, CAP&nbsp;</td><td>NO</td></tr>
-<tr><td class="Green">OWON</td><td>VDS2052</td> <td>CSV, BIN, CAP</td><td>NO</td></tr>
+<tr><th>Oscilloscope Brand</th><th>Serie</th><th>File Import</th><th>SCPI Transfer</th></tr>
+<tr><td class="Green">Rigol</td><td>DS1000Z</td> <td>CSV</td><td>USB, VXI, TCP</td></tr>
+<tr><td class="Green">Rigol</td><td>MSO1000Z</td><td>CSV</td><td>USB, VXI, TCP</td></tr>
+<tr><td class="Green">Rigol</td><td>DS1000D</td> <td>CSV</td><td>USB (no RJ-45 plug available)</td></tr>
+<tr><td class="Green">Rigol</td><td>DS1000E</td> <td>CSV</td><td>USB (no RJ-45 plug available)</td></tr>
+<tr><td class="Green">OWON</td><td>VDS1022</td> <td>CSV, BIN, CAP&nbsp;</td><td>not yet implemented</td></tr>
+<tr><td class="Green">OWON</td><td>VDS2052</td> <td>CSV, BIN, CAP</td><td>not yet implemented</td></tr>
 <tr><td class="Red">Tektronix</td>           <td>TODO</td><td colspan="2">Download <a href="https://download.tek.com/manual/MSO-DPO5000-B-DPO7000-C-DPO70000-B-C-D-DX-SX-DSA70000-B-C-D-and-MSO70000-C-DX-077001019.pdf" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Rohde &amp; Schwarz</td> <td>TODO</td><td colspan="2">Download <a href="https://www.batronix.com/files/Rohde-&-Schwarz/Oscilloscope/HMO1xx2/HMO1002_1202_ProgrammingManual_en.pdf" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Agilent</td>             <td>TODO</td><td colspan="2">Download <a href="https://ridl.cfd.rit.edu/products/manuals/Agilent/oscilloscopes/6000_series_prog_guide.pdf" target="_blank">Manual</a></td></tr>
