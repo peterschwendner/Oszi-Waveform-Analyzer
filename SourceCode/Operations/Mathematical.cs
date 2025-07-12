@@ -289,20 +289,23 @@ namespace Operations
 
         void Prepare()
         {
-            mi_Result = null;
-
             if (mb_Single)
+            {
+                mi_Result = null;
                 return;
+            }
 
             int s32_Samples = OsziPanel.CurCapture.ms32_Samples;
-            mi_Result       = OsziPanel.CurCapture.FindOrCreateChannel(textResult.Text, mi_ChannelA);
+            mi_Result       = OsziPanel.CurCapture.FindOrCreateChannel(textResult.Text, mi_ChannelA, mi_ChannelB);
             
             if (mb_Analog)
             {
                 if (mi_ChannelA.mf_Analog == null || mi_ChannelB.mf_Analog == null)
                     throw new Exception("If you right-click on an analog channel you must select two analog channels.");
 
-                mi_Result.mf_Analog = new float[s32_Samples];
+                if (mi_Result.mf_Analog == null)
+                    mi_Result.mf_Analog = new float[s32_Samples];
+
                 mi_Result.mi_SampleMinMax.mb_AnalogOK = false; // must be re-calculated
             }
             else // digital
@@ -310,10 +313,15 @@ namespace Operations
                 if (mi_ChannelA.mu8_Digital == null || mi_ChannelB.mu8_Digital == null)
                     throw new Exception("If you right-click on a digital channel you must select two digital channels.");
 
-                mi_Result.mu8_Digital = new Byte[s32_Samples];
+                if (mi_Result.mu8_Digital == null)
+                    mi_Result.mu8_Digital = new Byte[s32_Samples];
+
                 mi_Result.mi_MarkRows = null;
                 mi_Result.mi_SampleMinMax.mb_DigitalOK = false; // must be re-calculated
             }
+
+            if (!comboChannelB.Items.Contains(mi_Result))
+                 comboChannelB.Items.Add(mi_Result);
         }
     }
 }

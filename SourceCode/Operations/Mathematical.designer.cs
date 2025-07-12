@@ -46,9 +46,9 @@
             this.textParameter = new System.Windows.Forms.TextBox();
             this.lblUnit = new System.Windows.Forms.Label();
             this.groupSingle = new System.Windows.Forms.GroupBox();
-            this.groupDual = new System.Windows.Forms.GroupBox();
             this.lblChannel = new System.Windows.Forms.Label();
             this.lblName = new System.Windows.Forms.Label();
+            this.groupDual = new System.Windows.Forms.GroupBox();
             this.groupSingle.SuspendLayout();
             this.groupDual.SuspendLayout();
             this.SuspendLayout();
@@ -130,9 +130,9 @@
             this.label4.ForeColor = System.Drawing.Color.White;
             this.label4.Location = new System.Drawing.Point(8, 81);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(82, 13);
+            this.label4.Size = new System.Drawing.Size(84, 13);
             this.label4.TabIndex = 12;
-            this.label4.Text = "Result Channel:";
+            this.label4.Text = "Output Channel:";
             // 
             // textResult
             // 
@@ -229,24 +229,6 @@
             this.groupSingle.TabStop = false;
             this.groupSingle.Text = " Single Channel ";
             // 
-            // groupDual
-            // 
-            this.groupDual.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupDual.Controls.Add(this.label4);
-            this.groupDual.Controls.Add(this.textResult);
-            this.groupDual.Controls.Add(this.lblChannelB);
-            this.groupDual.Controls.Add(this.lblChannelA);
-            this.groupDual.Controls.Add(this.lblNameA);
-            this.groupDual.Controls.Add(this.comboChannelB);
-            this.groupDual.ForeColor = System.Drawing.Color.White;
-            this.groupDual.Location = new System.Drawing.Point(14, 142);
-            this.groupDual.Name = "groupDual";
-            this.groupDual.Size = new System.Drawing.Size(276, 114);
-            this.groupDual.TabIndex = 120;
-            this.groupDual.TabStop = false;
-            this.groupDual.Text = " Dual Channel ";
-            // 
             // lblChannel
             // 
             this.lblChannel.AutoSize = true;
@@ -266,6 +248,24 @@
             this.lblName.Size = new System.Drawing.Size(77, 13);
             this.lblName.TabIndex = 42;
             this.lblName.Text = "Channel Name";
+            // 
+            // groupDual
+            // 
+            this.groupDual.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupDual.Controls.Add(this.label4);
+            this.groupDual.Controls.Add(this.textResult);
+            this.groupDual.Controls.Add(this.lblChannelB);
+            this.groupDual.Controls.Add(this.lblChannelA);
+            this.groupDual.Controls.Add(this.lblNameA);
+            this.groupDual.Controls.Add(this.comboChannelB);
+            this.groupDual.ForeColor = System.Drawing.Color.White;
+            this.groupDual.Location = new System.Drawing.Point(14, 142);
+            this.groupDual.Name = "groupDual";
+            this.groupDual.Size = new System.Drawing.Size(276, 114);
+            this.groupDual.TabIndex = 120;
+            this.groupDual.TabStop = false;
+            this.groupDual.Text = " Dual Channel ";
             // 
             // Mathematical
             // 
