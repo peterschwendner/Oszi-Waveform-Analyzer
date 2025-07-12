@@ -212,9 +212,10 @@ namespace OsziWaveformAnalyzer
             }
 
             /// <summary>
-            /// returns an existing channel with the given name or inserts a new channel with the given name behind i_InsertAfter
+            /// returns an existing channel with the given name or inserts a new channel with the given name 
+            /// behind the last channel in i_InsertAfter
             /// </summary>
-            public Channel FindOrCreateChannel(String s_Name, Channel i_InsertAfter)
+            public Channel FindOrCreateChannel(String s_Name, params Channel[] i_InsertAfter)
             {
                 foreach(Channel i_Channel in mi_Channels)
                 {
@@ -246,9 +247,13 @@ namespace OsziWaveformAnalyzer
 
                 if (i_InsertAfter != null)
                 {
-                    // Insert the new channel directly behind i_InsertAfter
-                    int s32_Pos = mi_Channels.IndexOf(i_InsertAfter);
-                    mi_Channels.Insert(s32_Pos +1, i_NewChannel);
+                    // Insert the new channel behind the last channel in i_InsertAfter
+                    int s32_Pos = 0;
+                    foreach (Channel i_ChanAfter in i_InsertAfter)
+                    {
+                        s32_Pos = Math.Max(s32_Pos, mi_Channels.IndexOf(i_ChanAfter));
+                    }
+                    mi_Channels.Insert(s32_Pos + 1, i_NewChannel);
                 }
                 else
                 {
@@ -401,7 +406,7 @@ namespace OsziWaveformAnalyzer
 
         #endregion
 
-        public  const  String     APP_VERSION       = "v1.9"; // displayed in Main Window Title
+        public  const  String     APP_VERSION       = "v2.0"; // displayed in Main Window Title
         public  const  int        MIN_VALID_SAMPLES = 100;    // Error if loaded file contains less samples
         public  const  String     ERR_MIN_SAMPLES   = "The minimum amount of samples is 100.";
         public  const  String     NO_SAMPLES_LOADED = "No samples loaded. Use button 'Capture' or select an Input file.";
