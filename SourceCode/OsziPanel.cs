@@ -1010,8 +1010,8 @@ namespace OsziWaveformAnalyzer
                 int s32_Offset = ms32_DispSteps * 5;
                 if (e.Shift) s32_Offset *= 5;
 
-                if (e.KeyCode == Keys.Left)  ms32_DispStart -= s32_Offset;
-                if (e.KeyCode == Keys.Right) ms32_DispStart += s32_Offset;
+                if (e.KeyCode == Keys.Left)  ms32_DispStart += s32_Offset;
+                if (e.KeyCode == Keys.Right) ms32_DispStart -= s32_Offset;
 
                 RecalcHorizScrollPos(true);
             }
