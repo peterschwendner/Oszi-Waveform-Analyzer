@@ -1124,7 +1124,7 @@ namespace OsziWaveformAnalyzer
                     
                     // --------------------- Analog ------------------------------
 
-                    if (s32_PosY >= i_Draw.ms32_AnalTop && s32_PosY <= i_Draw.ms32_AnalBot && !CommonAnalogDrawing)
+                    if (s32_PosY >= i_Draw.ms32_AnalTop && s32_PosY <= i_Draw.ms32_AnalBot)
                     {
                         if (i_Channel.mb_AnalHidden)
                             continue; // the analog channel is invisible or overlayed by another analog channel
@@ -1518,6 +1518,7 @@ namespace OsziWaveformAnalyzer
 
                         if (mb_SeparateChannels || b_DrawVoltOnce)
                         {
+                            // If channels are drawn one on top of the other, ms_MinVolt and ms_MaxVolt are the same for all channels.
                             b_DrawVoltOnce = false;
                             Brush i_VoltBrush = mb_SeparateChannels ? i_TxtBrush : Brushes.White;
                             i_Graphics.DrawString(i_Draw.ms_MaxVolt, Font, i_VoltBrush, s32_SigLeft -8, i_Draw.ms32_VoltTop, mi_AlignTopRight);
