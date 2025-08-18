@@ -253,7 +253,7 @@ namespace OsziWaveformAnalyzer
         }
 
         /// <summary>
-        /// Set the indentation for the following text
+        /// Set the indentation for the following text (one tab per value)
         /// </summary>
         public int Indent
         {
@@ -393,7 +393,8 @@ namespace OsziWaveformAnalyzer
 
             AppendNewLineOnce();
             AppendLink(s_URL, s_Timestamp);
-            AppendNewLine();
+            WriteFontStyle(); // remove underline
+            AppendChar(' ');
         }
 
         // ----------------------------------------------------
