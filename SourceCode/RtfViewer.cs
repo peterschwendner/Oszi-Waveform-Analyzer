@@ -369,8 +369,9 @@ namespace OsziWaveformAnalyzer
         /// Adds a new line with a timestamp link of the form "XXX.YYY uu" (for example "97.281 µs")
         /// that the user can click and it jumps to this sample in the OsziPanel.
         /// The URL of the link are the start and end sample number separated by a comma.
+        /// b_OneLine = true --> Print the timestamp and the following data into the same line
         /// </summary>
-        public void AppendTimestampLine(int s32_StartSmpl, int s32_EndSmpl)
+        public void AppendTimestampLine(int s32_StartSmpl, int s32_EndSmpl, bool b_OneLine)
         {
             if (ms_TimeUnit == null)
             {
@@ -393,8 +394,15 @@ namespace OsziWaveformAnalyzer
 
             AppendNewLineOnce();
             AppendLink(s_URL, s_Timestamp);
-            WriteFontStyle(); // remove underline
-            AppendChar(' ');
+            if (b_OneLine)
+            {
+                WriteFontStyle(); // remove underline
+                AppendChar(' ');
+            }
+            else
+            {
+                AppendNewLine();
+            }
         }
 
         // ----------------------------------------------------
