@@ -380,12 +380,12 @@ namespace Operations
 
             foreach (IRPacket i_Packet in i_Packets)
             {
-                i_Builder.AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample);
+                i_Builder.AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample, true);
 
                 String s_CRC = i_Packet.mu32_CRC.ToString("X8");
                 String s_Cmd = "RC - Command: " + s_CRC;
                 if (i_Packet.ms_IniButton != null)
-                    s_Cmd += "   " + i_Packet.ms_IniButton;
+                    s_Cmd += "  " + i_Packet.ms_IniButton;
 
                 i_Builder.AppendLine(Color.Yellow, "Decoded Bits: " + i_Packet.ms_BitChars);
                 i_Builder.AppendLine(Color.Lime,   s_Cmd);
