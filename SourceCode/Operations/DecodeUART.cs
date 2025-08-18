@@ -344,6 +344,8 @@ namespace Operations
                     Utils.FillArray(i_ChanTx.mu8_Digital, 1);
             }
 
+            Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
             try
             {
                 Channel[] i_Channels = new Channel[] { mi_ChannelRx, i_ChanTx };
@@ -353,6 +355,7 @@ namespace Operations
             {
                 Utils.ShowExceptionBox(this, Ex);
             }
+            Cursor = Cursors.Arrow;
 
             // Show RTF, if created and switch to tab "Decoder"
             Utils.FormMain.ShowAnalysisResult(i_RtfDoc, ms32_SmplPerBit); 

@@ -194,13 +194,19 @@ namespace Operations
 
         private void btnExecuteClose_Click(object sender, EventArgs e)
         {
-            Execute(true);
+            Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
+            Calculate(true);
+            Cursor = Cursors.Arrow;
         }
         private void btnExecute_Click(object sender, EventArgs e)
         {
-            Execute(false);
+            Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
+            Calculate(false);
+            Cursor = Cursors.Arrow;
         }
-        void Execute(bool b_Close)
+        void Calculate(bool b_Close)
         {
             try
             {

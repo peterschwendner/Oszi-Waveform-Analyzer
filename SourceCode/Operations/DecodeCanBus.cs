@@ -405,10 +405,13 @@ namespace Operations
             InitializeComponent();
             if (ShowDialog(Utils.FormMain) == System.Windows.Forms.DialogResult.OK)
             {
+                Utils.StartBusyOperation(null); // show wait cursor
+
                 CanPacket[] i_Packets = DecodePackets(i_Channel);
                 ShowRtf(i_Packets);
-
                 Utils.OsziPanel.RecalculateEverything();
+
+                Utils.EndBusyOperation(null);
 
                 return i_Packets.Length + " CAN Bus packets detected";
             }
