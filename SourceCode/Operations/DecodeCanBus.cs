@@ -1103,7 +1103,7 @@ namespace Operations
             i_Builder.AppendText(Color.White, "\n\nDecoded Packets:\n", FontStyle.Underline);
             foreach (CanPacket i_Pack in i_Packets)
             {
-                i_Builder.AppendTimestampLine(i_Pack.ms32_StartSample, i_Pack.ms32_EndSample);
+                i_Builder.AppendTimestampLine(i_Pack.ms32_StartSample, i_Pack.ms32_EndSample, true);
 
                 String s_ID = i_Pack.ms32_ID.ToString(i_Pack.Is29Bit ? "X8" : "X3");
                 i_Builder.AppendText(Color.Yellow, s_ID + ": ");

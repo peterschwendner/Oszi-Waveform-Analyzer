@@ -577,7 +577,7 @@ namespace Operations
                     {
                         case eData.Start:
                             i_Builder.AppendNewLineOnce(); // if preceeded by a Stop condition a NewLine has already been output
-                            i_Builder.AppendTimestampLine(i_I2CPacket.ms32_StartSample, i_I2CPacket.ms32_EndSample);
+                            i_Builder.AppendTimestampLine(i_I2CPacket.ms32_StartSample, i_I2CPacket.ms32_EndSample, true);
                             i_Builder.AppendText(Color.Lime, "< ");
                             break;
 

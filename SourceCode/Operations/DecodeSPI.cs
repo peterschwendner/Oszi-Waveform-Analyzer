@@ -467,7 +467,7 @@ namespace Operations
             StringBuilder i_Line = new StringBuilder();
             foreach (SpiPacket i_Packet in i_Packets)
             {
-                i_RtfBuilder.AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample);
+                i_RtfBuilder.AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample, false);
 
                 for (int R=0; R<2; R++)
                 {

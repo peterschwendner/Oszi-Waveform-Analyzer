@@ -657,8 +657,8 @@ namespace Operations
             if (i_Packet.mi_Data.Count == 0)
                 return;
 
-            mi_RtfBinary.AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample);
-            mi_RtfAnsi  .AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample);
+            mi_RtfBinary.AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample, true);
+            mi_RtfAnsi  .AppendTimestampLine(i_Packet.ms32_StartSample, i_Packet.ms32_EndSample, true);
 
             mi_RtfBinary.AppendText(Color.Magenta, "> ");
             mi_RtfAnsi  .AppendText(Color.Magenta, "> ");
