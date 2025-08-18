@@ -261,6 +261,8 @@ namespace Operations
             Byte u8_ClkStatus = comboClkEdge .SelectedIndex == 0 ? (Byte)1 : (Byte)0;
             Byte u8_SelActive = comboPolarity.SelectedIndex == 0 ? (Byte)0 : (Byte)1;
 
+            Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
             try
             {
                 SpiPacket[] i_Packets = Decode(u8_ClkStatus, s32_DataBits, b_MsbFirst, u8_SelActive);
@@ -270,6 +272,7 @@ namespace Operations
             {
                 Utils.ShowExceptionBox(this, Ex);
             }
+            Cursor = Cursors.Arrow;
 
             Utils.OsziPanel.RecalculateEverything();
             DialogResult = DialogResult.OK;

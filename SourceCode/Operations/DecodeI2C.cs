@@ -274,16 +274,19 @@ namespace Operations
             ms32_Decoded = 0;
             Utils.RegWriteString(eRegKey.I2C_Chip, comboChip.Text);
 
+            Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
             try
             {
-                I2CByte  [] i_I2CBytes   = DecodeBytes();
-                I2CPacket[] i_I2CPackets = DecodePackets(i_I2CBytes);
+                I2CByte  [] i_ByteList   = DecodeBytes();
+                I2CPacket[] i_I2CPackets = DecodePackets(i_ByteList);
                 ShowRtf(i_I2CPackets);
             }
             catch (Exception Ex)
             {
                 Utils.ShowExceptionBox(this, Ex);
             }
+            Cursor = Cursors.Arrow;
 
             Utils.OsziPanel.RecalculateEverything();
             DialogResult = DialogResult.OK;
@@ -296,18 +299,19 @@ namespace Operations
         /// </summary>
         I2CByte[] DecodeBytes()
         {
-            List<I2CByte>  i_I2CBytes  = new List<I2CByte>();
+            List<I2CByte>  i_ByteList  = new List<I2CByte>();
             List<SmplMark> i_ClkMarks  = new List<SmplMark>();
             List<SmplMark> i_DataMarks = new List<SmplMark>();
             mi_SCL.mi_MarkRows = new List<SmplMark>[] { i_ClkMarks  };
             mi_SDA.mi_MarkRows = new List<SmplMark>[] { i_DataMarks };
 
-            int     s32_BitSmpl  = -1; // start sample of bit
-            int     s32_ByteSmpl = -1; // start sample of byte (address or data)
-            int     s32_ByteVal  =  0; // value of byte (address or data)
-            eBit    e_CurBit     = eBit.A6;
-            bool    b_Idle       = true;
-            I2CByte i_I2CByte    = null;
+            int     s32_BitSmpl   = -1; // start sample of bit
+            int     s32_ByteStart = -1; // start sample of byte (address or data)
+            int     s32_ByteEnd   = -1;
+            int     s32_ByteVal   =  0; // value of byte (address or data)
+            eBit    e_CurBit      = eBit.A6;
+            bool    b_Idle        = true;
+            I2CByte i_I2CByte     = null;
 
             Byte u8_LastSCL = mi_SCL.mu8_Digital[0];
             Byte u8_LastSDA = mi_SDA.mu8_Digital[0];
@@ -328,38 +332,56 @@ namespace Operations
 
                 if (b_StartCond) // START condition found
                 {
-                    b_Idle       = false;
-                    e_CurBit     = eBit.A6; // next bit is address bit 6
-                    s32_ByteVal  =  0;
-                    s32_ByteSmpl = -1;
-                    s32_BitSmpl  = -1;
+                    // i_I2CByte is not null here if a previous byte has not been finished
+                    if (i_I2CByte != null)
+                    {
+                        SmplMark i_ErrMark = new SmplMark(eMark.Error, s32_ByteEnd, -1, " Error");
+                        i_ErrMark.mi_TxtBrush = Utils.ERROR_BRUSH;
+                        i_DataMarks.Add(i_ErrMark);
+
+                        i_I2CByte.me_Data = eData.Error;
+                        i_ByteList.Add(i_I2CByte);
+                        i_I2CByte = null;
+                    }
+
+                    b_Idle        = false;
+                    e_CurBit      = eBit.A6; // next bit is address bit 6
+                    s32_ByteVal   =  0;
+                    s32_ByteStart = -1;
+                    s32_ByteEnd   = -1;
+                    s32_BitSmpl   = -1;
                     SmplMark i_Mark = new SmplMark(eMark.Text, S, -1, " <");
                     i_Mark.mi_TxtBrush = Brushes.Lime;
                     i_DataMarks.Add(i_Mark);
-                    i_I2CBytes .Add(new I2CByte(S, eData.Start));
+                    i_ByteList .Add(new I2CByte(S, eData.Start));
                     continue;
                 }
 
                 if (b_StopCond) // STOP condition found
                 {
                     eMark e_Mark = eMark.Text;
-                    if (e_CurBit != eBit.D7)
-                    {
-                        // At least one address byte must have appeared on the bus.
-                        e_Mark = eMark.Error;
-                        ms32_Errors ++;
 
-                        i_I2CByte.me_Data = eData.Error;
-                        i_I2CByte.ms32_EndSample = S;
-                        i_I2CBytes.Add(i_I2CByte);
-                        i_I2CByte = null;
+                    // i_I2CByte is null here if a Stop condition follows immediately after a Start condition
+                    if (i_I2CByte != null)
+                    {
+                        if (e_CurBit != eBit.D7)
+                        {
+                            // At least one address byte must have appeared on the bus.
+                            e_Mark = eMark.Error;
+                            ms32_Errors ++;
+
+                            i_I2CByte.me_Data = eData.Error;
+                            i_I2CByte.ms32_EndSample = S;
+                            i_ByteList.Add(i_I2CByte);
+                            i_I2CByte = null;
+                        }
                     }
 
                     b_Idle = true;
                     SmplMark i_Mark = new SmplMark(e_Mark, S, -1, " >");
                     i_Mark.mi_TxtBrush = Brushes.Lime;
                     i_DataMarks.Add(i_Mark);
-                    i_I2CBytes .Add(new I2CByte(S, eData.Stop));
+                    i_ByteList .Add(new I2CByte(S, eData.Stop));
                     continue;
                 }
 
@@ -378,8 +400,10 @@ namespace Operations
                         s32_ByteVal <<= 1; // the lowest address bit is used as R/W bit --> all addresses are even.
 
                     s32_BitSmpl = S;       // store sample where bit starts
-                    if (s32_ByteSmpl < 0)
-                        s32_ByteSmpl = S;  // store sample where byte starts
+                    if (s32_ByteStart < 0)
+                        s32_ByteStart = S; // store sample where byte starts
+
+                    s32_ByteEnd = S;       // store sample where byte ends
                 }
 
                 if (b_ClkFall) // Clock falling edge
@@ -401,7 +425,7 @@ namespace Operations
                             ms32_Decoded ++;
                             if (e_CurBit == eBit.D0)
                             {
-                                SmplMark i_DataMark = new SmplMark(eMark.Text, s32_ByteSmpl, S, s32_ByteVal.ToString("X2"));
+                                SmplMark i_DataMark = new SmplMark(eMark.Text, s32_ByteStart, s32_ByteEnd, s32_ByteVal.ToString("X2"));
                                 i_DataMark.mi_TxtBrush = Brushes.Yellow;
                                 i_DataMarks.Add(i_DataMark);
                                 i_I2CByte.me_Data = eData.Data;
@@ -409,11 +433,11 @@ namespace Operations
                             break;
 
                         case eBit.RW:
-                            SmplMark i_AdrMark = new SmplMark(eMark.Text, s32_ByteSmpl, S);
+                            SmplMark i_AdrMark = new SmplMark(eMark.Text, s32_ByteStart, s32_ByteEnd);
                             i_AdrMark.ms_Text = i_I2CByte.ms32_Value.ToString("X2");
                             i_DataMarks.Add(i_AdrMark);
 
-                            int s32_AvrgSmpl = (s32_BitSmpl - s32_ByteSmpl) / 7; // address = 7 bits
+                            int s32_AvrgSmpl = (s32_BitSmpl - s32_ByteStart) / 7; // address = 7 bits
                             if (ms32_SmplPerBit == 0)
                                 ms32_SmplPerBit = s32_AvrgSmpl;
                             else
@@ -449,28 +473,30 @@ namespace Operations
                             }
 
                             i_I2CByte.ms32_EndSample = S;
-                            i_I2CBytes.Add(i_I2CByte);
-                            i_I2CByte    = null;
-                            e_CurBit     = eBit.D7; // After ACK comes Data or Stop condition
-                            s32_ByteVal  = 0;
-                            s32_ByteSmpl = -1;
-                            s32_BitSmpl  = -1;
+                            i_ByteList.Add(i_I2CByte);
+                            i_I2CByte     = null;
+                            e_CurBit      = eBit.D7; // After ACK comes Data or Stop condition
+                            s32_ByteVal   = 0;
+                            s32_ByteStart = -1;
+                            s32_ByteEnd   = -1;
+                            s32_BitSmpl   = -1;
                             continue;
                     }
-
                     e_CurBit ++;
-                }
-            }    
-            return i_I2CBytes.ToArray();
+
+                } // if (b_ClkFall)
+            } // for (S)
+
+            return i_ByteList.ToArray();
         }
 
         // =============================================================================================================
 
-        I2CPacket[] DecodePackets(I2CByte[] i_I2CBytes)
+        I2CPacket[] DecodePackets(I2CByte[] i_ByteList)
         {
             List<I2CPacket> i_PackList = new List<I2CPacket>();
             I2CPacket       i_Packet   = null;
-            foreach (I2CByte i_I2CByte in i_I2CBytes)
+            foreach (I2CByte i_I2CByte in i_ByteList)
             {
                 if (i_Packet == null)
                     i_Packet = new I2CPacket(i_I2CByte.ms32_StartSample);

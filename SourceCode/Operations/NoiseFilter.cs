@@ -88,7 +88,9 @@ namespace Operations
             if (ShowDialog(Utils.FormMain) == DialogResult.OK)
             {
                 // OK --> apply filter to entire channel
+                Utils.StartBusyOperation(null);
                 ApplyFilter(Utils.FormMain, false);
+                Utils.EndBusyOperation(null);
             }
             else 
             {
