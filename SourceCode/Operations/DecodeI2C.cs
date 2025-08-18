@@ -396,9 +396,6 @@ namespace Operations
                     s32_ByteVal <<= 1;
                     s32_ByteVal |= u8_SDA;
                     
-                    if (e_CurBit == eBit.A0)
-                        s32_ByteVal <<= 1; // the lowest address bit is used as R/W bit --> all addresses are even.
-
                     s32_BitSmpl = S;       // store sample where bit starts
                     if (s32_ByteStart < 0)
                         s32_ByteStart = S; // store sample where byte starts
