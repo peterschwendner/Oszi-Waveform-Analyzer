@@ -111,7 +111,7 @@ namespace PostDecoder
         public void DecodeI2C(I2CPacket i_Packet, RtfBuilder i_RtfBuilder)
         {
             // The PN532 has a fix I2C slave address of 0x48
-            if (i_Packet.mu8_Address != 0x48)
+            if (i_Packet.mu8_Address != 0x24)
                 return;
 
             if (i_Packet.mb_Write)
