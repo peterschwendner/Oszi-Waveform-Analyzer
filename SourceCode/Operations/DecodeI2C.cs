@@ -275,7 +275,6 @@ namespace Operations
             Utils.RegWriteString(eRegKey.I2C_Chip, comboChip.Text);
 
             Cursor = Cursors.WaitCursor;
-            Application.DoEvents();
             try
             {
                 I2CByte  [] i_ByteList   = DecodeBytes();
@@ -312,6 +311,7 @@ namespace Operations
             eBit    e_CurBit      = eBit.A6;
             bool    b_Idle        = true;
             I2CByte i_I2CByte     = null;
+            Byte    u8_RiseSDA    = 0;  // state of SDA sampled at rising clock edge
 
             Byte u8_LastSCL = mi_SCL.mu8_Digital[0];
             Byte u8_LastSDA = mi_SDA.mu8_Digital[0];
@@ -393,8 +393,10 @@ namespace Operations
 
                 if (b_ClkRise) // Clock rising edge --> sample SDA
                 {
+                    u8_RiseSDA = u8_SDA;   // SDA at rising clock edge
+
                     s32_ByteVal <<= 1;
-                    s32_ByteVal |= u8_SDA;
+                    s32_ByteVal |= u8_RiseSDA;
                     
                     s32_BitSmpl = S;       // store sample where bit starts
                     if (s32_ByteStart < 0)
@@ -420,13 +422,6 @@ namespace Operations
                         case eBit.D0:
                             i_I2CByte.ms32_Value = s32_ByteVal;
                             ms32_Decoded ++;
-                            if (e_CurBit == eBit.D0)
-                            {
-                                SmplMark i_DataMark = new SmplMark(eMark.Text, s32_ByteStart, s32_ByteEnd, s32_ByteVal.ToString("X2"));
-                                i_DataMark.mi_TxtBrush = Brushes.Yellow;
-                                i_DataMarks.Add(i_DataMark);
-                                i_I2CByte.me_Data = eData.Data;
-                            }
                             break;
 
                         case eBit.RW:
@@ -440,7 +435,7 @@ namespace Operations
                             else
                                 ms32_SmplPerBit = Math.Min(ms32_SmplPerBit, s32_AvrgSmpl);
 
-                            if (u8_SDA == 0)
+                            if (u8_RiseSDA == 0)
                             {
                                 i_ClkMark.ms_Text = "WR";
                                 i_I2CByte.me_Data = eData.AdrWrite;
@@ -456,7 +451,7 @@ namespace Operations
 
                         case eBit.ACKA:
                         case eBit.ACKD:
-                            if (u8_SDA == 0)
+                            if (u8_RiseSDA == 0)
                             {
                                 i_ClkMark.ms_Text = "ACK";
                                 i_ClkMark.mi_TxtBrush = Brushes.Lime;
@@ -467,6 +462,14 @@ namespace Operations
                                 i_ClkMark.ms_Text = "NAK";
                                 i_ClkMark.mi_TxtBrush = Utils.ERROR_BRUSH;
                                 i_I2CByte.me_Ack  = eACK.NAK;
+                            }
+
+                            if (e_CurBit == eBit.ACKD)
+                            {
+                                SmplMark i_DataMark = new SmplMark(eMark.Text, s32_ByteStart, s32_ByteEnd, s32_ByteVal.ToString("X2"));
+                                i_DataMark.mi_TxtBrush = Brushes.Yellow;
+                                i_DataMarks.Add(i_DataMark);
+                                i_I2CByte.me_Data = eData.Data;
                             }
 
                             i_I2CByte.ms32_EndSample = S;

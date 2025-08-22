@@ -345,7 +345,6 @@ namespace Operations
             }
 
             Cursor = Cursors.WaitCursor;
-            Application.DoEvents();
             try
             {
                 Channel[] i_Channels = new Channel[] { mi_ChannelRx, i_ChanTx };
