@@ -147,7 +147,6 @@ namespace Operations
         void ApplyFilter(Form i_Form, bool b_VisibleOnly)
         {
             i_Form.Cursor = Cursors.WaitCursor;
-            Application.DoEvents();
 
             int s32_Start = b_VisibleOnly ? Utils.OsziPanel.DispStart : 0;
             int s32_End   = b_VisibleOnly ? Utils.OsziPanel.DispEnd   : OsziPanel.CurCapture.ms32_Samples;

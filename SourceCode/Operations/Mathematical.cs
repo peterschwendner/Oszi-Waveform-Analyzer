@@ -195,14 +195,12 @@ namespace Operations
         private void btnExecuteClose_Click(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
-            Application.DoEvents();
             Calculate(true);
             Cursor = Cursors.Arrow;
         }
         private void btnExecute_Click(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
-            Application.DoEvents();
             Calculate(false);
             Cursor = Cursors.Arrow;
         }

@@ -262,7 +262,6 @@ namespace Operations
             Byte u8_SelActive = comboPolarity.SelectedIndex == 0 ? (Byte)0 : (Byte)1;
 
             Cursor = Cursors.WaitCursor;
-            Application.DoEvents();
             try
             {
                 SpiPacket[] i_Packets = Decode(u8_ClkStatus, s32_DataBits, b_MsbFirst, u8_SelActive);
