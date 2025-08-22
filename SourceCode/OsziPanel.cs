@@ -522,6 +522,8 @@ namespace OsziWaveformAnalyzer
             if (mi_Capture == null)
                 return;
 
+            Parent.Cursor = Cursors.WaitCursor;
+
             // if scrollbar height is not subtracted there will be flickering when resizing the panel and vert/hor scrollbars appear/disappear
             int s32_AvailHeight = ClientSize.Height - SystemInformation.HorizontalScrollBarHeight;
             mi_DrawPos = CalcVerticalDrawPos(s32_AvailHeight, true);
@@ -533,6 +535,8 @@ namespace OsziWaveformAnalyzer
             int s32_LegendWidth = MeasureLegend(mi_DrawPos, null);
             AutoScrollMinSize   = new Size(s32_GraWidth + s32_LegendWidth, mi_DrawPos.ms32_SignalBot);
             RecalcHorizScrollPos(b_RestorePos);
+
+            Parent.Cursor = Cursors.Arrow;
         }
 
         protected override void OnMouseWheel(MouseEventArgs e)
@@ -1333,6 +1337,8 @@ namespace OsziWaveformAnalyzer
                                   + "The maximum width is 32760 pixels.\n"
                                   + "Please select a smaller display factor.");
 
+            Parent.Cursor = Cursors.WaitCursor;
+
             DrawPos i_Pos = CalcVerticalDrawPos(r_Area.Height, false);
             r_Area.Height = i_Pos.ms32_SignalBot;
 
@@ -1342,6 +1348,8 @@ namespace OsziWaveformAnalyzer
                 Draw(i_Graphics, i_Pos, r_Area, s32_First, s32_Last);
                 i_Bitmap.Save(s_Path, ImageFormat.Png);
             }
+
+            Parent.Cursor = Cursors.Arrow;
 
             return b_FullWidth ? "full image" : "screenshot";
         }
