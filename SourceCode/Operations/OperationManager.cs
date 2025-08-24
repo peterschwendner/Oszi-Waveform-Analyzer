@@ -289,6 +289,9 @@ namespace Operations
                     Utils.FormMain.PrintStatus(s_Status, c_Color);
                 }
 
+                // display status "unsaved changes"
+                Utils.FormMain.UpdateDirty();
+
                 // ------------ Sort Marks -----------
 
                 if (OsziPanel.CurCapture != null) // all channels may have been deleted --> Capture == null here

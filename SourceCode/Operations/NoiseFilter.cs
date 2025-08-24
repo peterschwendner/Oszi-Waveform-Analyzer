@@ -91,6 +91,7 @@ namespace Operations
                 Utils.StartBusyOperation(null);
                 ApplyFilter(Utils.FormMain, false);
                 Utils.EndBusyOperation(null);
+                OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
             }
             else 
             {
