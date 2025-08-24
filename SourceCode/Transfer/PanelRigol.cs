@@ -251,6 +251,7 @@ namespace Transfer
                 Capture i_Capture = mi_Rigol.CaptureAllChannels(radioMemory.Checked);
                 if (i_Capture != null)
                 {
+                    i_Capture.mb_Dirty = true; // The user has an unsaved capture
                     Utils.FormMain.StoreNewCapture(i_Capture);
                     mi_Form.PrintStatus("Ready", Color.Green);
                 }
