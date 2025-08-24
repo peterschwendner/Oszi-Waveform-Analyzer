@@ -202,6 +202,7 @@ namespace Operations
                         }     
                     }
 
+                    OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
                     Utils.OsziPanel.RecalculateEverything();
                     break;
                 }
@@ -262,6 +263,7 @@ namespace Operations
                     i_Capt.ms32_Samples += mi_Copy.ms32_Samples;
                     s_Status = mi_Copy.ms32_Samples.ToString("N0") + " samples pasted";
 
+                    OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
                     Utils.OsziPanel.RecalculateEverything();
                     break;
                 }

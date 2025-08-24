@@ -276,6 +276,7 @@ namespace Operations
                     break;
             }
 
+            OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
             Utils.OsziPanel.RecalculateEverything();
 
             if (b_Close)

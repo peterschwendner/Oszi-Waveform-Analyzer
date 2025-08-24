@@ -197,6 +197,7 @@ namespace Operations
             if (Utils.OsziPanel.CursorSample >= i_Capt.ms32_Samples)
                 Utils.OsziPanel.SetCursor(-1, -1m); 
 
+            OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
             Utils.OsziPanel.RecalculateEverything();
 
             return s32_Delete + " samples deleted";

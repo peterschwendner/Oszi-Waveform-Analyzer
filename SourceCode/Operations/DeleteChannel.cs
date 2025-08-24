@@ -94,12 +94,14 @@ namespace Operations
                 {
                     // Set OsziPanel.CurCapture = null --> show black screen
                     Utils.FormMain.ResetInputFile(); 
+
+                    OsziPanel.CurCapture.mb_Dirty = false; // all empty --> nothing to be saved anymore
                     return "Channel deleted.";
                 }
             }
 
+            OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
             Utils.OsziPanel.RecalculateEverything();
-
             return "Channel deleted.";
         }
     }

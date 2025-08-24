@@ -116,6 +116,7 @@ namespace Operations
 
                 mi_Channel.ms_Name = s_NewName;
 
+                OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
                 Utils.OsziPanel.RecalculateEverything();
             }
             DialogResult = DialogResult.OK;

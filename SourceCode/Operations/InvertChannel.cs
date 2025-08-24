@@ -100,6 +100,7 @@ namespace Operations
                 i_Channel.mi_MarkRows = null;
             }
 
+            OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
             Utils.OsziPanel.RecalculateEverything();
             return "Channel inverted.";
         }

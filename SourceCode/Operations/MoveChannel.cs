@@ -105,6 +105,7 @@ namespace Operations
             i_Channels[s32_DstIndex] = i_ChannelSrc;
             i_Channels[s32_SrcIndex] = i_ChannelDst;
 
+            OsziPanel.CurCapture.mb_Dirty = true; // user has unsaved changes
             Utils.OsziPanel.RecalculateEverything();
 
             return "Channel moved.";
