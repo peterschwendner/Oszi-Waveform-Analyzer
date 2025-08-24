@@ -45,6 +45,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 
+using delInvokeBool     = OsziWaveformAnalyzer.Utils.delInvokeBool;
 using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
@@ -72,6 +73,7 @@ namespace OsziWaveformAnalyzer
         Timer            mi_StatusTimer  = new Timer();
         Timer            mi_CmdLineTimer = new Timer();
         CheckBox[]       mi_CheckBoxes   = new CheckBox[0];
+        ComboPath        mi_CurInputFile;
 
         public FormMain()
         {
@@ -159,41 +161,69 @@ namespace OsziWaveformAnalyzer
             mi_CmdLineTimer.Start();
         }
 
+        // --------------------------------------------------
+
         /// <summary>
         /// IMPORTANT: This must be called from a timer!
         /// Loading an OSZI file with 24 Megasamples may take several seconds.
-        /// Meanwhile the user does not even see the main window if there is no timer.
+        /// Meanwhile the user does not even see the main window if OpenCommandlineFile() is called directly from OnLoad().
         /// </summary>
         void OnCmdLineTimer(object sender, EventArgs e)
         {
             mi_CmdLineTimer.Stop();
 
-            // The user has double clicked an .OSZI file which results in a Commandline like:
-            // "C:\Program Files\OsziWaveformAnalyzer.exe" -open "D:\Temp\MyCapture.oszi" 
-            String s_Cmd = Environment.CommandLine;
-            int s32_Open = s_Cmd.IndexOf(Utils.CMD_LINE_ACTION);
-            if (s32_Open <= 0)
-                return;
-           
-            String s_OsziFile = s_Cmd.Substring(s32_Open + Utils.CMD_LINE_ACTION.Length).Trim('"');
-            if (!File.Exists(s_OsziFile) || Path.GetExtension(s_OsziFile).ToLower() != ".oszi")
-                return;
-            
+            if (Program.CmdOpenFile != null)
+                OpenCommandlineFile(Program.CmdOpenFile);
+        }
+
+        /// <summary>
+        /// The pipeserver has received a request from another process to open an Oszi file
+        /// </summary>
+        public bool RemoteOpenRequest(String s_OsziPath)
+        {
+            // This is called from the PipeServerThread --> invoke into GUI thread
+            return (bool)Invoke((delInvokeBool)delegate() 
+            {
+                if (OsziPanel.CurCapture != null && OsziPanel.CurCapture.mb_Dirty)
+                {
+                    String s_Filename = Path.GetFileName(s_OsziPath);
+                    DialogResult e_Result = MessageBox.Show(this, "You have unsaved changes.\n"
+                                          + "Click OK to lose the changes and load the file\n" + s_Filename
+                                          + "\nClick Cancel to open the file in another process.", 
+                                            "Oszi Waveform Analyer", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation);
+
+                    if (e_Result == DialogResult.Cancel)
+                        return false;
+                }
+                OpenCommandlineFile(s_OsziPath);
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Open the file that has been passed by commandline after a double click in Explorer
+        /// </summary>
+        void OpenCommandlineFile(String s_OsziPath)
+        {
+            // Change the working directory with the capture files to the directory that the user has clicked.
+            Utils.SampleDir = Path.GetDirectoryName(s_OsziPath);
+
+            // reload combobox with the files from the new directory
+            mi_ExImport.LoadComboInput(comboInput);
+
             // If the user double clicked a file in subfolder "Samples" it is already in the ComboBox --> select it.
             foreach (ComboPath i_Exist in comboInput.Items)
             {
-                if (String.Compare(i_Exist.ms_Path, s_OsziFile, true) == 0)
+                if (String.Compare(i_Exist.ms_Path, s_OsziPath, true) == 0)
                 {
-                    comboInput.SelectedItem = i_Exist;
-                    return;
+                    mi_CurInputFile = null;            // FIRST
+                    comboInput.SelectedItem = i_Exist; // AFTER
+                    break;
                 }
             }
-
-            // The path may be anywhere on disk, not necessarily in subfolder "Samples" --> add it to the ComboBox
-            ComboPath i_New = new ComboPath(s_OsziFile);
-            comboInput.Items.Add(i_New);
-            comboInput.SelectedItem = i_New;
         }
+
+        // --------------------------------------------------
 
         protected override void OnClosing(CancelEventArgs e)
         {
@@ -429,9 +459,26 @@ namespace OsziWaveformAnalyzer
         /// </summary>
         private void comboInput_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ComboPath i_ComboPath = (ComboPath)comboInput.SelectedItem;
+            if ((ComboPath)comboInput.SelectedItem == mi_CurInputFile)
+                return;
+            
+            if (mi_CurInputFile != null && OsziPanel.CurCapture != null && OsziPanel.CurCapture.mb_Dirty)
+            {
+                DialogResult e_Result = MessageBox.Show(this, "You have unsaved changes.\n"
+                                        + "Do you want to lose them and open another file?", 
+                                          "Oszi Waveform Analyer", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
 
-            if (i_ComboPath == null || i_ComboPath.ms_Path == null)
+                if (e_Result == DialogResult.No)
+                {
+                    comboInput.DroppedDown  = false;
+                    comboInput.SelectedItem = mi_CurInputFile;
+                    return;
+                }
+            }
+
+            mi_CurInputFile = (ComboPath)comboInput.SelectedItem;
+
+            if (mi_CurInputFile == null || mi_CurInputFile.ms_Path == null)
             {
                 if (comboInput.Items.Count == 0)
                     PrintStatus("No CSV or OSZI files found in " + Utils.SampleDir, Color.Red);
@@ -440,7 +487,7 @@ namespace OsziWaveformAnalyzer
                 return;
             }
 
-            ImportFile(i_ComboPath.ms_Path);
+            ImportFile(mi_CurInputFile.ms_Path);
             osziPanel.Focus();
         }
 
@@ -502,7 +549,7 @@ namespace OsziWaveformAnalyzer
 
             // Only store the Capture, do not yet display it.
             // First osziPanel.ms32_DispSteps must be set
-            osziPanel.StoreNewCapture(i_Capture); 
+            osziPanel.StoreCapture(i_Capture); 
 
             if (i_Capture != null) 
             {
@@ -549,6 +596,7 @@ namespace OsziWaveformAnalyzer
             }
             
             osziPanel.RecalculateEverything();
+            UpdateDirty();
 
             // This must be after RecalculateEverything() has calculated ms32_AnalogCount
             checkSepChannels.Visible = i_Capture != null && i_Capture.ms32_AnalogCount > 1;
@@ -556,7 +604,11 @@ namespace OsziWaveformAnalyzer
             AdjustLabelInfo();
 
             if (i_Capture != null)
-                PrintStatus("Loaded " + i_Capture.mi_Channels.Count + " channels with " + i_Capture.ms32_Samples.ToString("N0") + " samples", Color.Green);
+            {
+                String s_Mesg = String.Format("Loaded {0} channels with {1:N0} samples", i_Capture.mi_Channels.Count, i_Capture.ms32_Samples);
+                if (i_Capture.ms_Path != null) s_Mesg += " from " + i_Capture.ms_Path;
+                PrintStatus(s_Mesg, Color.Green);
+            }
         }
 
         public void ShowAnalysisResult(RtfDocument i_Result, int s32_SamplesPerBit)
@@ -611,7 +663,8 @@ namespace OsziWaveformAnalyzer
             String s_RTF = rtfViewer.Rtf;
             if (String.IsNullOrEmpty(s_RTF))
             {
-                MessageBox.Show(this, "Nothing to be saved.\nThere is no decoder result.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "Nothing to be saved.\nThere is no decoder result.", "Error", 
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
                 tabControl.SelectedTab = tabDecoder;
                 return null;
             }
@@ -688,6 +741,14 @@ namespace OsziWaveformAnalyzer
         }
 
         // -----------------------------------------------------
+
+        /// <summary>
+        /// Display "Oszi *" in the tab if the user has unsaved changes
+        /// </summary>
+        public void UpdateDirty()
+        {
+            tabOszi.Text = (OsziPanel.CurCapture != null && OsziPanel.CurCapture.mb_Dirty) ? "Oszi *" : "Oszi";
+        }
 
         public void PrintStatus(String s_Text, Color c_Color)
         {
