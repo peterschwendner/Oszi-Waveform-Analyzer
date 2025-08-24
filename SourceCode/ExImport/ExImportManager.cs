@@ -220,7 +220,9 @@ namespace ExImport
 
             if (File.Exists(s_Path))
             {
-                if (MessageBox.Show(Utils.FormMain, "The file already exists:\n" + s_Path + "\n\nDo you want to move it to the recycle bin?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                if (MessageBox.Show(Utils.FormMain, "The file already exists:\n" + s_Path + 
+                                    "\n\nDo you want to move it to the recycle bin?", "Error", 
+                                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                     return null;
 
                 if (!Utils.MoveToRecycler(Utils.FormMain, s_Path))
