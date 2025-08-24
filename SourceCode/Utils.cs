@@ -153,6 +153,7 @@ namespace OsziWaveformAnalyzer
             public int           ms32_AnalogRes;    // the resolution of the A/D converter in the oscilloscope in bits (Rigol = 8 bit)
             public List<Channel> mi_Channels     = new List<Channel>();
             public int[]         ms32_Separators = new int[0]; // Sample positions where to draw a red vertical line (used for OWON Frames)
+            public bool          mb_Dirty;          // the user has modified channels after loading the capture for the first time (unsaved changes).
             // -------------------------------
             // The following are assigned in CalcAnalogMinMax()
             public int           ms32_AnalogCount;  // count of channels with analog data 
@@ -406,7 +407,9 @@ namespace OsziWaveformAnalyzer
 
         #endregion
 
-        public  const  String     APP_VERSION       = "v2.2"; // displayed in Main Window Title
+        public delegate bool delInvokeBool();
+
+        public  const  String     APP_VERSION       = "v2.3"; // displayed in Main Window Title
         public  const  int        MIN_VALID_SAMPLES = 100;    // Error if loaded file contains less samples
         public  const  String     ERR_MIN_SAMPLES   = "The minimum amount of samples is 100.";
         public  const  String     NO_SAMPLES_LOADED = "No samples loaded. Use button 'Capture' or select an Input file.";
@@ -423,6 +426,7 @@ namespace OsziWaveformAnalyzer
         private static FormMain   mi_Main;
         private static OsziPanel  mi_OsziPanel;
         private static String     ms_AppDir;
+        private static String     ms_SampleDir;
         private static String     ms_WinInstaller;
         private static String     ms_HelpHtmlPath;
         private static bool       mb_Busy;
@@ -435,7 +439,8 @@ namespace OsziWaveformAnalyzer
 
         public static String SampleDir
         {
-            get { return ms_AppDir + "\\Samples"; }
+            get { return ms_SampleDir; }
+            set { ms_SampleDir = value; }
         }
 
         public static String WinInstallerPath
@@ -483,7 +488,8 @@ namespace OsziWaveformAnalyzer
 
             try
             {
-                ms_AppDir = Path.GetDirectoryName(Application.ExecutablePath);
+                ms_AppDir    = Path.GetDirectoryName(Application.ExecutablePath);
+                ms_SampleDir = ms_AppDir + "\\Samples";
 
                 ms_WinInstaller = ms_AppDir + "\\Driver\\dpinst-amd64.exe";
                 String s_Driver = ms_AppDir + "\\Driver\\amd64\\ausbtmc.sys";

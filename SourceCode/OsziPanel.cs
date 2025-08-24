@@ -449,7 +449,7 @@ namespace OsziWaveformAnalyzer
 
         // =====================================================================================
 
-        public void StoreNewCapture(Capture i_Capture)
+        public void StoreCapture(Capture i_Capture)
         {
             mi_Capture = i_Capture;
             ms32_CursorSpl   = -1;  // no cursor
