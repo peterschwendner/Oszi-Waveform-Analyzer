@@ -150,7 +150,10 @@ namespace ExImport
                 }
             }
 
-            i_Capture.ms_Path = s_Path;
+            i_Capture.ms_Path  = s_Path;
+            i_Capture.mb_Dirty = false;
+            Utils.FormMain.UpdateDirty(); // display status "unsaved changes"
+
             return s32_SavedSamples.ToString("N0") + " samples"; // for status display
         }
 
