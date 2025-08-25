@@ -1044,6 +1044,8 @@ namespace OsziWaveformAnalyzer
 
             if (e.Button == MouseButtons.Right)
                 ShowMenu(k_Mouse, s32_Sample);
+            else
+                Cursor = Cursors.SizeAll; // move graph horizontally + vertically
         }
 
         /// <summary>
@@ -1235,12 +1237,14 @@ namespace OsziWaveformAnalyzer
             base.OnMouseLeave(e);
             mi_Tooltip.Hide(this);
             mk_MouseDownLoc = Point.Empty;
+            Cursor = Cursors.Arrow;
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
             mk_MouseDownLoc = Point.Empty;
+            Cursor = Cursors.Arrow;
         }
 
         // --------------------------------------------------------
