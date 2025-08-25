@@ -393,10 +393,14 @@ namespace Operations
 
                 if (b_ClkRise) // Clock rising edge --> sample SDA
                 {
-                    u8_RiseSDA = u8_SDA;   // SDA at rising clock edge
+                    u8_RiseSDA = u8_SDA; // SDA at rising clock edge
 
-                    s32_ByteVal <<= 1;
-                    s32_ByteVal |= u8_RiseSDA;
+                    if ((e_CurBit >= eBit.A6 && e_CurBit <= eBit.A0) || // order is revese!
+                        (e_CurBit >= eBit.D7 && e_CurBit <= eBit.D0))
+                    {
+                        s32_ByteVal <<= 1;
+                        s32_ByteVal |= u8_RiseSDA;
+                    }
                     
                     s32_BitSmpl = S;       // store sample where bit starts
                     if (s32_ByteStart < 0)
