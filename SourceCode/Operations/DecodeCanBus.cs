@@ -425,7 +425,7 @@ namespace Operations
             comboBaudStd.Text = Utils.RegReadString(eRegKey.CanBaudStd,     "500 k");
             comboBaudFD .Text = Utils.RegReadString(eRegKey.CanBaudFD,      "500 k");
             textSmplStd .Text = Utils.RegReadString(eRegKey.CanSplPointStd, "87.5");
-            textSmplFD  .Text = Utils.RegReadString(eRegKey.CanSplPointFD,  "87.5");
+            textSmplFD  .Text = Utils.RegReadString(eRegKey.CanSplPointFD,  "75.0");
 
             // Load the correct settings for the demo files
             String s_BaudFD;
@@ -435,7 +435,7 @@ namespace Operations
                 comboBaudStd.Text = "500 k";
                 comboBaudFD .Text = s_BaudFD;
                 textSmplStd .Text = "87.5";
-                textSmplFD  .Text = "87.5";
+                textSmplFD  .Text = "75.0";
                 radioIdleHigh.Checked = true;
             }
         }
