@@ -301,13 +301,13 @@ namespace Operations
             }
 
             int s32_Samples = OsziPanel.CurCapture.ms32_Samples;
-            mi_Result       = OsziPanel.CurCapture.FindOrCreateChannel(textResult.Text, mi_ChannelA, mi_ChannelB);
             
             if (mb_Analog)
             {
                 if (mi_ChannelA.mf_Analog == null || mi_ChannelB.mf_Analog == null)
                     throw new Exception("If you right-click on an analog channel you must select two analog channels.");
 
+                mi_Result = OsziPanel.CurCapture.FindOrCreateChannel(textResult.Text, mi_ChannelA, mi_ChannelB);
                 if (mi_Result.mf_Analog == null)
                     mi_Result.mf_Analog = new float[s32_Samples];
 
@@ -318,6 +318,7 @@ namespace Operations
                 if (mi_ChannelA.mu8_Digital == null || mi_ChannelB.mu8_Digital == null)
                     throw new Exception("If you right-click on a digital channel you must select two digital channels.");
 
+                mi_Result = OsziPanel.CurCapture.FindOrCreateChannel(textResult.Text, mi_ChannelA, mi_ChannelB);
                 if (mi_Result.mu8_Digital == null)
                     mi_Result.mu8_Digital = new Byte[s32_Samples];
 
