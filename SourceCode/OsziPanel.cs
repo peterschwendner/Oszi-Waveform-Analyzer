@@ -1388,7 +1388,7 @@ namespace OsziWaveformAnalyzer
             catch (Exception Ex)
             {
                 e.Graphics.FillRectangle(Brushes.Black, ClientRectangle);
-                e.Graphics.DrawString(Ex.Message + "\n\n" + Ex.StackTrace, Font, Utils.ERROR_BRUSH, 5, 5);
+                e.Graphics.DrawString(Ex.Message + "\n\n" + Ex.StackTrace, Font, Utils.ERROR_BRUSH, AutoScrollPosition.X + 5, 5);
             }
         }
         protected override void OnPaintBackground(PaintEventArgs e)
