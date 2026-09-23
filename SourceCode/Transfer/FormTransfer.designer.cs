@@ -51,6 +51,9 @@
             this.radioVXI = new System.Windows.Forms.RadioButton();
             this.textVxiLink = new System.Windows.Forms.TextBox();
             this.lblVxiLink = new System.Windows.Forms.Label();
+            this.radioRS232 = new System.Windows.Forms.RadioButton();
+            this.comboSerial = new System.Windows.Forms.ComboBox();
+            this.lblSerial = new System.Windows.Forms.Label();
             this.statusStrip.SuspendLayout();
             this.groupCommand.SuspendLayout();
             this.SuspendLayout();
@@ -111,7 +114,7 @@
             // 
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 184);
+            this.statusStrip.Location = new System.Drawing.Point(0, 199);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new System.Drawing.Size(566, 22);
             this.statusStrip.SizingGrip = false;
@@ -154,7 +157,7 @@
             this.groupCommand.Controls.Add(this.label7);
             this.groupCommand.Controls.Add(this.textCommand);
             this.groupCommand.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
-            this.groupCommand.Location = new System.Drawing.Point(13, 56);
+            this.groupCommand.Location = new System.Drawing.Point(13, 71);
             this.groupCommand.Name = "groupCommand";
             this.groupCommand.Size = new System.Drawing.Size(541, 114);
             this.groupCommand.TabIndex = 100;
@@ -272,13 +275,47 @@
             this.lblVxiLink.Size = new System.Drawing.Size(47, 13);
             this.lblVxiLink.TabIndex = 15;
             this.lblVxiLink.Text = "VXI Link";
+            //
+            // radioRS232
+            //
+            this.radioRS232.AutoSize = true;
+            this.radioRS232.Location = new System.Drawing.Point(14, 50);
+            this.radioRS232.Name = "radioRS232";
+            this.radioRS232.Size = new System.Drawing.Size(49, 17);
+            this.radioRS232.TabIndex = 4;
+            this.radioRS232.Text = "COM";
+            this.toolTip.SetToolTip(this.radioRS232, "RS232 serial port or USB virtual COM port (e.g. Hameg HO720 interface)");
+            this.radioRS232.UseVisualStyleBackColor = true;
+            this.radioRS232.CheckedChanged += new System.EventHandler(this.OnRadioButton_CheckedChanged);
+            //
+            // comboSerial
+            //
+            this.comboSerial.FormattingEnabled = true;
+            this.comboSerial.Location = new System.Drawing.Point(193, 25);
+            this.comboSerial.Name = "comboSerial";
+            this.comboSerial.Size = new System.Drawing.Size(108, 21);
+            this.comboSerial.TabIndex = 35;
+            this.toolTip.SetToolTip(this.comboSerial, "Baudrate, Databits, Parity (N,E,O), Stopbits, Handshake (RTS, XON, NONE)\n"
+                                                    + "These must match the settings in the interface menu of the oscilloscope.");
+            //
+            // lblSerial
+            //
+            this.lblSerial.AutoSize = true;
+            this.lblSerial.Location = new System.Drawing.Point(193, 9);
+            this.lblSerial.Name = "lblSerial";
+            this.lblSerial.Size = new System.Drawing.Size(70, 13);
+            this.lblSerial.TabIndex = 16;
+            this.lblSerial.Text = "Port Settings";
             // 
             // FormTransfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
-            this.ClientSize = new System.Drawing.Size(566, 206);
+            this.ClientSize = new System.Drawing.Size(566, 221);
+            this.Controls.Add(this.lblSerial);
+            this.Controls.Add(this.comboSerial);
+            this.Controls.Add(this.radioRS232);
             this.Controls.Add(this.lblVxiLink);
             this.Controls.Add(this.textVxiLink);
             this.Controls.Add(this.radioVXI);
@@ -335,6 +372,9 @@
         private System.Windows.Forms.RadioButton radioVXI;
         private System.Windows.Forms.TextBox textVxiLink;
         private System.Windows.Forms.Label lblVxiLink;
+        private System.Windows.Forms.RadioButton radioRS232;
+        private System.Windows.Forms.ComboBox comboSerial;
+        private System.Windows.Forms.Label lblSerial;
 
     }
 }

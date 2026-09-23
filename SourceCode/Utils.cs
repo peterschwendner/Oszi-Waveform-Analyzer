@@ -77,6 +77,8 @@ namespace OsziWaveformAnalyzer
             ConnectTCP,
             ConnectVXI,
             LinkVXI,
+            SerialSettings,
+            HamegPoints,
             // ------------
             RasterInterval,
             RasterUnit,
