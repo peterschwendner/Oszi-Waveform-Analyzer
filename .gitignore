@@ -1,0 +1,17 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+
+# Build output (the release exe in Compiled/ is tracked on purpose)
+SourceCode/obj/
+SourceCode/bin/
+*.pdb
+
+# .NET runtime files copied into Compiled/ when building without the .NET 4.0 targeting pack
+Compiled/mscorlib.dll
+Compiled/*.nlp
+Compiled/de/
+
+# Empty config file created by Visual Studio
+SourceCode/app.config
