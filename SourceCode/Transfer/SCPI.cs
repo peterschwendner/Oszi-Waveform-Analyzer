@@ -47,6 +47,7 @@ NAMING CONVENTIONS which allow to see the type of a variable immediately without
 
 using System;
 using System.IO;
+using System.IO.Ports;
 using System.Net;
 using System.Net.Sockets;
 using System.Diagnostics;
@@ -128,9 +129,10 @@ namespace Transfer
 
         public enum eConnectMode
         {
-            USB = 0,
-            TCP = 1,
-            VXI = 2,
+            USB   = 0,
+            TCP   = 1,
+            VXI   = 2,
+            RS232 = 3, // COM port: real RS232 or USB virtual COM port (e.g. Hameg HO720 dual interface)
         }
 
         #endregion
@@ -209,6 +211,15 @@ namespace Transfer
         IDevice      mi_UsbDevice;
         Socket       mi_TcpSocket;
         VxiClient    mi_VxiClient;
+        SerialPort   mi_SerialPort;
+        delBlockProgress mf_BlockProgress;
+
+        /// <summary>
+        /// Called while a large IEEE 488.2 binary block is received by SendBlockCommand() over RS232 or TCP.
+        /// These connections may be slow (19200 baud = 1,9 kB per second), so the user must see the progress.
+        /// Return true to abort the transfer.
+        /// </summary>
+        public delegate bool delBlockProgress(int s32_Received, int s32_Total);
 
         /// <summary>
         /// A delay which replaces the *OPC? command.
@@ -221,6 +232,16 @@ namespace Transfer
         public int OpcReplaceDelay
         {
             set { ms32_OpcReplaceDelay = value; }
+        }
+
+        public delBlockProgress BlockProgress
+        {
+            set { mf_BlockProgress = value; }
+        }
+
+        public eConnectMode ConnectMode
+        {
+            get { return me_Mode; }
         }
 
         // =============================================================================================
@@ -276,6 +297,115 @@ namespace Transfer
 
             me_Mode      = eConnectMode.TCP;
             mi_TcpSocket = ConnectTcpSocketAsync(i_IpAddress, u16_TcpPort);
+        }
+
+        /// <summary>
+        /// Opens a COM port (RS232 or USB virtual COM port).
+        /// s_PortName = "COM3" on Windows or "/dev/ttyUSB0" on Linux
+        /// s_Settings = "19200 8N2 RTS" --> Baudrate, Databits, Parity (N,E,O,M,S), Stopbits (1,2), Handshake (RTS, XON, NONE)
+        /// The handshake is optional, default is NONE.
+        /// </summary>
+        public void ConnectSerial(String s_PortName, String s_Settings)
+        {
+            #if TRACE_OUTPUT
+                Debug.Print("Open COM port " + s_PortName + " with " + s_Settings);
+            #endif
+
+            s_PortName = s_PortName.Trim();
+            if (s_PortName.Length == 0)
+                Throw("Enter the COM port like \"COM1\" or \"/dev/ttyUSB0\".");
+
+            SerialPort i_Port = ParseSerialSettings(s_Settings);
+            i_Port.PortName     = s_PortName;
+            i_Port.ReadTimeout  = DEFAULT_TIMEOUT;
+            i_Port.WriteTimeout = 2000; // all commands are very short
+            i_Port.DtrEnable    = true;
+            // Without hardware handshake RTS must be set manually, otherwise the CTS input of the scope stays inactive.
+            // With Handshake.RequestToSend the driver controls RTS and setting it would throw.
+            if (i_Port.Handshake != Handshake.RequestToSend)
+                i_Port.RtsEnable = true;
+
+            i_Port.Open(); // throws if the port does not exist or is in use
+            i_Port.DiscardInBuffer();
+            i_Port.DiscardOutBuffer();
+
+            me_Mode       = eConnectMode.RS232;
+            mi_SerialPort = i_Port;
+        }
+
+        /// <summary>
+        /// s_Settings = "115200 8N1 RTS"
+        /// </summary>
+        public static SerialPort ParseSerialSettings(String s_Settings)
+        {
+            const String ERR_FORMAT = "Enter the COM port settings like \"19200 8N2 RTS\" (Baudrate, Databits, Parity, Stopbits, Handshake)\n"
+                                    + "Parity: N = None, E = Even, O = Odd, M = Mark, S = Space\n"
+                                    + "Handshake: RTS = RTS/CTS hardware handshake, XON = XON/XOFF, NONE = no handshake";
+
+            String[] s_Parts = s_Settings.Trim().ToUpper().Split(new Char[] { ' ', ',', '/' }, StringSplitOptions.RemoveEmptyEntries);
+            if (s_Parts.Length < 2 || s_Parts.Length > 3 || s_Parts[1].Length != 3)
+                Throw(ERR_FORMAT);
+
+            int s32_Baud;
+            if (!int.TryParse(s_Parts[0], out s32_Baud) || s32_Baud < 300)
+                Throw(ERR_FORMAT);
+
+            SerialPort i_Port = new SerialPort();
+            i_Port.BaudRate = s32_Baud;
+
+            switch (s_Parts[1][0])
+            {
+                case '7': i_Port.DataBits = 7; break;
+                case '8': i_Port.DataBits = 8; break;
+                default:  Throw(ERR_FORMAT);   break;
+            }
+            switch (s_Parts[1][1])
+            {
+                case 'N': i_Port.Parity = Parity.None;  break;
+                case 'E': i_Port.Parity = Parity.Even;  break;
+                case 'O': i_Port.Parity = Parity.Odd;   break;
+                case 'M': i_Port.Parity = Parity.Mark;  break;
+                case 'S': i_Port.Parity = Parity.Space; break;
+                default:  Throw(ERR_FORMAT);            break;
+            }
+            switch (s_Parts[1][2])
+            {
+                case '1': i_Port.StopBits = StopBits.One; break;
+                case '2': i_Port.StopBits = StopBits.Two; break;
+                default:  Throw(ERR_FORMAT);              break;
+            }
+
+            String s_Handshake = s_Parts.Length > 2 ? s_Parts[2] : "NONE";
+            switch (s_Handshake)
+            {
+                case "RTS":  i_Port.Handshake = Handshake.RequestToSend; break;
+                case "XON":  i_Port.Handshake = Handshake.XOnXOff;       break;
+                case "NONE": i_Port.Handshake = Handshake.None;          break;
+                default:     Throw(ERR_FORMAT);                          break;
+            }
+            return i_Port;
+        }
+
+        /// <summary>
+        /// Loads all COM ports that exist on this computer into the ComboBox
+        /// </summary>
+        public static void EnumerateSerialPorts(ComboBox i_Combo)
+        {
+            String[] s_Ports = SerialPort.GetPortNames();
+            Array.Sort(s_Ports, CompareComPorts);
+            foreach (String s_Port in s_Ports)
+            {
+                if (!i_Combo.Items.Contains(s_Port))
+                    i_Combo.Items.Add(s_Port);
+            }
+        }
+
+        // Sort "COM2" before "COM10"
+        static int CompareComPorts(String s_Port1, String s_Port2)
+        {
+            if (s_Port1.Length != s_Port2.Length)
+                return s_Port1.Length - s_Port2.Length;
+            return String.Compare(s_Port1, s_Port2, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -337,6 +467,17 @@ namespace Transfer
                 #endif
                 mi_VxiClient.Dispose();
                 mi_VxiClient = null;
+            }
+
+            if (mi_SerialPort != null)
+            {
+                #if TRACE_OUTPUT
+                    Debug.Print("Close COM port");
+                #endif
+                try { mi_SerialPort.Close(); }
+                catch {} // a USB virtual COM port that was unplugged throws here
+                mi_SerialPort.Dispose();
+                mi_SerialPort = null;
             }
 
             if (mp_HeaderMem != IntPtr.Zero)
@@ -425,6 +566,14 @@ namespace Transfer
         }
 
         /// <summary>
+        /// Send an ASCII command that does not return a response, and do not wait for the command to finish.
+        /// </summary>
+        public void SendCommand(String s_Command, int s32_Timeout = DEFAULT_TIMEOUT)
+        {
+            TransmitString(s_Command, s32_Timeout);
+        }
+
+        /// <summary>
         /// Send an ASCII command and return a string
         /// </summary>
         public String SendStringCommand(String s_Command, int s32_Timeout = DEFAULT_TIMEOUT)
@@ -455,12 +604,155 @@ namespace Transfer
                 case eConnectMode.VXI: u8_Data = mi_VxiClient.DeviceRead(s32_Timeout);   break;
                 case eConnectMode.USB: u8_Data = ReceiveUsb(s32_BlockSize, s32_Timeout); break;
                 case eConnectMode.TCP: u8_Data = ReceiveTcp(e_BinaryTcp, s32_BlockSize, s32_Timeout); break;
+                case eConnectMode.RS232: Throw("Programming Error: Use SendBlockCommand() for RS232."); break;
             }
 
             #if TRACE_OUTPUT
                 Debug.Print("<< SendByteCommand() response= {0:N0} byte", u8_Data.Length);
             #endif
             return u8_Data;
+        }
+
+        /// <summary>
+        /// Send an ASCII command that returns an IEEE 488.2 definite length block "#<n><length><data>" + linefeed
+        /// and return only the payload <data> without header and linefeed.
+        /// Over a stream connection (RS232, TCP) exactly the announced count of bytes is read,
+        /// so the data may contain any byte values including linefeeds.
+        /// The indefinite block "#0<data>\n" is also supported, but then the data must not contain a linefeed.
+        /// s32_MaxSize = maximum expected size of the entire response (only used for USB)
+        /// s32_Timeout = timeout for the first byte and for each following chunk of data
+        /// Returns null if the user has aborted in the BlockProgress callback.
+        /// </summary>
+        public Byte[] SendBlockCommand(String s_Command, int s32_MaxSize, int s32_Timeout = DEFAULT_TIMEOUT)
+        {
+            if (me_Mode == eConnectMode.USB || me_Mode == eConnectMode.VXI)
+            {
+                // USB and VXI deliver the entire message at once
+                Byte[] u8_Response = SendByteCommand(eBinaryTCP.MinSize, s32_MaxSize, s_Command, s32_Timeout);
+                return ExtractBlock(u8_Response);
+            }
+
+            TransmitString(s_Command, s32_Timeout);
+
+            #if TRACE_OUTPUT
+                Debug.Print(">> SendBlockCommand() timeout= "+s32_Timeout);
+            #endif
+
+            // Skip whitespace that some devices send before the block
+            Byte u8_Char;
+            do
+            {
+                u8_Char = ReadStreamByte(s32_Timeout);
+            }
+            while (u8_Char == ' ' || u8_Char == '\r' || u8_Char == '\n');
+
+            if (u8_Char != '#')
+            {
+                // The device has sent an ASCII response instead of a block
+                String s_Text = ((Char)u8_Char) + ReadStreamLine(s32_Timeout);
+                Throw("The oscilloscope has not sent a data block but: \"" + s_Text + "\"");
+            }
+
+            Byte u8_Digits = ReadStreamByte(s32_Timeout);
+            if (u8_Digits < '0' || u8_Digits > '9')
+                Throw("The oscilloscope has sent an invalid data block header.");
+
+            if (u8_Digits == '0') // indefinite length block terminated by linefeed
+                return Encoding.ASCII.GetBytes(ReadStreamLine(s32_Timeout));
+
+            Byte[] u8_Length = new Byte[u8_Digits - '0'];
+            ReadStreamExact(u8_Length, 0, u8_Length.Length, s32_Timeout, false);
+
+            int s32_Length;
+            if (!int.TryParse(Encoding.ASCII.GetString(u8_Length), out s32_Length) || s32_Length < 0)
+                Throw("The oscilloscope has sent an invalid data block length.");
+
+            Byte[] u8_Data = new Byte[s32_Length];
+            if (!ReadStreamExact(u8_Data, 0, s32_Length, s32_Timeout, true))
+            {
+                // User abort: the rest of the block is still arriving. Discard it, otherwise the next response is corrupt.
+                DiscardInput();
+                return null;
+            }
+
+            // Remove the linefeed that terminates the response.
+            // Wait only a short time because some devices do not send it.
+            try
+            {
+                if (ReadStreamByte(200) == '\r')
+                    ReadStreamByte(200);
+            }
+            catch (TimeoutException) {}
+
+            #if TRACE_OUTPUT
+                Debug.Print("<< SendBlockCommand() response= {0:N0} byte", u8_Data.Length);
+            #endif
+            return u8_Data;
+        }
+
+        /// <summary>
+        /// Removes the IEEE 488.2 block header "#<n><length>" and the trailing linefeed from a complete response
+        /// </summary>
+        static Byte[] ExtractBlock(Byte[] u8_Response)
+        {
+            if (u8_Response.Length < 2 || u8_Response[0] != '#' || u8_Response[1] < '0' || u8_Response[1] > '9')
+                Throw("The oscilloscope has not sent a data block.");
+
+            int s32_Digits = u8_Response[1] - '0';
+            int s32_Start  = 2 + s32_Digits;
+            int s32_Length = 0;
+            if (s32_Digits == 0) // indefinite length block
+            {
+                s32_Length = u8_Response.Length - s32_Start;
+                while (s32_Length > 0 && (u8_Response[s32_Start + s32_Length - 1] == '\n' ||
+                                          u8_Response[s32_Start + s32_Length - 1] == '\r'))
+                {
+                    s32_Length --;
+                }
+            }
+            else
+            {
+                if (u8_Response.Length < s32_Start ||
+                    !int.TryParse(Encoding.ASCII.GetString(u8_Response, 2, s32_Digits), out s32_Length))
+                    Throw("The oscilloscope has sent an invalid data block header.");
+
+                if (u8_Response.Length < s32_Start + s32_Length)
+                    Throw("The oscilloscope has sent an incomplete data block.");
+            }
+
+            Byte[] u8_Data = new Byte[s32_Length];
+            Array.Copy(u8_Response, s32_Start, u8_Data, 0, s32_Length);
+            return u8_Data;
+        }
+
+        /// <summary>
+        /// Discards any data that the device may still be sending on a stream connection (RS232, TCP)
+        /// after an aborted transfer or a timeout. Returns when nothing was received for s32_Timeout ms.
+        /// </summary>
+        public void DiscardInput(int s32_Timeout = 300)
+        {
+            Byte[] u8_Dummy = new Byte[4096];
+            try
+            {
+                while (true)
+                {
+                    switch (me_Mode)
+                    {
+                        case eConnectMode.RS232:
+                            mi_SerialPort.ReadTimeout = s32_Timeout;
+                            mi_SerialPort.Read(u8_Dummy, 0, u8_Dummy.Length); // throws TimeoutException
+                            break;
+                        case eConnectMode.TCP:
+                            mi_TcpSocket.ReceiveTimeout = s32_Timeout;
+                            if (mi_TcpSocket.Receive(u8_Dummy) == 0) // throws SocketException on timeout
+                                return;
+                            break;
+                        default:
+                            return;
+                    }
+                }
+            }
+            catch {}
         }
 
         // ==================================== PRIVATE =====================================
@@ -478,6 +770,21 @@ namespace Transfer
                 case eConnectMode.VXI: mi_VxiClient.DeviceWrite(u8_TxCommand); break;
                 case eConnectMode.USB: SendUsbPacket    (u8_TxCommand, 0, s32_Timeout); break;
                 case eConnectMode.TCP: mi_TcpSocket.Send(u8_TxCommand, 0, u8_TxCommand.Length, SocketFlags.None); break;
+                case eConnectMode.RS232:
+                    // SCPI is strictly request / response. If the device has responded after a previous timeout,
+                    // this late response must be removed, otherwise all following responses would be shifted.
+                    mi_SerialPort.DiscardInBuffer();
+                    try
+                    {
+                        mi_SerialPort.Write(u8_TxCommand, 0, u8_TxCommand.Length);
+                    }
+                    catch (TimeoutException)
+                    {
+                        // With RTS/CTS handshake the write blocks while the CTS line is not active
+                        Throw("Timeout sending to the COM port.\nThe oscilloscope does not activate the CTS line.\n"
+                            + "Is it turned on and are the cable and the handshake setting correct?", true);
+                    }
+                    break;
             }
         
             #if TRACE_OUTPUT
@@ -497,6 +804,7 @@ namespace Transfer
                 case eConnectMode.VXI: u8_RxData = mi_VxiClient.DeviceRead(s32_Timeout); break;
                 case eConnectMode.USB: u8_RxData = ReceiveUsb(BUF_SIZE_ASCII, s32_Timeout); break;
                 case eConnectMode.TCP: u8_RxData = ReceiveTcp(eBinaryTCP.Linefeed, 0, s32_Timeout); break;
+                case eConnectMode.RS232: u8_RxData = Encoding.ASCII.GetBytes(ReadStreamLine(s32_Timeout)); break;
             }
             String s_Response = Encoding.ASCII.GetString(u8_RxData);
 
@@ -731,6 +1039,182 @@ namespace Transfer
                 Debug.Print("  << ReceiveTcp() --> received {0:N0} bytes", i_Stream.Length);
             #endif
             return i_Stream.ToArray();
+        }
+
+        // ============================= RS232 + TCP Stream ==============================
+
+        /// <summary>
+        /// Sends raw bytes without appending a linefeed. For devices with a proprietary (non SCPI) protocol like Hameg HM507.
+        /// b_ByteByByte = true --> send each byte separately and wait until it has been sent.
+        /// This is required for old devices with a small receive buffer that cannot handle the 16 byte FIFO of the PC's UART.
+        /// Only for RS232 and TCP.
+        /// </summary>
+        public void SendRaw(Byte[] u8_Data, bool b_ByteByByte, int s32_Timeout = DEFAULT_TIMEOUT)
+        {
+            #if TRACE_OUTPUT
+                Debug.Print(">> SendRaw() " + BitConverter.ToString(u8_Data));
+            #endif
+
+            switch (me_Mode)
+            {
+                case eConnectMode.RS232:
+                    // Remove a late response that has arrived after a previous timeout
+                    mi_SerialPort.DiscardInBuffer();
+                    mi_SerialPort.WriteTimeout = s32_Timeout;
+                    try
+                    {
+                        if (!b_ByteByByte)
+                        {
+                            mi_SerialPort.Write(u8_Data, 0, u8_Data.Length);
+                            break;
+                        }
+
+                        Stopwatch i_Watch = Stopwatch.StartNew();
+                        for (int i=0; i<u8_Data.Length; i++)
+                        {
+                            mi_SerialPort.Write(u8_Data, i, 1);
+                            while (mi_SerialPort.BytesToWrite > 0) // waits for CTS if RTS/CTS handshake is used
+                            {
+                                if (i_Watch.ElapsedMilliseconds > s32_Timeout)
+                                    throw new TimeoutException();
+                                Thread.Sleep(0);
+                            }
+                        }
+                    }
+                    catch (TimeoutException)
+                    {
+                        mi_SerialPort.DiscardOutBuffer();
+                        Throw("Timeout sending to the COM port.\nThe oscilloscope does not activate the CTS line.\n"
+                            + "Is it turned on and are the cable and the handshake setting correct?", true);
+                    }
+                    break;
+
+                case eConnectMode.TCP:
+                    mi_TcpSocket.Send(u8_Data, 0, u8_Data.Length, SocketFlags.None);
+                    break;
+
+                default:
+                    Throw("This oscilloscope can only be connected over RS232 (or a RS232 to Ethernet converter over TCP).");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Receives exactly s32_Count raw bytes. Only for RS232 and TCP.
+        /// s32_Timeout is the maximum time to wait for the next chunk of data, not for the entire data.
+        /// b_Progress = true --> call the BlockProgress callback which allows the user to abort.
+        /// Returns null if the user has aborted. Throws TimeoutException on timeout.
+        /// </summary>
+        public Byte[] ReceiveRaw(int s32_Count, int s32_Timeout, bool b_Progress = false)
+        {
+            Byte[] u8_Data = new Byte[s32_Count];
+            if (!ReadStreamExact(u8_Data, 0, s32_Count, s32_Timeout, b_Progress))
+            {
+                DiscardInput();
+                return null;
+            }
+
+            #if TRACE_OUTPUT
+                if (s32_Count <= 32) Debug.Print("<< ReceiveRaw() " + BitConverter.ToString(u8_Data));
+                else                 Debug.Print("<< ReceiveRaw() {0:N0} bytes", s32_Count);
+            #endif
+            return u8_Data;
+        }
+
+        /// <summary>
+        /// Receives one raw byte. Only for RS232 and TCP. Throws TimeoutException on timeout.
+        /// </summary>
+        public Byte ReceiveRawByte(int s32_Timeout)
+        {
+            return ReadStreamByte(s32_Timeout);
+        }
+
+        /// <summary>
+        /// Reads one byte from the COM port or the TCP socket
+        /// </summary>
+        private Byte ReadStreamByte(int s32_Timeout)
+        {
+            Byte[] u8_Byte = new Byte[1];
+            ReadStreamExact(u8_Byte, 0, 1, s32_Timeout, false);
+            return u8_Byte[0];
+        }
+
+        /// <summary>
+        /// Reads until linefeed. The linefeed and a preceding carriage return are not returned.
+        /// </summary>
+        private String ReadStreamLine(int s32_Timeout)
+        {
+            StringBuilder i_Line = new StringBuilder();
+            while (true)
+            {
+                Char c_Char = (Char)ReadStreamByte(s32_Timeout);
+                if (c_Char == '\n')
+                    break;
+                i_Line.Append(c_Char);
+            }
+            if (i_Line.Length > 0 && i_Line[i_Line.Length - 1] == '\r')
+                i_Line.Length --;
+
+            #if TRACE_OUTPUT
+                Debug.Print("  << ReadStreamLine() --> \"" + i_Line + "\"");
+            #endif
+            return i_Line.ToString();
+        }
+
+        /// <summary>
+        /// Reads exactly s32_Count bytes from the COM port or the TCP socket.
+        /// s32_Timeout is the maximum time to wait for the next chunk of data, not for the entire data.
+        /// b_Progress = true --> call the BlockProgress callback which allows the user to abort.
+        /// returns false if the user has aborted.
+        /// </summary>
+        private bool ReadStreamExact(Byte[] u8_Buffer, int s32_Offset, int s32_Count, int s32_Timeout, bool b_Progress)
+        {
+            Stopwatch i_Watch = Stopwatch.StartNew();
+            int s32_Done = 0;
+            while (s32_Done < s32_Count)
+            {
+                int s32_Read = 0;
+                try
+                {
+                    switch (me_Mode)
+                    {
+                        case eConnectMode.RS232:
+                            mi_SerialPort.ReadTimeout = s32_Timeout;
+                            s32_Read = mi_SerialPort.Read(u8_Buffer, s32_Offset + s32_Done, s32_Count - s32_Done);
+                            break;
+                        case eConnectMode.TCP:
+                            mi_TcpSocket.ReceiveTimeout = s32_Timeout;
+                            s32_Read = mi_TcpSocket.Receive(u8_Buffer, s32_Offset + s32_Done, s32_Count - s32_Done, SocketFlags.None);
+                            if (s32_Read == 0)
+                                Throw("The oscilloscope has closed the TCP connection.");
+                            break;
+                        default:
+                            Throw("Programming Error: ReadStreamExact() is only for RS232 and TCP");
+                            break;
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    Throw("Timeout. No response from the oscilloscope.\nRead the Help file!", true);
+                }
+                catch (SocketException Ex)
+                {
+                    if (Ex.ErrorCode == WSAETIMEDOUT)
+                        Throw("Timeout. No response from the oscilloscope.\nRead the Help file!", true);
+                    throw;
+                }
+                s32_Done += s32_Read;
+
+                // Do not call the callback too often because it calls Application.DoEvents()
+                if (b_Progress && mf_BlockProgress != null && (i_Watch.ElapsedMilliseconds > 250 || s32_Done == s32_Count))
+                {
+                    i_Watch.Reset();
+                    i_Watch.Start();
+                    if (mf_BlockProgress(s32_Done, s32_Count))
+                        return false;
+                }
+            }
+            return true;
         }
 
         // ================================== Helper ====================================

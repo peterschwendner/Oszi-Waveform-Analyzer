@@ -66,6 +66,7 @@ namespace Transfer
         SCPI           mi_Scpi;
         ITransferPanel mi_Panel;
         WForms.Timer   mi_StatusTimer;
+        bool           mb_ComPortsLoaded;
 
         /// <summary>
         /// Constructor
@@ -78,7 +79,7 @@ namespace Transfer
             InitializeComponent();
 
             Control i_Ctrl = (Control)i_Panel;
-            i_Ctrl.Top  = btnInstallDriver.Bottom + 5;
+            i_Ctrl.Top  = radioRS232.Bottom + 3;
             i_Ctrl.Left = 10;
             Controls.Add(i_Ctrl);
 
@@ -104,13 +105,31 @@ namespace Transfer
             try { PlatformManager.Instance.EnumerateUsbDevices(comboDevices); }                  // FIRST
             catch {}
 
-            int s32_Mode = Utils.RegReadInteger(eRegKey.ConnectMode, (int)eConnectMode.USB) % 3; // AFTER
+            // Load Combobox with COM port settings
+            String s_DefaultSerial = TransferManager.GetDefaultSerialSettings(me_OsziSerie);
+            comboSerial.Items.Add(s_DefaultSerial);
+            foreach (String s_Settg in new String[] { "115200 8N1 RTS", "57600 8N1 RTS", "38400 8N1 RTS", "19200 8N1 RTS", "9600 8N1 RTS",
+                                                      "115200 8N2 RTS", "57600 8N2 RTS", "38400 8N2 RTS", "19200 8N2 RTS", "9600 8N2 RTS",
+                                                      "115200 8N1 NONE", "9600 8N1 NONE" })
+            {
+                if (!comboSerial.Items.Contains(s_Settg))
+                    comboSerial.Items.Add(s_Settg);
+            }
+            Utils.ComboAdjustDropDownWidth(comboSerial);
+            comboSerial.Text = ReadSerialSetting(1, s_DefaultSerial);
+
+            int s32_Mode = Utils.RegReadInteger(eRegKey.ConnectMode, (int)eConnectMode.USB) % 4; // AFTER
             switch ((eConnectMode)s32_Mode)
             {
-                case eConnectMode.USB: radioUSB.Checked = true; break; // fires OnRadioButton_CheckedChanged()
-                case eConnectMode.VXI: radioVXI.Checked = true; break; // fires OnRadioButton_CheckedChanged()
-                case eConnectMode.TCP: radioTCP.Checked = true; break; // fires OnRadioButton_CheckedChanged()
+                case eConnectMode.USB:   radioUSB  .Checked = true; break; // fires OnRadioButton_CheckedChanged()
+                case eConnectMode.VXI:   radioVXI  .Checked = true; break; // fires OnRadioButton_CheckedChanged()
+                case eConnectMode.TCP:   radioTCP  .Checked = true; break; // fires OnRadioButton_CheckedChanged()
+                case eConnectMode.RS232: radioRS232.Checked = true; break; // fires OnRadioButton_CheckedChanged()
             }
+
+            // Old oscilloscopes like HM507 have only a RS232 port. (TCP is allowed for RS232 to Ethernet converters)
+            if (TransferManager.RequiresSerial(me_OsziSerie) && !radioTCP.Checked)
+                radioRS232.Checked = true;
 
             textVxiLink.Text = Utils.RegReadString(eRegKey.LinkVXI, "inst0");
 
@@ -174,6 +193,15 @@ namespace Transfer
 
                     PrintStatus("Loaded " + comboDevices.Items.Count + " USB device(s) into Combobox", Color.Green);
                 }
+                else if (me_Mode == eConnectMode.RS232)
+                {
+                    SCPI.EnumerateSerialPorts(comboDevices);
+                    if (comboDevices.Items.Count == 0)
+                        throw new Exception("No COM port was found on this computer.");
+
+                    comboDevices.SelectedIndex = 0;
+                    PrintStatus("Loaded " + comboDevices.Items.Count + " COM port(s) into Combobox", Color.Green);
+                }
                 else // TCP / VXI
                 {
                     VxiClient i_VxiCLient = new VxiClient();
@@ -205,10 +233,22 @@ namespace Transfer
         }
 
         /// <summary>
-        /// Called from all 3 RadioButtons
+        /// Called from all 4 RadioButtons
         /// </summary>
         private void OnRadioButton_CheckedChanged(object sender, EventArgs e)
         {
+            // Remove the COM ports when switching from RS232 to another mode
+            if (mb_ComPortsLoaded && !radioRS232.Checked)
+            {
+                mb_ComPortsLoaded = false;
+                comboDevices.Items.Clear();
+                if (radioUSB.Checked)
+                {
+                    try { PlatformManager.Instance.EnumerateUsbDevices(comboDevices); }
+                    catch {}
+                }
+            }
+
             if (radioUSB.Checked)
             {
                 me_Mode = eConnectMode.USB;
@@ -230,9 +270,23 @@ namespace Transfer
                 comboDevices.Text = Utils.RegReadString(eRegKey.ConnectVXI, "192.168.0.240");
                 lblUsbEndp  .Text = "IP Address";
             }
+            if (radioRS232.Checked)
+            {
+                me_Mode = eConnectMode.RS232;
+                comboDevices.DropDownStyle = ComboBoxStyle.DropDown; // allow entering "/dev/ttyUSB0" on Linux
+                comboDevices.Items.Clear();
+                try { SCPI.EnumerateSerialPorts(comboDevices); } // enumerating COM ports is instantaneous
+                catch {}
+                mb_ComPortsLoaded = true;
+                comboDevices.Text = ReadSerialSetting(0, comboDevices.Items.Count > 0 ? comboDevices.Items[0].ToString() : "COM1");
+                lblUsbEndp  .Text = "COM Port";
+            }
 
             lblVxiLink .Visible = radioVXI.Checked;
             textVxiLink.Visible = radioVXI.Checked;
+            lblSerial  .Visible = radioRS232.Checked;
+            comboSerial.Visible = radioRS232.Checked;
+            btnSearch  .Visible = !radioRS232.Checked; // COM ports are loaded when the RadioButton is checked
         }
 
         // ==========================================================
@@ -286,6 +340,11 @@ namespace Transfer
                         mi_Scpi.ConnectTcp(comboDevices.Text); // opens network connection, throws
                         Utils.RegWriteString(eRegKey.ConnectTCP, comboDevices.Text);
                         break;
+
+                    case eConnectMode.RS232:
+                        mi_Scpi.ConnectSerial(comboDevices.Text, comboSerial.Text); // opens COM port, throws
+                        WriteSerialSetting(comboDevices.Text.Trim(), comboSerial.Text.Trim());
+                        break;
                 }
                 
                 mi_Panel.OnOpenDevice(mi_Scpi);
@@ -301,6 +360,42 @@ namespace Transfer
 
             btnOpen.Enabled = true;
             Utils.EndBusyOperation(this);
+        }
+
+        // ==========================================================
+
+        /// <summary>
+        /// Each oscilloscope model has its own COM port and port settings, because they differ (e.g. HMO: 8N1, HM507: 8N2 RTS).
+        /// Stored in one registry value: "Hameg_HMO1522=COM6|115200 8N1 NONE;Hameg_HM507=COM1|19200 8N2 RTS"
+        /// s32_Index = 0 --> COM port, 1 --> port settings
+        /// </summary>
+        String ReadSerialSetting(int s32_Index, String s_Default)
+        {
+            String s_Prefix = me_OsziSerie + "=";
+            foreach (String s_Entry in Utils.RegReadString(eRegKey.SerialSettings).Split(';'))
+            {
+                if (!s_Entry.StartsWith(s_Prefix))
+                    continue;
+
+                String[] s_Parts = s_Entry.Substring(s_Prefix.Length).Split('|');
+                if (s_Parts.Length == 2 && s_Parts[s32_Index].Length > 0)
+                    return s_Parts[s32_Index];
+            }
+            return s_Default;
+        }
+
+        void WriteSerialSetting(String s_Port, String s_Settings)
+        {
+            String s_Prefix = me_OsziSerie + "=";
+            List<String> i_Entries = new List<String>();
+            foreach (String s_Entry in Utils.RegReadString(eRegKey.SerialSettings).Split(';'))
+            {
+                // Keep the entries of the other models. Skip legacy values without model name.
+                if (s_Entry.Contains("=") && !s_Entry.StartsWith(s_Prefix))
+                    i_Entries.Add(s_Entry);
+            }
+            i_Entries.Add(s_Prefix + s_Port.Replace("|", "").Replace(";", "") + "|" + s_Settings.Replace("|", "").Replace(";", ""));
+            Utils.RegWriteString(eRegKey.SerialSettings, String.Join(";", i_Entries.ToArray()));
         }
 
         void Disconnect()
@@ -319,9 +414,13 @@ namespace Transfer
             groupCommand.Enabled =  b_Open;
             comboDevices.Enabled = !b_Open;
             btnSearch   .Enabled = !b_Open;
+            bool b_Serial = TransferManager.RequiresSerial(me_OsziSerie);
             radioTCP    .Enabled = !b_Open;
-            radioUSB    .Enabled = !b_Open;
-            radioVXI    .Enabled = !b_Open;
+            radioUSB    .Enabled = !b_Open && !b_Serial;
+            radioVXI    .Enabled = !b_Open && !b_Serial;
+            radioRS232  .Enabled = !b_Open;
+            comboSerial .Enabled = !b_Open;
+            lblSerial   .Enabled = !b_Open;
             lblUsbEndp  .Enabled = !b_Open;
             textVxiLink .Enabled = !b_Open;
             lblVxiLink  .Enabled = !b_Open;

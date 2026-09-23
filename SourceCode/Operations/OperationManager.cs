@@ -148,6 +148,10 @@ namespace Operations
             mi_Operations.Add(typeof(Mathematical));
             mi_Operations.Add(typeof(NoiseFilter));
 
+            // ---------- Analysis windows (not modal) ------------
+            mi_Operations.Add(typeof(SpectrumFFT));
+            mi_Operations.Add(typeof(XYPlot));
+
             // ---------- Decoder Operations ------------
             mi_Operations.Add(typeof(DecodeUART));
             mi_Operations.Add(typeof(DecodeSPI));
