@@ -84,6 +84,15 @@ namespace Transfer
             [Description("Picoscope 3206 MSO")]
             Picoscope_3206,
 
+            [Description("Hameg HMO1522 / HMO Compact Series")] // also HMO1002, HMO1202, HMO2022, HMO722/1022/2022
+            Hameg_HMO1522,
+
+            [Description("Hameg HM2008 / HM1008 / HM1508 CombiScope")]
+            Hameg_HM2008,
+
+            [Description("Hameg HM507 (RS232 only)")] // proprietary binary protocol, also HM504 (analog only, no waveforms)
+            Hameg_HM507,
+
             // TODO: Add more oscilloscope brands like Tektronix, Rhode & Schwarz, Siglent, ...
         }
 
@@ -107,6 +116,37 @@ namespace Transfer
             // Sends a command that the user has typed and displays the response in i_TextReponse.
             // Must not throw, but display error in i_TextReponse
             void SendManualCommand(String s_Command, TextBox i_TextReponse);
+        }
+
+        /// <summary>
+        /// Default settings for the COM port "Baudrate Databits Parity Stopbits Handshake".
+        /// The user can change them in FormTransfer. They must match the settings in the interface menu of the oscilloscope.
+        /// </summary>
+        public static String GetDefaultSerialSettings(eOsziSerie e_OsziSerie)
+        {
+            switch (e_OsziSerie)
+            {
+                // HO720 dual interface: sigrok uses 115200/8n1 with RTS/CTS for HMO scopes.
+                case eOsziSerie.Hameg_HMO1522: return "115200 8N1 RTS";
+
+                // The HM1508-2 / HM2008 manual specifies "N-8-2 no parity, 8 bits data, 2 stop bits (RTS/CTS hardware protocol)".
+                // The baudrate is selectable in SETTINGS > Interface on the oscilloscope.
+                case eOsziSerie.Hameg_HM2008:  return "19200 8N2 RTS";
+
+                // HM507 command description: "keine Paritaet, Datenlaenge 8 Bit, 2 Stoppbit, RTS/CTS Handshake"
+                // The baudrate (110 ... 115200) is detected automatically from the first SPACE CR after power on.
+                case eOsziSerie.Hameg_HM507:   return "19200 8N2 RTS";
+
+                default:                       return "9600 8N1 NONE";
+            }
+        }
+
+        /// <summary>
+        /// true if the oscilloscope has only a serial port (no USB TMC, no VXI)
+        /// </summary>
+        public static bool RequiresSerial(eOsziSerie e_OsziSerie)
+        {
+            return e_OsziSerie == eOsziSerie.Hameg_HM507;
         }
 
         public static void FillComboOsziModel(ComboBox i_ComboOsziModel)
@@ -148,6 +188,12 @@ namespace Transfer
                 case eOsziSerie.Picoscope_3206:
                     throw new Exception("For Picoscope 3206 the SCPI transfer is not yet implemented.\nBut you can import a CSV file.");
 
+                case eOsziSerie.Hameg_HMO1522:
+                case eOsziSerie.Hameg_HM2008:
+                case eOsziSerie.Hameg_HM507:
+                    i_Panel = new PanelHameg();
+                    break;
+
                 // TODO: Add Tektronix, Rhode & Schwarz, Siglent, ...
 
                 default:
@@ -183,6 +229,11 @@ namespace Transfer
                 case eOsziSerie.Rigol_1000Z:
                 case eOsziSerie.Picoscope_3206:
                     throw new Exception("For " + i_ComboOsziModel.Text + " only CSV file import is implemented.\nDid you select the correct Oszi Model?");
+
+                case eOsziSerie.Hameg_HMO1522:
+                case eOsziSerie.Hameg_HM2008:
+                case eOsziSerie.Hameg_HM507:
+                    throw new Exception("For " + i_ComboOsziModel.Text + " file import is not implemented.\nUse 'Transfer' to read the waveforms over RS232, USB or TCP.");
 
                 case eOsziSerie.OWON_1022:
                     if (s_FileExt == ".cap") return ExImport.OWON.ParseBinaryFile(s_Path, ref b_Abort);

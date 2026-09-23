@@ -67,6 +67,14 @@
     <Compile Include="Transfer\PanelRigol.Designer.cs">
       <DependentUpon>PanelRigol.cs</DependentUpon>
     </Compile>
+    <Compile Include="Transfer\PanelHameg.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Transfer\PanelHameg.Designer.cs">
+      <DependentUpon>PanelHameg.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Transfer\Hameg.cs" />
+    <Compile Include="Transfer\HamegHM507.cs" />
     <Compile Include="Transfer\TransferManager.cs" />
     <Compile Include="Transfer\FormTransfer.cs">
       <SubType>Form</SubType>
@@ -115,6 +123,12 @@
     </Compile>
     <Compile Include="Operations\DeleteSamples.cs" />
     <Compile Include="Operations\MoreDecoders.cs" />
+    <Compile Include="Operations\SpectrumFFT.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Operations\XYPlot.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Operations\NoiseFilter.cs">
       <SubType>Form</SubType>
     </Compile>
