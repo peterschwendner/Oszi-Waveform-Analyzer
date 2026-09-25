@@ -40,7 +40,8 @@ The *Show Help* links in the new windows open these chapters.
 
 ### Build
 
-```
-C:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe SourceCode/OsziWaveformAnalyzer.csproj -p:Configuration=Release
-```
-(see `build.bat`). The program is written to `Compiled/OsziWaveformAnalyzer.exe`.
+Run `build.bat` (double-click or from any folder). It uses the MSBuild of the .NET Framework 4.x
+that is part of every Windows installation, so Visual Studio is not required.
+The program is written to `Compiled/OsziWaveformAnalyzer.exe`.
+
+The warnings MSB3644 and MSB3270 are harmless. MSB3644 disappears if the .NET Framework 4.x Developer Pack is installed.
