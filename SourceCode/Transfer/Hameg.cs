@@ -156,6 +156,7 @@ namespace Transfer
         FormTransfer mi_Form;
         OsziModel    mi_OsziModel;
         bool         mb_UseTrace;             // true --> use the :TRACe commands, false --> use the :CHANnel:DATA commands
+        bool         mb_CombiScope;           // true --> HM1008 / HM1508 / HM2008 which have an analog and a digital mode
         bool         mb_Abort;
         String       ms_Progress;
 
@@ -184,7 +185,8 @@ namespace Transfer
         /// </summary>
         public Hameg(eOsziSerie e_Serie)
         {
-            mb_UseTrace = (e_Serie == eOsziSerie.Hameg_HM2008);
+            mb_UseTrace   = (e_Serie == eOsziSerie.Hameg_HM2008);
+            mb_CombiScope = mb_UseTrace;
         }
 
         public void AbortTransfer()
@@ -206,24 +208,26 @@ namespace Transfer
             // Important: Execute the command *IDN? immediatley here.
             // If the communication fails, the connection cannot be used and an error must be displayed to the user.
             // HMO1522 returns "HAMEG,HMO1522,012345678,05.886"
+            // HM1508  returns "HAMEG,HM1508,000000000,HW10030000,SW05.100-02.005" (hardware and software version)
             String s_IDN = mi_Scpi.SendStringCommand("*IDN?", 2000); // throws
 
             String[] s_Parts = s_IDN.Split(',');
-            if (s_Parts.Length == 4)
+            if (s_Parts.Length >= 4)
             {
                 mi_OsziModel = new OsziModel();
                 mi_OsziModel.ms_Brand    = s_Parts[0].Trim();
                 mi_OsziModel.ms_Model    = s_Parts[1].Trim();
                 mi_OsziModel.ms_Serial   = s_Parts[2].Trim();
-                mi_OsziModel.ms_Firmware = s_Parts[3].Trim();
+                mi_OsziModel.ms_Firmware = String.Join(" ", s_Parts, 3, s_Parts.Length - 3).Trim();
 
                 // The model reported by the scope overrides the model selected by the user.
                 // All HMO scopes use the :CHANnel:DATA commands (with fallback to :TRACe for old firmware).
-                mb_UseTrace = !mi_OsziModel.ms_Model.ToUpper().StartsWith("HMO");
+                mb_UseTrace   = !mi_OsziModel.ms_Model.ToUpper().StartsWith("HMO");
+                mb_CombiScope = mb_UseTrace;
             }
 
-            // The CombiScopes are not documented to support the query *OPC? --> make a fix pause after each command instead.
-            mi_Scpi.OpcReplaceDelay = mb_UseTrace ? 300 : 0;
+            // All Hameg scopes support *OPC? (documented in the SCPI manuals of HMO and CombiScopes)
+            mi_Scpi.OpcReplaceDelay = 0;
         }
 
         public void Disconnect()
@@ -336,17 +340,14 @@ namespace Transfer
         /// </summary>
         public void ExecuteOperation(eOperation e_Operation)
         {
-            String s_Cmd  = null;
-            int  s32_Wait = 0; // additional pause for CombiScopes which do not support *OPC?
+            String s_Cmd = null;
             switch (e_Operation)
             {
                 case eOperation.Reset:
                     s_Cmd = "*RST";
-                    s32_Wait = 3000;
                     break;
                 case eOperation.Auto:
                     s_Cmd = mb_UseTrace ? ":SYSTem:SET:AUTO" : ":AUToscale";
-                    s32_Wait = 5000;
                     break;
                 case eOperation.Run:
                     s_Cmd = mb_UseTrace ? ":ACQuire:STATe RUN" : ":RUN";
@@ -361,16 +362,8 @@ namespace Transfer
 
             mi_Form.PrintStatus("Command   " + s_Cmd, Color.Blue);
 
-            if (mb_UseTrace)
-            {
-                mi_Scpi.SendOpcCommand(s_Cmd); // makes the fix pause of OpcReplaceDelay
-                if (s32_Wait > 0)
-                    Thread.Sleep(s32_Wait);
-            }
-            else
-            {
-                mi_Scpi.SendOpcCommand(s_Cmd, 15000); // *OPC? returns when the command has finished
-            }
+            // *OPC? returns when the command has finished. Autoset may take several seconds.
+            mi_Scpi.SendOpcCommand(s_Cmd, 15000);
         }
 
         // ===============================================================================================
@@ -383,6 +376,8 @@ namespace Transfer
         public Capture TransferAllChannels(bool b_Memory)
         {
             mb_Abort = false;
+
+            CheckDigitalMode();
 
             if (GetAcquisitionState() == "RUN")
                 throw new ArgumentException("The oscilloscope must be in STOP mode to transfer the channels.\n"
@@ -485,6 +480,35 @@ namespace Transfer
                 }
             }
             return i_Capture;
+        }
+
+        /// <summary>
+        /// The CombiScopes HM1008 / HM1508 / HM2008 have an analog and a digital mode.
+        /// Only in digital mode (DSO) the waveforms are stored and can be transferred.
+        /// </summary>
+        void CheckDigitalMode()
+        {
+            if (!mb_CombiScope)
+                return;
+
+            String s_Mode;
+            try
+            {
+                s_Mode = mi_Scpi.SendStringCommand(":INSTrument:SELect?").Trim().ToUpper();
+            }
+            catch (TimeoutException)
+            {
+                DiscardInput();
+                return; // not supported by this firmware
+            }
+
+            if (s_Mode.StartsWith("AO"))
+                throw new ArgumentException("The oscilloscope is in analog mode. Switch it to digital mode (DSO) to store and transfer waveforms.");
+            if (s_Mode.StartsWith("CT"))
+                throw new ArgumentException("The oscilloscope is in component tester mode. Switch it to digital mode (DSO).");
+            if (s_Mode.StartsWith("FFT"))
+                throw new ArgumentException("The oscilloscope is in FFT mode. Switch it to digital mode (DSO).\n"
+                                          + "You can display the spectrum of the transferred channels with 'FFT Spectrum' (right-click on an analog channel).");
         }
 
         bool IsChannelEnabled(int s32_Chan)
