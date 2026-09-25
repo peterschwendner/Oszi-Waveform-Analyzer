@@ -32,6 +32,8 @@
         <div><a href="#DC_Capture"       class="MenuLink" onClick="ShowMenu(false)">DC Capture</a></div>
         <div><a href="#AD_Conversion"    class="MenuLink" onClick="ShowMenu(false)">A/D Conversion</a></div>
         <div><a href="#NoiseSuppression" class="MenuLink" onClick="ShowMenu(false)">Noise Suppression</a></div>
+        <div><a href="#FFT"              class="MenuLink" onClick="ShowMenu(false)">FFT Spectrum</a></div>
+        <div><a href="#XYPlot"           class="MenuLink" onClick="ShowMenu(false)">X/Y Plot</a></div>
         <div><a href="#SplitHalfDuplex"  class="MenuLink" onClick="ShowMenu(false)">Split Half Duplex Communication</a></div>
         <div><a href="#DecodeAsync"      class="MenuLink" onClick="ShowMenu(false)">Decode Asynchronous Data</a></div>
         <div>— &nbsp; <a href="#PostISO7816"      class="MenuLink" onClick="ShowMenu(false)">Post Decoder ISO 7816</a></div>
@@ -50,11 +52,13 @@
         <div>— &nbsp; <a href="#Prerequisites"    class="MenuLink" onClick="ShowMenu(false)">Prerequisites</a></div>
         <div>— &nbsp; <a href="#TransferWindow"   class="MenuLink" onClick="ShowMenu(false)">Transfer Window</a></div>
         <div>— &nbsp; <a href="#ImplementOszi"    class="MenuLink" onClick="ShowMenu(false)">Implemented Oscilloscopes</a></div>
+        <div>— &nbsp; <a href="#Hameg"            class="MenuLink" onClick="ShowMenu(false)">Hameg Oscilloscopes</a></div>
         <div>— &nbsp; <a href="#ScpiLibrary"      class="MenuLink" onClick="ShowMenu(false)">The SCPI Library in C#</a></div>
-        <div><a href="#ConnectionModes"  class="MenuLink" onClick="ShowMenu(false)">Connection over USB, VXI, TCP</a></div>
+        <div><a href="#ConnectionModes"  class="MenuLink" onClick="ShowMenu(false)">Connection over USB, VXI, TCP, COM</a></div>
         <div>— &nbsp; <a href="#USBConnection"    class="MenuLink" onClick="ShowMenu(false)">USB Connection</a></div>
         <div>— &nbsp; <a href="#VXIConnection"    class="MenuLink" onClick="ShowMenu(false)">VXI-11 Connection</a></div>
         <div>— &nbsp; <a href="#TCPConnection"    class="MenuLink" onClick="ShowMenu(false)">TCP Connection</a></div>
+        <div>— &nbsp; <a href="#RS232Connection"  class="MenuLink" onClick="ShowMenu(false)">COM Port (RS232)</a></div>
         <div>— &nbsp; <a href="#TransferSpeed"    class="MenuLink" onClick="ShowMenu(false)">Transfer Speed</a></div>
         <div><a href="#StoreDisk"        class="MenuLink" onClick="ShowMenu(false)">Storing Waveforms on Disk</a></div>
         <div>— &nbsp; <a href="#CsvFiles"         class="MenuLink" onClick="ShowMenu(false)">CSV Files</a></div>
@@ -86,7 +90,7 @@
 <a name="Features"></a>
 <h3>Features</h3>
 <ul>
-<li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB, VXI or TCP using the <b>SCPI</b> protocol.</div>
+<li><div>Oszi Waveform Analyzer transfers analog and digital signals from the oscilloscope to the computer over USB, VXI, TCP or <b>RS232</b> (COM port) using the <b>SCPI</b> protocol.</div>
 <li><div>Oszi Waveform Analyzer does <span class="Error">NOT</span> require any huge installations like NI-VISA (1 GB), TekVISA (100 MB), IVI, UltraSigma (500 MB).</div>
 <li><div>Oszi Waveform Analyzer requires only the .NET framework 4.0 or higher.</div>
 <li><div>Oszi Waveform Analyzer runs on <b>Windows 7, 8, 10 and 11</b>.</div>
@@ -115,6 +119,8 @@
 <li><div><span class="Error">NEW in v2.5</span>: DC Capture allows to capture very slow processes over hours or days.</div>
 <li><div><span class="Error">NEW in v2.6</span>: Decoder for USB Full speed captures.</div>
 <li><div><span class="Error">NEW in v2.7</span>: Several improvements in CAN decoder.</div>
+<li><div><span class="Error">NEW</span>: Waveform transfer from <b>Hameg</b> oscilloscopes HMO1522 / HMO Compact, HM2008 / HM1508 / HM1008 and HM507 over RS232 (COM port). See <a href="#Hameg">Hameg Oscilloscopes</a>.</div>
+<li><div><span class="Error">NEW</span>: <a href="#FFT">FFT Spectrum</a> and <a href="#XYPlot">X/Y Plot</a> for analog channels.</div>
 </ul>
 
 <a name="Decoders"></a>
@@ -128,6 +134,9 @@
 <tr><td>CAN bus</td><td>CAN classic and CAN FD with 2 baudrates with full error detection</td></tr>
 <tr><td>IR Remote</td><td>Decoding of any InfraRed Remote Control</td></tr>
 <tr><td>MagStripe</td><td>Decoding of analog magnetic stripe tracks on  ISO 7813 cards</td></tr>
+<tr><th>Analysis</th><th>Comment</th></tr>
+<tr><td>FFT Spectrum</td><td>Frequency spectrum of an analog channel with 5 window functions and peak detection</td></tr>
+<tr><td>X/Y Plot</td><td>Two analog channels as Lissajous figure with phase measurement</td></tr>
 <tr><th>Post Decoder</th><th>Comment</th></tr>
 <tr><td>PN 532</td><td>SPI + I²C traffic of Philips RFID + NFC transmission chip</td></tr>
 <tr><td>ISO 7816</td><td>UART traffic of pinpad with smartcard</td></tr>
@@ -270,6 +279,63 @@
 <div>When you apply too much filtering the signal flanks are affected.</div>
 <div><span class="Error">ATTENTION:</span> If you apply the noise filter to multiple channels of the same capture make sure</div>
 <div>that you use the <b>same filter settings</b> for all channels otherwise you get phase shifts between the channels.</div>
+
+
+<a name="FFT"></a>
+<h1>FFT Spectrum</h1>
+
+<table class="TblImage">
+    <tr><td><img src="Images/FftSpectrum.png" alt="Oszi Waveform Analyzer - FFT Spectrum" width="458" height="280"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/FftSpectrum.png')">Show Full Size</span></td></tr>
+</table>
+<div>Right-click on the analog signal of a channel and select <b>FFT Spectrum</b> to see which frequencies the signal contains.</div>
+<div>The spectrum opens in a separate window. It is not modal, so you can open multiple spectra and continue working in the main window.</div>
+<div>The screenshot shows a 10 kHz square wave with its odd harmonics at 30, 50, 70 and 90 kHz.</div>
+<p>
+<table class="DataTable">
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Window</td><td><b>Hann</b>: good all-round window.<br>
+                        <b>Blackman-Harris</b>: separates a weak signal close to a strong one (lowest leakage).<br>
+                        <b>Flat Top</b>: measures the <b>amplitude</b> exactly, but frequencies close together are not separated.<br>
+                        <b>Rectangular</b>: no window, only for signals with an integer count of periods in the capture.</td></tr>
+<tr><td>Scale</td><td><b>dBV (RMS)</b>: 0 dBV = 1 Volt RMS, like most oscilloscopes. <b>Volt (peak)</b>: amplitude of a sine wave.</td></tr>
+<tr><td>Range</td><td><b>Entire capture</b> or only the <b>visible screen</b>. Zoom into the signal in the main window to analyze only a part of it.</td></tr>
+<tr><td>Log frequency</td><td>Logarithmic frequency axis. Useful if the sample rate is much higher than the signal frequency.</td></tr>
+<tr><td>Remove DC</td><td>Removes the average voltage, otherwise the DC component may hide low frequencies.</td></tr>
+<tr><td>Export CSV</td><td>Saves frequency, amplitude in Volt and in dBV of all frequency bins.</td></tr>
+</table>
+<p>
+<div>The 5 strongest peaks are marked and listed in the upper right corner.</div>
+<div>Their frequency is interpolated between the FFT bins and is much more accurate than the bin distance.</div>
+<div>Move the mouse over the spectrum to see frequency and level. Drag with the left mouse button to <b>zoom</b> a frequency range. Double-click to reset the zoom.</div>
+<p>
+<div>The status bar shows the <b>resolution</b> (sample rate / count of samples). Two frequencies closer than this cannot be separated.</div>
+<div>The highest frequency is half the sample rate (Nyquist). A longer capture gives a finer resolution, a faster sample rate a higher maximum frequency.</div>
+<p>
+<div><span class="Error">ATTENTION:</span> An 8 bit oscilloscope has a dynamic range of approx 48 dB.</div>
+<div>Everything more than approx 50 dB below the strongest signal is quantization noise of the A/D converter.</div>
+<div>The FFT uses at most 4 Mega samples. For longer captures zoom in and select <b>Visible screen</b>.</div>
+
+
+<a name="XYPlot"></a>
+<h1>X/Y Plot</h1>
+
+<table class="TblImage">
+    <tr><td><img src="Images/XYPlot.png" alt="Oszi Waveform Analyzer - X/Y Plot" width="318" height="300"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/XYPlot.png')">Show Full Size</span></td></tr>
+</table>
+<div>Right-click on the analog signal of a channel and select <b>X/Y Plot</b> to display one channel versus another channel.</div>
+<div>This works like the XY mode of an oscilloscope, but with a capture that was recorded in normal Yt mode.</div>
+<div>So you can capture both channels and decide later to look at them as X/Y (Lissajous figure).</div>
+<p>
+<div>Select the channels for the X and Y axis and the range (entire capture or visible screen).</div>
+<div><b>Connect samples</b> draws lines between the samples, which is important if there are only few samples per period.</div>
+<div><b>Same Volt/Div</b> uses the same scale for both axes, so that a circle stays a circle.</div>
+<div>The brightness of each pixel shows how often the trace passes through it, like the phosphor of an analog oscilloscope.</div>
+<p>
+<div>The status bar shows the peak-to-peak voltages and the <b>phase</b> between the channels, calculated from their correlation.</div>
+<div>The phase is only correct if both signals have the <b>same frequency</b>. It is always between 0° and 180°: +45° and -45° show the same value.</div>
+<div>The screenshot shows two sine waves with a phase shift of 45°.</div>
 
 
 <a name="SplitHalfDuplex"></a>
@@ -557,6 +623,8 @@
 <div>I have implemented the SCPI commands for the <b>Rigol</b> series DS1000Z and DS1000DE.</div>
 <div>Rigol is such an inconsistent company that not even for their own products they have any standard.</div>
 <div>Each serie requires different commands with completely different parameters and responses.</div>
+<p>
+<div>The <b>Hameg</b> oscilloscopes are described in the chapter <a href="#Hameg">Hameg Oscilloscopes</a>.</div>
 
 <a name="Prerequisites"></a>
 <h3>Prerequisites</h3>
@@ -610,6 +678,9 @@
 <tr><td class="Green">OWON</td><td>VDS1022</td> <td>CSV, BIN, CAP&nbsp;</td><td>not yet implemented</td></tr>
 <tr><td class="Green">OWON</td><td>VDS2052</td> <td>CSV, BIN, CAP</td><td>not yet implemented</td></tr>
 <tr><td class="Green">Picoscope</td><td>3206 MSO</td> <td>CSV</td><td>not yet implemented</td></tr>
+<tr><td class="Green">Hameg</td><td>HMO1522, HMO Compact</td><td>&nbsp;</td><td>RS232 (HO720), USB virtual COM port, TCP (HO730)</td></tr>
+<tr><td class="Green">Hameg</td><td>HM2008, HM1508, HM1008</td><td>&nbsp;</td><td>RS232 (HO720), USB virtual COM port, TCP (HO730)</td></tr>
+<tr><td class="Green">Hameg</td><td>HM507</td><td>&nbsp;</td><td>RS232</td></tr>
 <tr><td class="Red">Tektronix</td>           <td>TODO</td><td colspan="2">Download <a href="https://download.tek.com/manual/MSO-DPO5000-B-DPO7000-C-DPO70000-B-C-D-DX-SX-DSA70000-B-C-D-and-MSO70000-C-DX-077001019.pdf" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Rohde &amp; Schwarz</td> <td>TODO</td><td colspan="2">Download <a href="https://www.batronix.com/files/Rohde-&-Schwarz/Oscilloscope/HMO1xx2/HMO1002_1202_ProgrammingManual_en.pdf" target="_blank">Manual</a></td></tr>
 <tr><td class="Red">Agilent</td>             <td>TODO</td><td colspan="2">Download <a href="https://ridl.cfd.rit.edu/products/manuals/Agilent/oscilloscopes/6000_series_prog_guide.pdf" target="_blank">Manual</a></td></tr>
@@ -625,20 +696,68 @@
 <div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
 <div>Clone the Rigol classes, rename and modify them and register the new oscilloscope serie in the <b>TransferManager</b>.</div>
 
+
+<a name="Hameg"></a>
+<h3>Hameg Oscilloscopes</h3>
+
+<p>
+<img src="Images/HamegTransfer.png" width="572" height="407" alt="Oszi Waveform Analyzer - Hameg Transfer over COM port">
+<p>
+<div>Hameg (today Rohde &amp; Schwarz) oscilloscopes are connected over their <b>RS232</b> interface.</div>
+<div>Select the oscilloscope serie, then <b>COM</b> in the Transfer window, the COM port and the <a href="#RS232Connection">port settings</a>.</div>
+<div>The port settings must match the settings in the interface menu of the oscilloscope.</div>
+<p>
+<table class="DataTable">
+<tr><th>Serie</th><th>Default Port Settings</th><th>Protocol</th><th>Tested</th></tr>
+<tr><td>HMO1522, HMO1002, HMO1202, HMO2022 (HMO Compact)</td><td>115200 8N1 RTS</td><td>SCPI :CHANnel:DATA, floats in Volt, logic pod</td><td class="Green">Real HMO1522</td></tr>
+<tr><td>HM2008, HM1508, HM1008 (CombiScope)</td><td>19200 8N2 RTS</td><td>SCPI :TRACe, 8 bit values</td><td class="Red">Simulation only</td></tr>
+<tr><td>HM507</td><td>19200 8N2 RTS</td><td>Proprietary binary protocol</td><td class="Red">Simulation only</td></tr>
+</table>
+<p>
+<div>The buttons Run, Stop, Single and Auto remote control the oscilloscope.</div>
+<div>The oscilloscope must be <b>stopped</b> before you click <b>Transfer</b>. Otherwise each channel would come from a different acquisition.</div>
+<div>RS232 is slow: at 115200 baud a transfer of 10.000 float samples takes approx 3.5 seconds. The progress is shown in the status bar and you can abort it.</div>
+<p>
+<div><b><u>HMO Compact series</u>:</b></div>
+<ul>
+    <li><div>The HO720 interface has a RS232 port and a USB port. The USB port is a <b>virtual COM port</b>, so also select <b>COM</b> for it.</div>
+    <li><div><b>Transfer Visible Screen</b> transfers the displayed samples, <b>Transfer Entire Memory</b> all samples in the display window.</div>
+    <li><div>If the logic probe HO3508 is connected and POD 1 is on, the 8 digital channels are transferred too.</div>
+    <li><div>If an old firmware does not support the commands :CHANnel:DATA, the :TRACe commands are used automatically.</div>
+</ul>
+<div><b><u>CombiScopes HM2008, HM1508, HM1008</u>:</b></div>
+<ul>
+    <li><div>The oscilloscope must be in <b>digital mode</b> (DSO). In analog mode there is no data to transfer.</div>
+    <li><div>Envelope and peak detect waveforms cannot be transferred. Use the acquisition mode Refresh.</div>
+    <li><div>Transfer Entire Memory is only possible in STOP mode.</div>
+</ul>
+<div><b><u>HM507</u>:</b></div>
+<ul>
+    <li><div>The HM507 has only a RS232 port. Use a 1:1 cable (not crossed).</div>
+    <li><div>The oscilloscope detects the baudrate (110 ... 115200) automatically, but only once <b>after power on</b> or after leaving the remote state.</div>
+    <div>If it does not respond, press the button <b>AUTOSET (LOCAL)</b> on the oscilloscope or switch it off and on and connect again.</div>
+    <li><div>Switch to digital storage mode with the button <b>STOR.</b> The button <b>Stop</b> activates <b>HOLD</b> on the oscilloscope.</div>
+    <li><div>Each channel has 2048 samples (200 samples per division).</div>
+    <li><div>A warning is shown after the transfer if the voltage or time values are not exact (VAR knob uncalibrated, X-MAG x10, ADD mode, GND).</div>
+    <li><div>XY mode cannot be transferred. Capture in Yt mode and use the <a href="#XYPlot">X/Y Plot</a> instead.</div>
+</ul>
+<div>The field <b>SCPI Command</b> in the Transfer window also works with the HM507.</div>
+<div>Binary bytes in the response are displayed in hex, for example <code>CH1:&lt;19&gt;</code>.</div>
+
 <a name="ScpiLibrary"></a>
 <h3>The SCPI Library for C# Programmers</h3>
 
 <div>As this project is open source you can use the <b>class SCPI</b> also in your own C# project.</div>
-<div>It allows you to communicate with any SCPI device over USB, VXI or TCP.</div>
+<div>It allows you to communicate with any SCPI device over USB, VXI, TCP or RS232.</div>
 <div>My code will keep your harddisk clean. You do not need to install the NI-VISA monster of 1 Gigabyte.</div>
 <div>In the class SCPI you can enable <code>TRACE_OUTPUT</code> to see the SCPI commands and responses.</div>
 <div>In the subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a> you find a <b>logfile</b> of the SCPI commands and responses of my scope.</div>
 
 
 <a name="ConnectionModes"></a>
-<h1>Connection over USB, VXI, TCP</h1>
+<h1>Connection over USB, VXI, TCP, COM</h1>
 
-<div>Oszi Waveform Analyzer offers 3 options to connect to your oscilloscope:</div>
+<div>Oszi Waveform Analyzer offers 4 options to connect to your oscilloscope:</div>
 
 <a name="USBConnection"></a>
 <h3>Option 1: USB Connection</h3>
@@ -708,6 +827,30 @@
 <div>You can use a <b>port scanner</b> to find all listening ports.</div>
 
 
+<a name="RS232Connection"></a>
+<h3>Option 4: COM Port (RS232)</h3>
+
+<div>Older oscilloscopes and interface cards like the Hameg HO720 have a RS232 port.</div>
+<div>Select <b>COM</b> in the Transfer window. The COM ports of the computer are loaded automatically.</div>
+<div>You can also enter a port name, for example <code>/dev/ttyUSB0</code> on Linux.</div>
+<div>A USB to RS232 adapter and the USB port of the Hameg HO720 appear as a <b>virtual COM port</b> and work the same way.</div>
+<p>
+<div>The <b>Port Settings</b> have the format <code>Baudrate Databits Parity Stopbits Handshake</code>, for example <code>19200 8N2 RTS</code>:</div>
+<table class="DataTable">
+<tr><th>Part</th><th>Values</th></tr>
+<tr><td>Baudrate</td><td>300 ... 115200 and higher</td></tr>
+<tr><td>Databits</td><td>7 or 8</td></tr>
+<tr><td>Parity</td><td>N = None, E = Even, O = Odd, M = Mark, S = Space</td></tr>
+<tr><td>Stopbits</td><td>1 or 2</td></tr>
+<tr><td>Handshake</td><td>RTS = RTS/CTS hardware handshake, XON = XON/XOFF, NONE = no handshake (optional, default NONE)</td></tr>
+</table>
+<p>
+<div>The settings must match the interface menu of the oscilloscope.</div>
+<div>Each oscilloscope serie remembers its own COM port and port settings.</div>
+<div>If the Transfer window shows a timeout when sending with RTS handshake, the oscilloscope does not activate the CTS line:</div>
+<div>Check that it is turned on, the cable and the handshake setting.</div>
+
+
 <a name="TransferSpeed"></a>
 <h3>Transfer Speed</h3>
 
@@ -718,6 +861,8 @@
 <div>If your scope implements Fast Ethernet, the maximum transfer rate is 100 MBit/sec.</div>
 <div>If your scope, router and computer support Gigabit Ethernet, the maximum transfer rate is 1 GBit/sec.</div>
 <div>If your computer connects over WIFI you will have a significantly worse performance.</div>
+<div><b><u>RS232</u>:</b></div>
+<div>RS232 is very slow: at 115200 baud approx 11 kB/sec, at 19200 baud approx 1.9 kB/sec.</div>
 <p>
 <div>My Rigol has 480 MBit USB and 100 MBit ethernet and a waveform transfer is 4 times faster over USB.</div>
 <div>And plain TCP transfer is approx 30% faster than VXI transfer.</div>
