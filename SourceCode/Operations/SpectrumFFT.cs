@@ -51,6 +51,7 @@ using Utils             = OsziWaveformAnalyzer.Utils;
 using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -355,7 +356,9 @@ namespace Operations
 
             FlowLayoutPanel i_Bar = new FlowLayoutPanel();
             i_Bar.Dock    = DockStyle.Top;
-            i_Bar.Height  = 32;
+            i_Bar.AutoSize     = true; // wraps into a second row if the window is narrow
+            i_Bar.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            i_Bar.MinimumSize  = new Size(0, 32);
             i_Bar.Padding = new Padding(4, 4, 4, 0);
 
             mi_ComboWindow = AddCombo(i_Bar, "Window:", 140);
@@ -382,6 +385,17 @@ namespace Operations
             i_Export.Margin    = new Padding(10, 0, 0, 0);
             i_Export.Click    += new EventHandler(OnExportClick);
             i_Bar.Controls.Add(i_Export);
+
+            LinkLabel i_Help = new LinkLabel();
+            i_Help.Text      = "Show Help";
+            i_Help.LinkColor = Color.Lime;
+            i_Help.AutoSize  = true;
+            i_Help.Margin    = new Padding(12, 5, 0, 0);
+            i_Help.LinkClicked += delegate(object o_Sender, LinkLabelLinkClickedEventArgs e)
+            {
+                PlatformManager.Instance.ShowHelp(this, "FFT");
+            };
+            i_Bar.Controls.Add(i_Help);
 
             mi_LblInfo = new Label();
             mi_LblInfo.Dock      = DockStyle.Bottom;
@@ -712,7 +726,7 @@ namespace Operations
                 }
                 else
                 {
-                    double d_StepX = NiceStep(md_FreqMax - md_FreqMin, 10);
+                    double d_StepX = NiceStep(md_FreqMax - md_FreqMin, Math.Max(2, r_Plot.Width / 80)); // labels need approx 80 pixels
                     for (double d_F = Math.Ceiling(md_FreqMin / d_StepX) * d_StepX; d_F <= md_FreqMax + d_StepX * 1e-6; d_F += d_StepX)
                     {
                         float X = FreqToX(d_F, r_Plot);

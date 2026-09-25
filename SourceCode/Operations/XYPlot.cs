@@ -51,6 +51,7 @@ using Utils             = OsziWaveformAnalyzer.Utils;
 using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
+using PlatformManager   = Platform.PlatformManager;
 
 namespace Operations
 {
@@ -145,7 +146,9 @@ namespace Operations
 
             FlowLayoutPanel i_Bar = new FlowLayoutPanel();
             i_Bar.Dock    = DockStyle.Top;
-            i_Bar.Height  = 32;
+            i_Bar.AutoSize     = true; // wraps into a second row if the window is narrow
+            i_Bar.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            i_Bar.MinimumSize  = new Size(0, 32);
             i_Bar.Padding = new Padding(4, 4, 4, 0);
 
             mi_ComboX     = AddCombo(i_Bar, "X:", 100);
@@ -156,6 +159,17 @@ namespace Operations
 
             mi_CheckLines = AddCheck(i_Bar, "Connect samples", true);
             mi_CheckEqual = AddCheck(i_Bar, "Same Volt/Div",   true);
+
+            LinkLabel i_Help = new LinkLabel();
+            i_Help.Text      = "Show Help";
+            i_Help.LinkColor = Color.Lime;
+            i_Help.AutoSize  = true;
+            i_Help.Margin    = new Padding(12, 5, 0, 0);
+            i_Help.LinkClicked += delegate(object o_Sender, LinkLabelLinkClickedEventArgs e)
+            {
+                PlatformManager.Instance.ShowHelp(this, "XYPlot");
+            };
+            i_Bar.Controls.Add(i_Help);
 
             mi_LblInfo = new Label();
             mi_LblInfo.Dock      = DockStyle.Bottom;
@@ -442,7 +456,7 @@ namespace Operations
             using (Font  i_Font  = new Font("Segoe UI", 8))
             {
                 // Vertical grid lines with X voltage labels
-                double d_StepX = NiceStep(md_ScaleX * W, 8);
+                double d_StepX = NiceStep(md_ScaleX * W, Math.Max(2, W / 90)); // labels need approx 90 pixels
                 for (double V = Math.Ceiling(md_ViewX0 / d_StepX) * d_StepX; V <= md_ViewX0 + md_ScaleX * W; V += d_StepX)
                 {
                     float X = (float)(r_Plot.Left + (V - md_ViewX0) / md_ScaleX);
@@ -453,7 +467,7 @@ namespace Operations
                 }
 
                 // Horizontal grid lines with Y voltage labels
-                double d_StepY = NiceStep(md_ScaleY * H, 8);
+                double d_StepY = NiceStep(md_ScaleY * H, Math.Max(2, H / 40));
                 for (double V = Math.Ceiling(md_ViewY0 / d_StepY) * d_StepY; V <= md_ViewY0 + md_ScaleY * H; V += d_StepY)
                 {
                     float Y = (float)(r_Plot.Bottom - (V - md_ViewY0) / md_ScaleY);
