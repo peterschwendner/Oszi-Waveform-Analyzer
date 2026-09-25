@@ -291,9 +291,9 @@
             // comboSerial
             //
             this.comboSerial.FormattingEnabled = true;
-            this.comboSerial.Location = new System.Drawing.Point(193, 25);
+            this.comboSerial.Location = new System.Drawing.Point(140, 25);
             this.comboSerial.Name = "comboSerial";
-            this.comboSerial.Size = new System.Drawing.Size(108, 21);
+            this.comboSerial.Size = new System.Drawing.Size(161, 21);
             this.comboSerial.TabIndex = 35;
             this.toolTip.SetToolTip(this.comboSerial, "Baudrate, Databits, Parity (N,E,O), Stopbits, Handshake (RTS, XON, NONE)\n"
                                                     + "These must match the settings in the interface menu of the oscilloscope.");
@@ -301,7 +301,7 @@
             // lblSerial
             //
             this.lblSerial.AutoSize = true;
-            this.lblSerial.Location = new System.Drawing.Point(193, 9);
+            this.lblSerial.Location = new System.Drawing.Point(140, 9);
             this.lblSerial.Name = "lblSerial";
             this.lblSerial.Size = new System.Drawing.Size(70, 13);
             this.lblSerial.TabIndex = 16;

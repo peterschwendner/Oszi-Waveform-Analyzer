@@ -229,7 +229,17 @@ namespace Transfer
 
         private void linkHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            PlatformManager.Instance.ShowHelp(this, "SCPI");
+            switch (me_OsziSerie)
+            {
+                case eOsziSerie.Hameg_HMO1522:
+                case eOsziSerie.Hameg_HM2008:
+                case eOsziSerie.Hameg_HM507:
+                    PlatformManager.Instance.ShowHelp(this, "Hameg");
+                    break;
+                default:
+                    PlatformManager.Instance.ShowHelp(this, "SCPI");
+                    break;
+            }
         }
 
         /// <summary>
@@ -281,6 +291,9 @@ namespace Transfer
                 comboDevices.Text = ReadSerialSetting(0, comboDevices.Items.Count > 0 ? comboDevices.Items[0].ToString() : "COM1");
                 lblUsbEndp  .Text = "COM Port";
             }
+
+            // COM port names are short: make room for the port settings
+            comboDevices.Width  = radioRS232.Checked ? comboSerial.Left - comboDevices.Left - 5 : btnSearch.Left - comboDevices.Left - 3;
 
             lblVxiLink .Visible = radioVXI.Checked;
             textVxiLink.Visible = radioVXI.Checked;
