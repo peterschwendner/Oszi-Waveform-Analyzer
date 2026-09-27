@@ -228,6 +228,12 @@ namespace Operations
             Calculate();
         }
 
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+            Utils.OsziPanel.RemoveHighlight(this);
+        }
+
         void Calculate()
         {
             Channel i_ChanX = (Channel)mi_ComboX.SelectedItem;
@@ -249,6 +255,7 @@ namespace Operations
             }
 
             Text = "X/Y Plot  —  X: " + i_ChanX.ms_Name + "   Y: " + i_ChanY.ms_Name;
+            ShowRange(this, i_ChanX, mi_ComboRange.Text == RANGE_ALL, s32_Start, s32_End, OsziPanel.GetChannelColor(i_ChanY));
             mi_View.SetData(i_ChanX.mf_Analog, i_ChanY.mf_Analog, s32_Start, s32_End,
                             mi_CheckLines.Checked, mi_CheckEqual.Checked, OsziPanel.GetChannelColor(i_ChanY));
 
@@ -271,6 +278,18 @@ namespace Operations
             s32_Start = Math.Max(0,               Math.Min(s32_Cursor, s32_ClickSample));
             s32_End   = Math.Min(s32_Samples - 1, Math.Max(s32_Cursor, s32_ClickSample));
             return s32_Cursor >= 0 && s32_ClickSample >= 0 && s32_End > s32_Start;
+        }
+
+        /// <summary>
+        /// Shades the analyzed range in the main window (not for the entire capture, which would tint everything).
+        /// Only if the channel is still in the main window, otherwise the sample positions refer to another capture.
+        /// </summary>
+        public static void ShowRange(Form i_Owner, Channel i_Channel, bool b_Entire, int s32_Start, int s32_End, Color c_Color)
+        {
+            if (b_Entire || OsziPanel.CurCapture == null || !OsziPanel.CurCapture.mi_Channels.Contains(i_Channel))
+                Utils.OsziPanel.RemoveHighlight(i_Owner);
+            else
+                Utils.OsziPanel.SetHighlight(i_Owner, s32_Start, s32_End, c_Color);
         }
 
         /// <summary>

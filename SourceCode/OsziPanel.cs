@@ -251,6 +251,7 @@ namespace OsziWaveformAnalyzer
         int              ms32_DispStart;     // sample at left  of display area
         int              ms32_DispEnd;       // sample at right of display area
         int              ms32_CursorSpl;     // sample of the user's cursor
+        List<Highlight>  mi_Highlights = new List<Highlight>(); // time ranges analyzed in FFT / X/Y windows
         Point            mk_MouseDownLoc;    // Position of left-mouse down event
         Point            mk_MouseDownStart;  // X = ms32_DispStart, Y = Autscroll.Y
         decimal          md_RasterSamples;   // samples between 2 raster lines
@@ -290,6 +291,42 @@ namespace OsziWaveformAnalyzer
         }
 
         // ----------------------------------------
+
+        /// <summary>
+        /// A time range that is analyzed in a non-modal window (FFT Spectrum, X/Y Plot).
+        /// It is shaded in the display, so the user sees which part of the signal the window shows.
+        /// </summary>
+        class Highlight
+        {
+            public Object mo_Owner;
+            public int    ms32_Start;
+            public int    ms32_End;
+            public Color  mc_Color;
+        }
+
+        /// <summary>
+        /// o_Owner is the window that analyzes the range. Each owner has at most one range.
+        /// s32_Start &lt; 0 removes the range of this owner.
+        /// </summary>
+        public void SetHighlight(Object o_Owner, int s32_Start, int s32_End, Color c_Color)
+        {
+            mi_Highlights.RemoveAll(delegate(Highlight i_High) { return i_High.mo_Owner == o_Owner; });
+            if (s32_Start >= 0 && s32_End > s32_Start)
+            {
+                Highlight i_High = new Highlight();
+                i_High.mo_Owner   = o_Owner;
+                i_High.ms32_Start = s32_Start;
+                i_High.ms32_End   = s32_End;
+                i_High.mc_Color   = c_Color;
+                mi_Highlights.Add(i_High);
+            }
+            Invalidate();
+        }
+
+        public void RemoveHighlight(Object o_Owner)
+        {
+            SetHighlight(o_Owner, -1, -1, Color.Empty);
+        }
 
         /// <summary>
         /// returns the sample with the cursor or -1 if no cursor is set.
@@ -452,6 +489,7 @@ namespace OsziWaveformAnalyzer
         public void StoreCapture(Capture i_Capture)
         {
             mi_Capture = i_Capture;
+            mi_Highlights.Clear();  // the sample positions refer to the previous capture
             ms32_CursorSpl   = -1;  // no cursor
             md_RasterSamples = -1m; // no raster
             mi_Tooltip.Hide(this);
@@ -1433,6 +1471,30 @@ namespace OsziWaveformAnalyzer
             {
                 s32_VertTop -= s32_VertDiff / 2;
                 s32_VertBot += s32_VertDiff / 2;
+            }
+
+            // ----------------- Highlights ----------------
+
+            // Shade the time ranges analyzed in FFT / X/Y windows. Drawn before the signals, so they stay on top.
+            foreach (Highlight i_High in mi_Highlights)
+            {
+                if (i_High.ms32_End < s32_FirstSpl || i_High.ms32_Start > s32_LastSpl)
+                    continue;
+
+                int X1 = (Math.Max(i_High.ms32_Start, s32_FirstSpl) + s32_RoundOffX) * ms32_Zoom / ms32_DispSteps + s32_SigLeft;
+                int X2 = (Math.Min(i_High.ms32_End,   s32_LastSpl)  + s32_RoundOffX) * ms32_Zoom / ms32_DispSteps + s32_SigLeft;
+                X1 = Math.Max(X1, s32_SigLeft);
+                X2 = Math.Min(X2, s32_SigLeft + i_Pos.ms32_SignalWidth);
+                if (X2 < X1)
+                    continue;
+
+                using (Brush i_Fill = new SolidBrush(Color.FromArgb(0x30, i_High.mc_Color)))
+                using (Pen   i_Edge = new Pen(Color.FromArgb(0xA0, i_High.mc_Color)))
+                {
+                    i_Graphics.FillRectangle(i_Fill, X1, s32_VertTop, Math.Max(1, X2 - X1), s32_VertBot - s32_VertTop);
+                    if (i_High.ms32_Start >= s32_FirstSpl) i_Graphics.DrawLine(i_Edge, X1, s32_VertTop, X1, s32_VertBot);
+                    if (i_High.ms32_End   <= s32_LastSpl)  i_Graphics.DrawLine(i_Edge, X2, s32_VertTop, X2, s32_VertBot);
+                }
             }
 
             // ----------------- Separators ----------------

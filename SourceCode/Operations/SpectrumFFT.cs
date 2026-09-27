@@ -494,6 +494,12 @@ namespace Operations
             Calculate();
         }
 
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+            Utils.OsziPanel.RemoveHighlight(this);
+        }
+
         void OnDisplayChanged(object sender, EventArgs e)
         {
             mi_View.ShowDb   = mi_ComboScale.Text == SCALE_DB;
@@ -555,6 +561,8 @@ namespace Operations
             }
             mi_View.Peaks = Fourier.FindPeaks(d_Amp, d_Refine, d_BinWidth, 5, s32_MinDist);
             mi_View.SetSpectrum(d_Amp, d_BinWidth, d_Rate);
+
+            XYPlot.ShowRange(this, mi_Channel, mi_ComboRange.Text == RANGE_ALL, s32_Start, s32_Start + s32_Count - 1, mi_View.TraceColor);
 
             ms32_LastStart   = s32_Start;
             ms32_LastCount   = s32_Count;
