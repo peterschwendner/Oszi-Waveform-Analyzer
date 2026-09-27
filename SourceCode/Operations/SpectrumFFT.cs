@@ -304,6 +304,9 @@ namespace Operations
         int          ms32_AllCount;
         int          ms32_VisStart;
         int          ms32_VisCount;
+        int          ms32_CurStart;   // range between cursor and mouse click
+        int          ms32_CurCount;
+        String       ms_RangeCursor;  // null if no cursor range
 
         ComboBox     mi_ComboWindow;
         ComboBox     mi_ComboScale;
@@ -347,6 +350,13 @@ namespace Operations
             ms32_VisStart = Math.Max(0, Utils.OsziPanel.DispStart);
             ms32_VisCount = Math.Min(i_Capture.ms32_Samples, Utils.OsziPanel.DispEnd + 1) - ms32_VisStart;
 
+            int s32_CurEnd;
+            if (XYPlot.GetCursorRange(s32_Sample, i_Capture.ms32_Samples, out ms32_CurStart, out s32_CurEnd))
+            {
+                ms32_CurCount  = s32_CurEnd - ms32_CurStart + 1;
+                ms_RangeCursor = XYPlot.FormatCursorRange(ms32_CurStart, s32_CurEnd);
+            }
+
             CreateControls(i_Channel);
             Show(Utils.FormMain); // not modal
             Calculate();
@@ -380,9 +390,15 @@ namespace Operations
             mi_ComboScale.Items.AddRange(new Object[] { SCALE_DB, SCALE_LINEAR });
             mi_ComboScale.SelectedIndex = 0;
 
-            mi_ComboRange = AddCombo(i_Bar, "Range:", 110);
+            mi_ComboRange = AddCombo(i_Bar, "Range:", 170);
             mi_ComboRange.Items.AddRange(new Object[] { RANGE_ALL, RANGE_VISIBLE });
             mi_ComboRange.SelectedIndex = 0;
+            if (ms_RangeCursor != null)
+            {
+                // The user has set the cursor before: he wants exactly this range
+                mi_ComboRange.Items.Add(ms_RangeCursor);
+                mi_ComboRange.SelectedIndex = 2;
+            }
 
             mi_CheckLogF = AddCheck(i_Bar, "Log frequency", false);
             mi_CheckDC   = AddCheck(i_Bar, "Remove DC",     true);
@@ -468,9 +484,18 @@ namespace Operations
 
         void Calculate()
         {
-            bool b_Visible  = mi_ComboRange.Text == RANGE_VISIBLE;
-            int  s32_Start  = b_Visible ? ms32_VisStart : ms32_AllStart;
-            int  s32_Count  = b_Visible ? ms32_VisCount : ms32_AllCount;
+            int  s32_Start  = ms32_AllStart;
+            int  s32_Count  = ms32_AllCount;
+            if (mi_ComboRange.Text == RANGE_VISIBLE)
+            {
+                s32_Start = ms32_VisStart;
+                s32_Count = ms32_VisCount;
+            }
+            else if (mi_ComboRange.Text == ms_RangeCursor)
+            {
+                s32_Start = ms32_CurStart;
+                s32_Count = ms32_CurCount;
+            }
             bool b_Truncated = false;
 
             if (s32_Count > Fourier.MAX_FFT_SIZE)
