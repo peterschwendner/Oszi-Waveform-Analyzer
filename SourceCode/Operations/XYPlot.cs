@@ -362,8 +362,8 @@ namespace Operations
             int s32_PrevX = 0, s32_PrevY = 0;
             for (int S=ms32_Start; S<=ms32_End; S++)
             {
-                int X = (int)((mf_X[S] - md_ViewX0) / md_ScaleX);
-                int Y = H - 1 - (int)((mf_Y[S] - md_ViewY0) / md_ScaleY);
+                int X = VoltToPixelX(mf_X[S]);
+                int Y = VoltToPixelY(mf_Y[S], H);
 
                 if (mb_Lines && S > ms32_Start)
                     AddLine(s32_Hits, W, H, s32_PrevX, s32_PrevY, X, Y);
@@ -400,6 +400,20 @@ namespace Operations
             }
             mi_Bitmap.UnlockBits(i_Data);
             Invalidate();
+        }
+
+        /// <summary>
+        /// Pixel column / row inside the plot area. The trace and the grid lines must use the same formula,
+        /// otherwise a trace at a round voltage (e.g. 1 V) is drawn one pixel beside the grid line.
+        /// </summary>
+        int VoltToPixelX(double d_Volt)
+        {
+            return (int)Math.Round((d_Volt - md_ViewX0) / md_ScaleX);
+        }
+
+        int VoltToPixelY(double d_Volt, int H)
+        {
+            return H - 1 - (int)Math.Round((d_Volt - md_ViewY0) / md_ScaleY);
         }
 
         static void AddPixel(int[] s32_Hits, int W, int H, int X, int Y)
@@ -457,9 +471,10 @@ namespace Operations
             {
                 // Vertical grid lines with X voltage labels
                 double d_StepX = NiceStep(md_ScaleX * W, Math.Max(2, W / 90)); // labels need approx 90 pixels
-                for (double V = Math.Ceiling(md_ViewX0 / d_StepX) * d_StepX; V <= md_ViewX0 + md_ScaleX * W; V += d_StepX)
+                for (long s64_Grid = (long)Math.Ceiling(md_ViewX0 / d_StepX); s64_Grid * d_StepX <= md_ViewX0 + md_ScaleX * W; s64_Grid++)
                 {
-                    float X = (float)(r_Plot.Left + (V - md_ViewX0) / md_ScaleX);
+                    double V = s64_Grid * d_StepX;
+                    int X = r_Plot.Left + VoltToPixelX(V); // exactly the same pixel as the trace
                     g.DrawLine(Math.Abs(V) < d_StepX * 1e-6 ? i_Zero : i_Grid, X, r_Plot.Top, X, r_Plot.Bottom);
                     String s_Label = SpectrumFFT.FormatVolt(Math.Abs(V) < d_StepX * 1e-6 ? 0 : V);
                     SizeF  k_Size  = g.MeasureString(s_Label, i_Font);
@@ -468,9 +483,10 @@ namespace Operations
 
                 // Horizontal grid lines with Y voltage labels
                 double d_StepY = NiceStep(md_ScaleY * H, Math.Max(2, H / 40));
-                for (double V = Math.Ceiling(md_ViewY0 / d_StepY) * d_StepY; V <= md_ViewY0 + md_ScaleY * H; V += d_StepY)
+                for (long s64_Grid = (long)Math.Ceiling(md_ViewY0 / d_StepY); s64_Grid * d_StepY <= md_ViewY0 + md_ScaleY * H; s64_Grid++)
                 {
-                    float Y = (float)(r_Plot.Bottom - (V - md_ViewY0) / md_ScaleY);
+                    double V = s64_Grid * d_StepY;
+                    int Y = r_Plot.Top + VoltToPixelY(V, H); // exactly the same pixel as the trace
                     g.DrawLine(Math.Abs(V) < d_StepY * 1e-6 ? i_Zero : i_Grid, r_Plot.Left, Y, r_Plot.Right, Y);
                     String s_Label = SpectrumFFT.FormatVolt(Math.Abs(V) < d_StepY * 1e-6 ? 0 : V);
                     SizeF  k_Size  = g.MeasureString(s_Label, i_Font);

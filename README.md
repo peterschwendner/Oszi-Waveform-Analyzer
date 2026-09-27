@@ -32,6 +32,7 @@ Right-click on the analog signal of a channel:
 
 - **FFT Spectrum**: Hann, Hamming, Blackman-Harris, Flat Top and Rectangular windows, dBV or Volt, logarithmic frequency axis, zoom, peak detection with interpolated frequencies, CSV export.
 - **X/Y Plot**: two channels as Lissajous figure with phosphor-like intensity display and phase measurement. This replaces the XY mode of the oscilloscope with captures recorded in Yt mode.
+- Demo file `Compiled/Samples/X-Y Plot Square 1 kHz.oszi`: draws a square in the X/Y Plot, and its trapezoid waves show odd harmonics with 1/n² in the FFT.
 
 ### WAV import
 
