@@ -251,13 +251,23 @@ namespace Operations
                 if (b_TooClose)
                     continue;
 
-                // The maximum of the refine spectrum near this peak
+                // The maximum of the refine spectrum at this peak (+/- 1 bin, because the windows have slightly different lobes)
                 int s32_Max = k;
-                for (int i=Math.Max(1, k - s32_MinDist / 2); i<=Math.Min(d_Refine.Length - 2, k + s32_MinDist / 2); i++)
+                for (int i=Math.Max(1, k - 1); i<=Math.Min(d_Refine.Length - 2, k + 1); i++)
                 {
                     if (d_Refine[i] > d_Refine[s32_Max])
                         s32_Max = i;
                 }
+
+                // A real signal is also a local maximum in the Blackman-Harris spectrum.
+                // A side lobe of another window (Hann, Rectangular,...) lies on the slope of the Blackman-Harris main lobe --> skip it.
+                if (d_Refine[s32_Max] < d_Refine[s32_Max - 1] || d_Refine[s32_Max] < d_Refine[s32_Max + 1])
+                    continue;
+
+                // A real signal has approximately the same amplitude with all windows (+/- 4 dB).
+                // A far side lobe of another window is 30 dB or more below its level in the Blackman-Harris spectrum.
+                if (d_Refine[s32_Max] < d_Amp[k] * 0.25) // -12 dB
+                    continue;
 
                 double a = Math.Log(Math.Max(d_Refine[s32_Max - 1], 1e-15));
                 double b = Math.Log(Math.Max(d_Refine[s32_Max],     1e-15));
@@ -488,7 +498,9 @@ namespace Operations
             mi_View.LogFreq   = mi_CheckLogF.Checked;
 
             // The main lobe of the window is several bins wide. Zero padding makes it wider in bins.
-            int s32_MinDist = Math.Max(3, (int)(6.0 * s32_FftSize / s32_Count));
+            // Minimum distance between 2 peaks: 3 resolution bins (a main lobe has only one local maximum).
+            // A larger distance would hide the harmonics of short captures (1 kHz square wave with 1200 samples at 500 kSa/s).
+            int s32_MinDist = Math.Max(3, (int)(3.0 * s32_FftSize / s32_Count));
 
             // The peak frequencies are always measured in a Blackman-Harris spectrum (see FindPeaks())
             double[] d_Refine = null;
