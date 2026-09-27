@@ -151,6 +151,7 @@ namespace ExImport
                 case ".cap":
                 case ".csv":  return TransferManager.ParseVendorFile(s_Path, mi_ComboOsziModel, ref b_Abort);
                 case ".oszi": return OsziFile.Load(s_Path, ref b_Abort);
+                case ".wav":  return WavFile.Load (s_Path, ref b_Abort); // independent of the oscilloscope model
                 case ".wfm":  ShowWfmErrorBox(); return null;
 
                 // TODO: You can implement further file formats here
@@ -237,7 +238,7 @@ namespace ExImport
         {
             try
             {
-                List<String> i_Extensions = new List<String>(new String[]{ ".bin", ".cap", ".csv", ".oszi", ".wfm"});
+                List<String> i_Extensions = new List<String>(new String[]{ ".bin", ".cap", ".csv", ".oszi", ".wav", ".wfm"});
 
                 i_ComboInput.Items.Clear();
                 foreach (String s_Path in Directory.EnumerateFiles(Utils.SampleDir))

@@ -61,6 +61,7 @@
     <Compile Include="PostDecoder\ISO14230.cs" />
     <Compile Include="PostDecoder\ISO7816.cs" />
     <Compile Include="ExImport\Owon.cs" />
+    <Compile Include="ExImport\WavFile.cs" />
     <Compile Include="Transfer\PanelRigol.cs">
       <SubType>UserControl</SubType>
     </Compile>
