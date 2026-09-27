@@ -52,6 +52,8 @@ using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using Channel           = OsziWaveformAnalyzer.Utils.Channel;
 using PlatformManager   = Platform.PlatformManager;
+using RtfDocument       = OsziWaveformAnalyzer.RtfDocument;
+using RtfBuilder        = OsziWaveformAnalyzer.RtfBuilder;
 
 namespace Operations
 {
@@ -307,6 +309,12 @@ namespace Operations
         int          ms32_CurStart;   // range between cursor and mouse click
         int          ms32_CurCount;
         String       ms_RangeCursor;  // null if no cursor range
+        Channel      mi_Channel;
+        int          ms32_LastStart;  // the last calculation (for the peak table in the Decoder tab)
+        int          ms32_LastCount;
+        int          ms32_LastFftSize;
+        int          ms32_LastMinDist;
+        double[]     md_LastRefine;
 
         ComboBox     mi_ComboWindow;
         ComboBox     mi_ComboScale;
@@ -357,6 +365,7 @@ namespace Operations
                 ms_RangeCursor = XYPlot.FormatCursorRange(ms32_CurStart, s32_CurEnd);
             }
 
+            mi_Channel = i_Channel;
             CreateControls(i_Channel);
             Show(Utils.FormMain); // not modal
             Calculate();
@@ -411,6 +420,16 @@ namespace Operations
             i_Export.Margin    = new Padding(10, 0, 0, 0);
             i_Export.Click    += new EventHandler(OnExportClick);
             i_Bar.Controls.Add(i_Export);
+
+            // Not automatically: this would overwrite the result of a decoder (UART, SPI,...) in the Decoder tab
+            Button i_Peaks = new Button();
+            i_Peaks.Text      = "Peaks → Decoder tab";
+            i_Peaks.ForeColor = Color.Black;
+            i_Peaks.BackColor = SystemColors.Control;
+            i_Peaks.AutoSize  = true;
+            i_Peaks.Margin    = new Padding(6, 0, 0, 0);
+            i_Peaks.Click    += new EventHandler(OnPeaksToDecoderTab);
+            i_Bar.Controls.Add(i_Peaks);
 
             LinkLabel i_Help = new LinkLabel();
             i_Help.Text      = "Show Help";
@@ -537,6 +556,12 @@ namespace Operations
             mi_View.Peaks = Fourier.FindPeaks(d_Amp, d_Refine, d_BinWidth, 5, s32_MinDist);
             mi_View.SetSpectrum(d_Amp, d_BinWidth, d_Rate);
 
+            ms32_LastStart   = s32_Start;
+            ms32_LastCount   = s32_Count;
+            ms32_LastFftSize = s32_FftSize;
+            ms32_LastMinDist = s32_MinDist;
+            md_LastRefine    = d_Refine;
+
             String s_Info = String.Format("Samples: {0:N0}   FFT size: {1:N0}   Sample rate: {2}   Resolution: {3}   Nyquist: {4}",
                                           s32_Count, s32_FftSize,
                                           FormatFreq(d_Rate), FormatFreq(d_Rate / s32_Count), FormatFreq(d_Rate / 2));
@@ -546,6 +571,75 @@ namespace Operations
             mi_LblInfo.Text      = s_Info;
             mi_LblInfo.ForeColor = b_Truncated ? Color.FromArgb(0xFF, 0xA0, 0x80) : Color.White;
             Cursor = Cursors.Default;
+        }
+
+        /// <summary>
+        /// Writes the peaks as text into the tab "Decoder" of the main window, where it can be saved as RTF file.
+        /// The timestamp is a link that jumps to the start of the analyzed range.
+        /// </summary>
+        void OnPeaksToDecoderTab(object sender, EventArgs e)
+        {
+            double[] d_Amp = mi_View.Spectrum;
+            if (d_Amp == null)
+                return;
+
+            // The timestamp link refers to the capture in the main window
+            if (OsziPanel.CurCapture == null || !OsziPanel.CurCapture.mi_Channels.Contains(mi_Channel))
+            {
+                MessageBox.Show(this, "The capture in the main window has changed.\nOpen the FFT Spectrum again.",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            const int MAX_PEAKS = 20;
+            double d_Rate = (double)md_SampleRate;
+            List<Fourier.Peak> i_Peaks = Fourier.FindPeaks(d_Amp, md_LastRefine, mi_View.BinWidth, MAX_PEAKS, ms32_LastMinDist);
+
+            RtfDocument i_RtfDoc  = new RtfDocument(Color.White);
+            RtfBuilder  i_Builder = i_RtfDoc.CreateNewBuilder();
+
+            i_Builder.AppendLine(Color.Magenta, "FFT Spectrum of channel " + mi_Channel.ms_Name + "\n", FontStyle.Underline);
+            i_Builder.Append2ColorPair(Color.Cyan, "Range:",       14, Color.White, "{0}", mi_ComboRange.Text);
+            i_Builder.Append2ColorPair(Color.Cyan, "Window:",      14, Color.White, "{0}", mi_ComboWindow.Text);
+            i_Builder.Append2ColorPair(Color.Cyan, "Samples:",     14, Color.White, "{0:N0}  (FFT size {1:N0})", ms32_LastCount, ms32_LastFftSize);
+            i_Builder.Append2ColorPair(Color.Cyan, "Sample rate:", 14, Color.White, "{0}", FormatFreq(d_Rate));
+            i_Builder.Append2ColorPair(Color.Cyan, "Resolution:",  14, Color.White, "{0}", FormatFreq(d_Rate / ms32_LastCount));
+            i_Builder.AppendTimestampLine(ms32_LastStart, ms32_LastStart + ms32_LastCount - 1, true);
+            i_Builder.AppendLine(Color.White, "<-- start of the analyzed signal (click to jump there)");
+            i_Builder.AppendNewLine();
+
+            if (i_Peaks.Count == 0)
+            {
+                i_Builder.AppendLine(Utils.ERROR_COLOR, "No peaks found.");
+            }
+            else
+            {
+                i_Builder.AppendLine(Color.Magenta, " Nr   Frequency         dBV     Volt peak    Volt RMS   Rel. to 1  Harmonic\n", FontStyle.Underline);
+
+                double d_Fund = i_Peaks[0].md_Frequency;
+                for (int P=0; P<i_Peaks.Count; P++)
+                {
+                    Fourier.Peak i_Peak = i_Peaks[P];
+                    double d_Rel = 20 * Math.Log10(i_Peak.md_Amplitude / i_Peaks[0].md_Amplitude);
+
+                    // A harmonic is an integer multiple of the strongest peak (within one resolution bin).
+                    // Higher multiples are rather artifacts (e.g. of the A/D converter) than real harmonics.
+                    String s_Harmonic = "";
+                    int s32_Mult = (int)Math.Round(i_Peak.md_Frequency / d_Fund);
+                    if (P > 0 && s32_Mult >= 2 && s32_Mult <= 100 && Math.Abs(i_Peak.md_Frequency - s32_Mult * d_Fund) < d_Rate / ms32_LastCount)
+                        s_Harmonic = s32_Mult.ToString().PadLeft(4);
+
+                    i_Builder.AppendText(Color.Yellow, String.Format("{0,3}   {1,-15}", P + 1, FormatFreq(i_Peak.md_Frequency)));
+                    i_Builder.AppendText(Color.Lime,   String.Format(CultureInfo.InvariantCulture, "{0,7:F1}   {1,11}   {2,9}",
+                                                       Fourier.ToDbV(i_Peak.md_Amplitude), FormatVolt(i_Peak.md_Amplitude),
+                                                       FormatVolt(i_Peak.md_Amplitude / Math.Sqrt(2))));
+                    i_Builder.AppendLine(Color.White,  String.Format(CultureInfo.InvariantCulture, "   {0,7:F1} dB  {1}",
+                                                       d_Rel, s_Harmonic));
+                }
+            }
+
+            // Show the text and switch to tab "Decoder". 0 = do not change the display factor.
+            Utils.FormMain.ShowAnalysisResult(i_RtfDoc, 0);
         }
 
         void OnExportClick(object sender, EventArgs e)
