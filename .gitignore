@@ -15,3 +15,6 @@ Compiled/de/
 
 # Empty config file created by Visual Studio
 SourceCode/app.config
+
+# WAV files for testing (e.g. oscilloscope music) are copyrighted and must not be published
+Compiled/Samples/*.wav
