@@ -64,6 +64,7 @@
         <div>— &nbsp; <a href="#CsvFiles"         class="MenuLink" onClick="ShowMenu(false)">CSV Files</a></div>
         <div>— &nbsp; <a href="#WfmFiles"         class="MenuLink" onClick="ShowMenu(false)">WFM Files</a></div>
         <div>— &nbsp; <a href="#OsziFiles"        class="MenuLink" onClick="ShowMenu(false)">OSZI Files</a></div>
+        <div>— &nbsp; <a href="#WavFiles"         class="MenuLink" onClick="ShowMenu(false)">WAV Files</a></div>
         <div>— &nbsp; <a href="#OtherFiles"       class="MenuLink" onClick="ShowMenu(false)">Other File Formats</a></div>
         <div>— &nbsp; <a href="#SaveOptions"      class="MenuLink" onClick="ShowMenu(false)">Save File Options</a></div>
         <div><a href="#Frames"           class="MenuLink" onClick="ShowMenu(false)">Display of Multiple Frames</a></div>
@@ -121,6 +122,7 @@
 <li><div><span class="Error">NEW in v2.7</span>: Several improvements in CAN decoder.</div>
 <li><div><span class="Error">NEW</span>: Waveform transfer from <b>Hameg</b> oscilloscopes HMO1522 / HMO Compact, HM2008 / HM1508 / HM1008 and HM507 over RS232 (COM port). See <a href="#Hameg">Hameg Oscilloscopes</a>.</div>
 <li><div><span class="Error">NEW</span>: <a href="#FFT">FFT Spectrum</a> and <a href="#XYPlot">X/Y Plot</a> for analog channels.</div>
+<li><div><span class="Error">NEW</span>: Import of <a href="#WavFiles">WAV audio files</a>, for example oscilloscope music.</div>
 </ul>
 
 <a name="Decoders"></a>
@@ -996,6 +998,21 @@
 <div>You can then <b>double click</b> any OSZI file anywhere on your disk and it will open in Oszi Waveform Analyzer.</div>
 <div>The folder in which you have double clicked the file will be your new <b>working folder</b> for further open/save operations.</div>
 
+
+<a name="WavFiles"></a>
+<h3>WAV Files</h3>
+
+<div>Oszi Waveform Analyzer can import uncompressed <b>WAV</b> audio files (PCM with 8, 16, 24, 32 bit and float with 32, 64 bit).</div>
+<div>Copy the WAV file into the subfolder <b>Samples</b>, then it appears in the list of input files.</div>
+<div>WAV files are loaded independently of the selected oscilloscope model.</div>
+<p>
+<div>Each audio channel becomes an analog channel. A stereo file has the channels <b>Left</b> and <b>Right</b>.</div>
+<div>The values are normalized: 1.0 means full scale (0 dBFS). The time axis uses the sample rate of the file.</div>
+<div>At most 24 Mega samples per channel are loaded (2 minutes of a stereo file with 192 kHz). Cut longer files with an audio editor.</div>
+<p>
+<div>WAV files are useful to test the <a href="#FFT">FFT Spectrum</a> and the <a href="#XYPlot">X/Y Plot</a>.</div>
+<div><b>Oscilloscope music</b> is stereo audio where Left drives X and Right drives Y. It draws images on an oscilloscope in XY mode.</div>
+<div>Load such a file, zoom into a short part (for example 20 ms), right-click the channel Left and select <b>X/Y Plot</b> with <b>Range: Visible screen</b>.</div>
 
 <a name="OtherFiles"></a>
 <h3>Other File Formats</h3>
