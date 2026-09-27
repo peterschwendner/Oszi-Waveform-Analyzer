@@ -67,6 +67,9 @@ namespace Operations
 
         int        ms32_VisStart;
         int        ms32_VisEnd;
+        int        ms32_CurStart;   // range between cursor and mouse click
+        int        ms32_CurEnd;
+        String     ms_RangeCursor;  // null if no cursor range
         int        ms32_Samples;
         ComboBox   mi_ComboX;
         ComboBox   mi_ComboY;
@@ -102,6 +105,9 @@ namespace Operations
             ms32_Samples  = i_Capture.ms32_Samples;
             ms32_VisStart = Math.Max(0, Utils.OsziPanel.DispStart);
             ms32_VisEnd   = Math.Min(ms32_Samples - 1, Utils.OsziPanel.DispEnd);
+
+            if (GetCursorRange(s32_Sample, ms32_Samples, out ms32_CurStart, out ms32_CurEnd))
+                ms_RangeCursor = FormatCursorRange(ms32_CurStart, ms32_CurEnd);
 
             CreateControls();
 
@@ -153,9 +159,15 @@ namespace Operations
 
             mi_ComboX     = AddCombo(i_Bar, "X:", 100);
             mi_ComboY     = AddCombo(i_Bar, "Y:", 100);
-            mi_ComboRange = AddCombo(i_Bar, "Range:", 110);
+            mi_ComboRange = AddCombo(i_Bar, "Range:", 170);
             mi_ComboRange.Items.AddRange(new Object[] { RANGE_ALL, RANGE_VISIBLE });
             mi_ComboRange.SelectedIndex = 0;
+            if (ms_RangeCursor != null)
+            {
+                // The user has set the cursor before: he wants exactly this range
+                mi_ComboRange.Items.Add(ms_RangeCursor);
+                mi_ComboRange.SelectedIndex = 2;
+            }
 
             mi_CheckLines = AddCheck(i_Bar, "Connect samples", true);
             mi_CheckEqual = AddCheck(i_Bar, "Same Volt/Div",   true);
@@ -223,9 +235,18 @@ namespace Operations
             if (i_ChanX == null || i_ChanY == null)
                 return;
 
-            bool b_Visible = mi_ComboRange.Text == RANGE_VISIBLE;
-            int  s32_Start = b_Visible ? ms32_VisStart : 0;
-            int  s32_End   = b_Visible ? ms32_VisEnd   : ms32_Samples - 1;
+            int s32_Start = 0;
+            int s32_End   = ms32_Samples - 1;
+            if (mi_ComboRange.Text == RANGE_VISIBLE)
+            {
+                s32_Start = ms32_VisStart;
+                s32_End   = ms32_VisEnd;
+            }
+            else if (mi_ComboRange.Text == ms_RangeCursor)
+            {
+                s32_Start = ms32_CurStart;
+                s32_End   = ms32_CurEnd;
+            }
 
             Text = "X/Y Plot  —  X: " + i_ChanX.ms_Name + "   Y: " + i_ChanY.ms_Name;
             mi_View.SetData(i_ChanX.mf_Analog, i_ChanY.mf_Analog, s32_Start, s32_End,
@@ -237,6 +258,28 @@ namespace Operations
             mi_LblInfo.Text = String.Format("Samples: {0:N0}   X: {1} pp   Y: {2} pp   Phase: {3}  (valid only if X and Y have the same frequency, 0...180°)",
                                             s32_End - s32_Start + 1,
                                             SpectrumFFT.FormatVolt(mi_View.RangeX), SpectrumFFT.FormatVolt(mi_View.RangeY), s_Phase);
+        }
+
+        /// <summary>
+        /// The range between the cursor and the sample where the user has right-clicked.
+        /// Workflow: "Set the cursor to the mouse position" at the start, then right-click at the end.
+        /// returns false if no cursor is set or it is at the clicked sample.
+        /// </summary>
+        public static bool GetCursorRange(int s32_ClickSample, int s32_Samples, out int s32_Start, out int s32_End)
+        {
+            int s32_Cursor = Utils.OsziPanel.CursorSample;
+            s32_Start = Math.Max(0,               Math.Min(s32_Cursor, s32_ClickSample));
+            s32_End   = Math.Min(s32_Samples - 1, Math.Max(s32_Cursor, s32_ClickSample));
+            return s32_Cursor >= 0 && s32_ClickSample >= 0 && s32_End > s32_Start;
+        }
+
+        /// <summary>
+        /// "Cursor → mouse (12.5 ms)"
+        /// </summary>
+        public static String FormatCursorRange(int s32_Start, int s32_End)
+        {
+            decimal d_Pico = (decimal)(s32_End - s32_Start) * OsziPanel.CurCapture.ms64_SampleDist;
+            return "Cursor → mouse (" + Utils.FormatTimePico(d_Pico) + ")";
         }
 
         /// <summary>
