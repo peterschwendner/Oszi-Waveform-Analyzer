@@ -301,7 +301,8 @@
                         <b>Flat Top</b>: measures the <b>amplitude</b> exactly, but frequencies close together are not separated.<br>
                         <b>Rectangular</b>: no window, only for signals with an integer count of periods in the capture.</td></tr>
 <tr><td>Scale</td><td><b>dBV (RMS)</b>: 0 dBV = 1 Volt RMS, like most oscilloscopes. <b>Volt (peak)</b>: amplitude of a sine wave.</td></tr>
-<tr><td>Range</td><td><b>Entire capture</b> or only the <b>visible screen</b>. Zoom into the signal in the main window to analyze only a part of it.</td></tr>
+<tr><td>Range</td><td><b>Entire capture</b> or only the <b>visible screen</b>. Zoom into the signal in the main window to analyze only a part of it.<br>
+                       <b>Cursor → mouse</b>: the range between the cursor and the position where you right-clicked (see <a href="#XYPlot">X/Y Plot</a>).</td></tr>
 <tr><td>Log frequency</td><td>Logarithmic frequency axis. Useful if the sample rate is much higher than the signal frequency.</td></tr>
 <tr><td>Remove DC</td><td>Removes the average voltage, otherwise the DC component may hide low frequencies.</td></tr>
 <tr><td>Export CSV</td><td>Saves frequency, amplitude in Volt and in dBV of all frequency bins.</td></tr>
@@ -331,6 +332,15 @@
 <div>So you can capture both channels and decide later to look at them as X/Y (Lissajous figure).</div>
 <p>
 <div>Select the channels for the X and Y axis and the range (entire capture or visible screen).</div>
+<p>
+<div>To display an exact <b>time range</b>, use the <a href="#MeasureTime">cursor</a>:</div>
+<ol>
+<li><div>Right-click at the start of the range and select <b>Set the cursor to the mouse position</b>.</div>
+<li><div>Right-click at the end of the range and select <b>X/Y Plot</b> (or <b>FFT Spectrum</b>).</div>
+</ol>
+<div>The window opens with the range <b>Cursor → mouse</b>, which shows the duration of the range.</div>
+<div>This is useful for oscilloscope music, where each image is drawn in a few milliseconds and the images change quickly.</div>
+<p>
 <div><b>Connect samples</b> draws lines between the samples, which is important if there are only few samples per period.</div>
 <div><b>Same Volt/Div</b> uses the same scale for both axes, so that a circle stays a circle.</div>
 <div>The brightness of each pixel shows how often the trace passes through it, like the phosphor of an analog oscilloscope.</div>
