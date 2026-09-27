@@ -33,9 +33,15 @@ Right-click on the analog signal of a channel:
 - **FFT Spectrum**: Hann, Hamming, Blackman-Harris, Flat Top and Rectangular windows, dBV or Volt, logarithmic frequency axis, zoom, peak detection with interpolated frequencies, CSV export.
 - **X/Y Plot**: two channels as Lissajous figure with phosphor-like intensity display and phase measurement. This replaces the XY mode of the oscilloscope with captures recorded in Yt mode.
 
+### WAV import
+
+Uncompressed WAV files (PCM 8/16/24/32 bit, float 32/64 bit) can be imported. Copy them into `Compiled/Samples`.
+Each audio channel becomes an analog channel (full scale = 1.0). This is useful to test the FFT and to display
+oscilloscope music (stereo: Left = X, Right = Y) with the X/Y Plot.
+
 ### Documentation
 
-The manual [Compiled/Manual.htm](Compiled/Manual.htm) has new chapters *FFT Spectrum*, *X/Y Plot*, *Hameg Oscilloscopes* and *Option 4: COM Port (RS232)*.
+The manual [Compiled/Manual.htm](Compiled/Manual.htm) has new chapters *FFT Spectrum*, *X/Y Plot*, *Hameg Oscilloscopes*, *Option 4: COM Port (RS232)* and *WAV Files*.
 The *Show Help* links in the new windows open these chapters.
 
 ### Build
