@@ -40,6 +40,7 @@
             this.comboOsziModel = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
             this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnOpenFile = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.comboInput = new System.Windows.Forms.ComboBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -149,6 +150,7 @@
             this.groupBox1.Controls.Add(this.comboOsziModel);
             this.groupBox1.Controls.Add(this.label9);
             this.groupBox1.Controls.Add(this.btnRefresh);
+            this.groupBox1.Controls.Add(this.btnOpenFile);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.comboInput);
             this.groupBox1.Location = new System.Drawing.Point(123, 2);
@@ -202,6 +204,20 @@
             this.btnRefresh.Text = "Refresh";
             this.btnRefresh.UseVisualStyleBackColor = true;
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            //
+            // btnOpenFile
+            //
+            this.btnOpenFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOpenFile.ForeColor = System.Drawing.Color.Black;
+            this.btnOpenFile.Location = new System.Drawing.Point(232, 66);
+            this.btnOpenFile.Name = "btnOpenFile";
+            this.btnOpenFile.Size = new System.Drawing.Size(55, 23);
+            this.btnOpenFile.TabIndex = 12;
+            this.btnOpenFile.Text = "Open...";
+            this.toolTip.SetToolTip(this.btnOpenFile, "Open an OSZI, WAV, CSV, BIN or CAP file from any folder.\n"
+                                                    + "The folder of the file becomes the folder of the list 'Input File'.");
+            this.btnOpenFile.UseVisualStyleBackColor = true;
+            this.btnOpenFile.Click += new System.EventHandler(this.btnOpenFile_Click);
             // 
             // label1
             // 
@@ -221,7 +237,7 @@
             this.comboInput.Location = new System.Drawing.Point(8, 67);
             this.comboInput.MaxDropDownItems = 30;
             this.comboInput.Name = "comboInput";
-            this.comboInput.Size = new System.Drawing.Size(277, 21);
+            this.comboInput.Size = new System.Drawing.Size(220, 21);
             this.comboInput.Sorted = true;
             this.comboInput.TabIndex = 10;
             this.comboInput.SelectedIndexChanged += new System.EventHandler(this.comboInput_SelectedIndexChanged);
@@ -579,6 +595,7 @@
         private System.Windows.Forms.CheckBox checkSepChannels;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnOpenFile;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox comboInput;
         private System.Windows.Forms.GroupBox groupBox3;
