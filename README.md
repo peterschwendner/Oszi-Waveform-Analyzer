@@ -37,7 +37,8 @@ Right-click on the analog signal of a channel:
 
 ### WAV import
 
-Uncompressed WAV files (PCM 8/16/24/32 bit, float 32/64 bit) can be imported. Copy them into `Compiled/Samples`.
+Uncompressed WAV files (PCM 8/16/24/32 bit, float 32/64 bit) can be imported with the new button **Open...** from any folder,
+or from `Compiled/Samples` (WAV files there are ignored by git, because test files like oscilloscope music are copyrighted).
 Each audio channel becomes an analog channel (full scale = 1.0). This is useful to test the FFT and to display
 oscilloscope music (stereo: Left = X, Right = Y) with the X/Y Plot.
 

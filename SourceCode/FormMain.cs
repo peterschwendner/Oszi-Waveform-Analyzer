@@ -428,6 +428,32 @@ namespace OsziWaveformAnalyzer
         // -----------------------------------------------------
 
         /// <summary>
+        /// Open a file from any folder.
+        /// Like a double click in Explorer, the folder of the file becomes the folder of the combobox "Input File".
+        /// This allows to open files which have no file association with this program (e.g. WAV files).
+        /// </summary>
+        private void btnOpenFile_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog i_Dialog = new OpenFileDialog())
+            {
+                i_Dialog.Title            = "Open Capture";
+                i_Dialog.InitialDirectory = Utils.SampleDir;
+                i_Dialog.Filter           = "All supported files|*.oszi;*.wav;*.csv;*.bin;*.cap"
+                                          + "|OSZI files (*.oszi)|*.oszi"
+                                          + "|WAV audio files (*.wav)|*.wav"
+                                          + "|CSV files (*.csv)|*.csv"
+                                          + "|OWON files (*.bin, *.cap)|*.bin;*.cap";
+
+                if (i_Dialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                // Same as a double click in Explorer: switch the folder, reload the combobox and select the file.
+                // Selecting the file in the combobox asks for unsaved changes and loads the file.
+                OpenCommandlineFile(i_Dialog.FileName);
+            }
+        }
+
+        /// <summary>
         /// Reload the combobox with CSV and SOCI file
         /// </summary>
         private void btnRefresh_Click(object sender, EventArgs e)
@@ -522,6 +548,7 @@ namespace OsziWaveformAnalyzer
             mb_Abort = false;
             comboFactor.Items.Clear();
             comboInput.Enabled = false;
+            btnOpenFile.Enabled = false;
             btnRefresh.Text = "Abort";
             lblInfo   .Text = "";
             Application.DoEvents();
@@ -543,6 +570,7 @@ namespace OsziWaveformAnalyzer
             btnRefresh.Text = "Refresh";
 
             comboInput.Enabled = true;
+            btnOpenFile.Enabled = true;
             if (OsziPanel.CurCapture == null)
             {
                 comboInput.SelectedIndex = -1;
