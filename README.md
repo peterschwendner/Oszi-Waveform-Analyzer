@@ -42,6 +42,11 @@ or from `Compiled/Samples` (WAV files there are ignored by git, because test fil
 Each audio channel becomes an analog channel (full scale = 1.0). This is useful to test the FFT and to display
 oscilloscope music (stereo: Left = X, Right = Y) with the X/Y Plot.
 
+### Open... and Save as...
+
+The buttons **Open...** and **Save as...** open and save files in any folder, so own captures can be kept outside of the program folder.
+The folder then becomes the folder of the list *Input File* and of the button *Save* (its tooltip shows the folder).
+
 ### Documentation
 
 The manual [Compiled/Manual.htm](Compiled/Manual.htm) has new chapters *FFT Spectrum*, *X/Y Plot*, *Hameg Oscilloscopes*, *Option 4: COM Port (RS232)* and *WAV Files*.
