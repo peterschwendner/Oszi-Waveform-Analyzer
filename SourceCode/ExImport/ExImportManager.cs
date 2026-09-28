@@ -207,31 +207,89 @@ namespace ExImport
                 return null;
             }
 
-            String s_Path = Path.Combine(Utils.SampleDir, mi_TextFileName.Text);
+            String s_Ext = GetSaveExtension();
+            if (s_Ext == null)
+                return null;
+
+            String s_Path = Path.Combine(Utils.SampleDir, mi_TextFileName.Text) + s_Ext;
+            if (!CheckExistingFile(s_Path))
+                return null;
+            return s_Path;
+        }
+
+        /// <summary>
+        /// Called when button "Save as..." is clicked.
+        /// Shows a dialog preset with the filename, the extension of the selected format and the current folder.
+        /// returns the Save path or null if the user has cancelled
+        /// </summary>
+        public String GetSavePathDialog()
+        {
+            String s_Ext = GetSaveExtension();
+            if (s_Ext == null)
+                return null;
+
+            String s_Name = mi_TextFileName.Text.Trim();
+            if (s_Name.ToLower().EndsWith(s_Ext))
+                s_Name = s_Name.Substring(0, s_Name.Length - s_Ext.Length);
+
+            using (SaveFileDialog i_Dialog = new SaveFileDialog())
+            {
+                i_Dialog.Title            = "Save as " + Utils.GetDescriptionAttribute(me_SaveAs);
+                i_Dialog.InitialDirectory = Utils.SampleDir;
+                i_Dialog.FileName         = s_Name;
+                i_Dialog.DefaultExt       = s_Ext;
+                i_Dialog.AddExtension     = true;
+                i_Dialog.OverwritePrompt  = false; // an existing file is moved to the recycle bin in CheckExistingFile()
+                i_Dialog.Filter           = Utils.GetDescriptionAttribute(me_SaveAs) + " (*" + s_Ext + ")|*" + s_Ext;
+
+                if (i_Dialog.ShowDialog(Utils.FormMain) != DialogResult.OK)
+                    return null;
+
+                String s_Path = i_Dialog.FileName;
+                if (!CheckExistingFile(s_Path))
+                    return null;
+
+                mi_TextFileName.Text = Path.GetFileNameWithoutExtension(s_Path);
+                return s_Path;
+            }
+        }
+
+        /// <summary>
+        /// returns the file extension of the selected save format or null if it cannot be saved
+        /// </summary>
+        String GetSaveExtension()
+        {
             switch (me_SaveAs)
             {
                 case eSaveAs.OsziFilePlain:
-                case eSaveAs.OsziFileZip:  s_Path += ".oszi"; break;
+                case eSaveAs.OsziFileZip:  return ".oszi";
                 case eSaveAs.Screenshot:
-                case eSaveAs.FullImage:    s_Path += ".png";  break;
-                case eSaveAs.RtfFile:      s_Path += ".rtf";  break;
+                case eSaveAs.FullImage:    return ".png";
+                case eSaveAs.RtfFile:      return ".rtf";
                 case eSaveAs.WfmFile:      ShowWfmErrorBox(); return null;
-                default: 
+                default:
                     Debug.Assert(false, "Programming Error: Invalid Save option: " + me_SaveAs);
                     return null;
             }
+        }
 
+        /// <summary>
+        /// If the file exists, ask the user to move it to the recycle bin.
+        /// returns false if the file cannot be saved.
+        /// </summary>
+        bool CheckExistingFile(String s_Path)
+        {
             if (File.Exists(s_Path))
             {
                 if (MessageBox.Show(Utils.FormMain, "The file already exists:\n" + s_Path + 
                                     "\n\nDo you want to move it to the recycle bin?", "Error", 
                                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
-                    return null;
+                    return false;
 
                 if (!Utils.MoveToRecycler(Utils.FormMain, s_Path))
-                    return null;
+                    return false;
             }
-            return s_Path;
+            return true;
         }
 
         public void LoadComboInput(ComboBox i_ComboInput)

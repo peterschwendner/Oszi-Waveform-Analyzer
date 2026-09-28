@@ -41,6 +41,7 @@
             this.label9 = new System.Windows.Forms.Label();
             this.btnRefresh = new System.Windows.Forms.Button();
             this.btnOpenFile = new System.Windows.Forms.Button();
+            this.btnSaveAs = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.comboInput = new System.Windows.Forms.ComboBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -118,6 +119,7 @@
             this.btnSave.Size = new System.Drawing.Size(48, 23);
             this.btnSave.TabIndex = 3;
             this.btnSave.Text = "Save";
+            this.btnSave.MouseEnter += new System.EventHandler(this.btnSave_MouseEnter);
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
@@ -218,6 +220,19 @@
                                                     + "The folder of the file becomes the folder of the list 'Input File'.");
             this.btnOpenFile.UseVisualStyleBackColor = true;
             this.btnOpenFile.Click += new System.EventHandler(this.btnOpenFile_Click);
+            //
+            // btnSaveAs
+            //
+            this.btnSaveAs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSaveAs.ForeColor = System.Drawing.Color.Black;
+            this.btnSaveAs.Location = new System.Drawing.Point(171, 66);
+            this.btnSaveAs.Name = "btnSaveAs";
+            this.btnSaveAs.Size = new System.Drawing.Size(66, 23);
+            this.btnSaveAs.TabIndex = 104;
+            this.btnSaveAs.Text = "Save as...";
+            this.toolTip.SetToolTip(this.btnSaveAs, "Save to any folder.\nThe folder becomes the folder of the list 'Input File' and of the button 'Save'.");
+            this.btnSaveAs.UseVisualStyleBackColor = true;
+            this.btnSaveAs.Click += new System.EventHandler(this.btnSaveAs_Click);
             // 
             // label1
             // 
@@ -306,6 +321,7 @@
             this.groupBox4.Controls.Add(this.label5);
             this.groupBox4.Controls.Add(this.textFileName);
             this.groupBox4.Controls.Add(this.btnSave);
+            this.groupBox4.Controls.Add(this.btnSaveAs);
             this.groupBox4.Location = new System.Drawing.Point(613, 2);
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.Size = new System.Drawing.Size(246, 102);
@@ -376,7 +392,7 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.textFileName.Location = new System.Drawing.Point(8, 68);
             this.textFileName.Name = "textFileName";
-            this.textFileName.Size = new System.Drawing.Size(229, 20);
+            this.textFileName.Size = new System.Drawing.Size(159, 20);
             this.textFileName.TabIndex = 2;
             // 
             // checkLegend
@@ -596,6 +612,7 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.Button btnOpenFile;
+        private System.Windows.Forms.Button btnSaveAs;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox comboInput;
         private System.Windows.Forms.GroupBox groupBox3;

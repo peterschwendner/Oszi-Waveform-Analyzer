@@ -749,6 +749,52 @@ namespace OsziWaveformAnalyzer
             if (s_Path == null)
                 return;
 
+            SaveFile(s_Path);
+        }
+
+        /// <summary>
+        /// Save to any folder. Like "Open...", the folder becomes the folder of the list "Input File"
+        /// and further clicks on "Save" save into this folder.
+        /// </summary>
+        private void btnSaveAs_Click(object sender, EventArgs e)
+        {
+            if (!Utils.CheckMinSamples())
+                return;
+
+            // Shows the Save dialog, asks if existing file may be overwritten
+            String s_Path = mi_ExImport.GetSavePathDialog();
+            if (s_Path == null)
+                return;
+
+            SaveFile(s_Path);
+
+            if (!File.Exists(s_Path))
+                return; // error
+
+            // Show the files of the new folder in the combobox and select the saved file without loading it again
+            Utils.SampleDir = Path.GetDirectoryName(s_Path);
+            mi_ExImport.LoadComboInput(comboInput);
+            foreach (ComboPath i_Exist in comboInput.Items)
+            {
+                if (String.Compare(i_Exist.ms_Path, s_Path, true) == 0)
+                {
+                    mi_CurInputFile = i_Exist;         // FIRST (the same item does not load the file)
+                    comboInput.SelectedItem = i_Exist; // AFTER
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The tooltip of button "Save" shows the folder where the file will be saved
+        /// </summary>
+        private void btnSave_MouseEnter(object sender, EventArgs e)
+        {
+            toolTip.SetToolTip(btnSave, "Save to folder:\n" + Utils.SampleDir + "\n\nUse 'Save as...' to select another folder.");
+        }
+
+        void SaveFile(String s_Path)
+        {
             if (!Utils.StartBusyOperation(this))
                 return;
             try
