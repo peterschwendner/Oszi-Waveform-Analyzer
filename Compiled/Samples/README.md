@@ -13,3 +13,8 @@ Unless otherwise indicated by their filename or repository history, the remainin
 They are retained as test/capture data rather than as copies of external documentation or media. Copyrighted WAV/music examples are intentionally excluded from the repository.
 
 If provenance of a particular inherited capture becomes uncertain, it should be documented or removed rather than assumed to be freely redistributable.
+
+
+## Removed examples
+
+Several inherited card and terminal captures with unclear provenance are intentionally not redistributed. Future examples should use synthetic or clearly documented test captures.
