@@ -2,6 +2,7 @@
 ------------------------------------------------------------
 Oscilloscope Waveform Analyzer by ElmüSoft (www.netcult.ch/elmue)
 This code is released under the terms of the GNU General Public License.
+Modified/added by Peter Schwendner, 2026. See Git history for detailed authorship.
 ------------------------------------------------------------
 
 NAMING CONVENTIONS which allow to see the type of a variable immediately without having to jump to the variable declaration:
