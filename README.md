@@ -5,10 +5,19 @@ Has decoders for UART, SPI, I2C, USB bus, CAN bus. Has special features that you
 
 ![OsziWaveformAnalyzer](https://github.com/user-attachments/assets/c058ae70-8507-4213-9f49-14a93fb323d4)
 
-
 Please read the detailed project description and find the release download here:
 
 https://netcult.ch/elmue/Oszi-Waveform-Analyzer/
+
+## Copyright and licensing
+
+This repository is a modified version of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Waveform-Analyzer).
+
+The original project is distributed under the GNU General Public License version 3. This fork contains modifications and new functionality by Peter Schwendner made in 2026; see the Git history for details.
+
+The GPL applies to software and other material distributed under that license. Product names, trademarks, external standards, manufacturer documentation, drivers and other third-party material remain the property of their respective owners. Their mention is solely for identification and interoperability purposes and does not imply endorsement.
+
+See [LICENSE](LICENSE), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), and [Documentation/Standards.md](Documentation/Standards.md).
 
 ## Additions in this fork
 
@@ -51,6 +60,8 @@ The folder then becomes the folder of the list *Input File* and of the button *S
 
 The manual [Compiled/Manual.htm](Compiled/Manual.htm) has new chapters *FFT Spectrum*, *X/Y Plot*, *Hameg Oscilloscopes*, *Option 4: COM Port (RS232)* and *WAV Files*.
 The *Show Help* links in the new windows open these chapters.
+
+Copyrighted standards and vendor manuals are not mirrored in this repository. See [Documentation/Standards.md](Documentation/Standards.md) for references.
 
 ### Build
 
