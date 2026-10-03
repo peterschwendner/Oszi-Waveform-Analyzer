@@ -37,3 +37,10 @@ The application uses APIs supplied by the Microsoft .NET Framework. Microsoft so
 ## No transfer of third-party rights
 
 The GNU GPL applies only to material for which the relevant copyright holders have granted rights under that license. Nothing in this repository purports to relicense trademarks, standards, manufacturer documentation, drivers or other third-party material for which such rights have not been granted.
+
+
+## Inherited assets and sample data
+
+Provenance notes for inherited images/icons are maintained in `ASSET_PROVENANCE.md`.
+
+Sample waveform/capture provenance is documented in `Compiled/Samples/README.md`. If redistribution rights for an inherited asset or capture cannot be established, it should be replaced or removed.
