@@ -505,17 +505,11 @@ namespace Platform
         /// </summary>
         public void InstallDriver(Form i_Owner)
         {
-            try
-            {
-                ProcessStartInfo k_Info = new ProcessStartInfo(Utils.WinInstallerPath, "");
-                k_Info.UseShellExecute = true;
-                k_Info.Verb = "runas"; // run as administrator
-                Process.Start(k_Info);
-            }
-            catch (Exception Ex)
-            {
-                Utils.ShowExceptionBox(i_Owner, Ex, "Error starting the installer");
-            }
+            MessageBox.Show(i_Owner,
+                            "The USBTMC driver installer is not bundled with this project.\n\n"
+                          + "Install the appropriate VISA/USBTMC driver from your oscilloscope manufacturer "
+                          + "or from your VISA provider, then reconnect the instrument and click Search.",
+                            "USBTMC Driver", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         /// <summary>
