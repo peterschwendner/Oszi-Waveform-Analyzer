@@ -539,10 +539,9 @@ namespace OsziWaveformAnalyzer
                 ms_AppDir    = Path.GetDirectoryName(Application.ExecutablePath);
                 ms_SampleDir = Path.Combine(ms_AppDir, "Samples");
 
-                ms_WinInstaller = Path.Combine(ms_AppDir, "Driver", "dpinst-amd64.exe");
-                String s_Driver = Path.Combine(ms_AppDir, "Driver", "amd64", "ausbtmc.sys");
-                if (!File.Exists(ms_WinInstaller) || !File.Exists(s_Driver))
-                    throw new Exception("Driver files not found");
+                // Third-party USBTMC drivers/installers are no longer bundled with this project.
+                // USB transfer remains available when the user installs a compatible driver separately.
+                ms_WinInstaller = null;
 
                 ms_HelpHtmlPath = Path.Combine(ms_AppDir, "Manual.htm");
                 if (!File.Exists(ms_HelpHtmlPath))
