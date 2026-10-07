@@ -835,6 +835,13 @@
 <tr><td>20 ms</td><td>25 kSa/s</td><td>12.5 kHz</td><td>4.2 Hz</td><td>Music, tones, hum</td></tr>
 </table>
 <div>For audio select 10 ms/div on the oscilloscope and <b>Max. frequency</b> = 20 kHz. A slower timebase gives a finer resolution, but each step takes longer (one sweep).</div>
+<p>
+<table class="TblImage">
+    <tr><td><img src="Images/WaterfallAudio.png" alt="Oszi Waveform Analyzer - Waterfall FFT of an audio signal" width="500" height="322"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/WaterfallAudio.png')">Show Full Size</span></td></tr>
+</table>
+<div>An audio signal measured with a HMO1522 over the USB port of the HO720 with <b>Max. frequency</b> = 20 kHz during more than 5 minutes.</div>
+<div>The fundamentals between 80 and 170 Hz and their harmonics up to approx 4 kHz are clearly visible. At approx 170 seconds the level of the signal was changed.</div>
 <div><span class="Error">ATTENTION:</span> Frequencies above the highest frequency may not be removed by the oscilloscope. Then they appear mirrored at a wrong frequency (aliasing).</div>
 <p>
 <div>The speed depends on the connection. At 115200 baud the HM507 transfers its 2048 samples in approx 0.2 seconds.</div>
