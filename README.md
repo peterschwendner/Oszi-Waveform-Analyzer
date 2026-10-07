@@ -29,7 +29,7 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 |---|---|---|---|
 | HMO1522, HMO1002, HMO1202, HMO2022 (HMO Compact) | 115200 8N1 RTS | SCPI `:CHANnel:DATA` (floats in Volt), logic pod | Real HMO1522 |
 | HM2008, HM1508, HM1008 (CombiScope) | 115200 8N2 RTS | SCPI `:TRACe` (8 bit values) | Simulation only |
-| HM507 | 115200 8N2 RTS | Proprietary binary protocol | Real HM507 |
+| HM507 | 115200 8N2 RTS | Hameg command set (not SCPI): ASCII commands, binary responses | Real HM507 |
 
 - New connection mode **COM** in the Transfer window for RS232 ports, USB to RS232 adapters and the USB virtual COM port of the Hameg HO720 / HO730 interfaces.
 - Connected Hameg USB interfaces are detected and listed first. If the second part of the Hameg USB driver (`ftdiport.inf`) is missing, Windows creates no COM port (Device Manager: error code 28) and the Transfer window explains how to fix it.
