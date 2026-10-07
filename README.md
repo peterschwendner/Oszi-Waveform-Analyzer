@@ -28,8 +28,8 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 | Serie | Default port settings | Protocol | Tested |
 |---|---|---|---|
 | HMO1522, HMO1002, HMO1202, HMO2022 (HMO Compact) | 115200 8N1 RTS | SCPI `:CHANnel:DATA` (floats in Volt), logic pod | Real HMO1522 |
-| HM2008, HM1508, HM1008 (CombiScope) | 19200 8N2 RTS | SCPI `:TRACe` (8 bit values) | Simulation only |
-| HM507 | 19200 8N2 RTS | Proprietary binary protocol | Real HM507 |
+| HM2008, HM1508, HM1008 (CombiScope) | 115200 8N2 RTS | SCPI `:TRACe` (8 bit values) | Simulation only |
+| HM507 | 115200 8N2 RTS | Proprietary binary protocol | Real HM507 |
 
 - New connection mode **COM** in the Transfer window for RS232 ports, USB to RS232 adapters and the USB virtual COM port of the Hameg HO720 interface.
 - Port settings like `19200 8N2 RTS` (baudrate, databits, parity, stopbits, handshake), stored separately for each oscilloscope serie.

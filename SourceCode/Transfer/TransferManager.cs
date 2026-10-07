@@ -130,12 +130,13 @@ namespace Transfer
                 case eOsziSerie.Hameg_HMO1522: return "115200 8N1 RTS";
 
                 // The HM1508-2 / HM2008 manual specifies "N-8-2 no parity, 8 bits data, 2 stop bits (RTS/CTS hardware protocol)".
-                // The baudrate is selectable in SETTINGS > Interface on the oscilloscope.
-                case eOsziSerie.Hameg_HM2008:  return "19200 8N2 RTS";
+                // The baudrate is selectable in SETTINGS > Interface on the oscilloscope. 115200 baud has been tested.
+                case eOsziSerie.Hameg_HM2008:  return "115200 8N2 RTS";
 
                 // HM507 command description: "keine Paritaet, Datenlaenge 8 Bit, 2 Stoppbit, RTS/CTS Handshake"
                 // The baudrate (110 ... 115200) is detected automatically from the first SPACE CR after power on.
-                case eOsziSerie.Hameg_HM507:   return "19200 8N2 RTS";
+                // 115200 baud has been tested with a real HM507: 2048 samples per channel in 0.2 seconds.
+                case eOsziSerie.Hameg_HM507:   return "115200 8N2 RTS";
 
                 default:                       return "9600 8N1 NONE";
             }
