@@ -80,6 +80,7 @@ namespace OsziWaveformAnalyzer
             SerialSettings,
             HamegPoints,
             AudioInput,
+            AudioRecord,
             // ------------
             RasterInterval,
             RasterUnit,

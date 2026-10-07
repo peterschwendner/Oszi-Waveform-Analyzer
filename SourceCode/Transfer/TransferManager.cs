@@ -94,7 +94,7 @@ namespace Transfer
             [Description("Hameg HM507 (RS232 only)")] // proprietary binary protocol, also HM504 (analog only, no waveforms)
             Hameg_HM507,
 
-            [Description("Audio Interface / Sound Card (live Waterfall FFT)")] // e.g. Focusrite Scarlett, MOTU M4
+            [Description("Audio Interface / Sound Card")] // e.g. Focusrite Scarlett, MOTU M4
             Audio_Input,
 
             // TODO: Add more oscilloscope brands like Tektronix, Rhode & Schwarz, Siglent, ...
@@ -207,10 +207,10 @@ namespace Transfer
                     break;
 
                 case eOsziSerie.Audio_Input:
-                    // There is no Transfer window: the audio input is used directly by the Waterfall FFT
-                    using (WaterfallFFT i_Waterfall = new WaterfallFFT(new AudioInput()))
+                    // Record into the main window or open the Waterfall FFT
+                    using (FormAudio i_Audio = new FormAudio())
                     {
-                        i_Waterfall.ShowDialog(Utils.FormMain);
+                        i_Audio.ShowDialog(Utils.FormMain);
                     }
                     return;
 

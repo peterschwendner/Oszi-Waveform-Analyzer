@@ -57,7 +57,8 @@ using Utils             = OsziWaveformAnalyzer.Utils;
 // Uses the Windows Multimedia API (waveIn) of winmm.dll which is available on all Windows versions without additional libraries.
 // Windows converts the format of the device into the requested format (32 bit float, which keeps the full 24 bit resolution).
 //
-// The recording runs continuously: the driver fills a chain of small buffers, which are copied into a ring buffer.
+// The recording runs continuously: the driver fills a chain of small buffers, which a background thread copies into a ring buffer.
+// The thread is independent of the GUI: a slow display (e.g. the main window painting millions of samples) does not cause gaps.
 // Each Acquire() returns the next block of samples, so consecutive spectra have no gaps.
 // If the computer is too slow to display every block, the oldest blocks are skipped (the waterfall stays in real time).
 //
@@ -144,10 +145,10 @@ namespace Transfer
 
         #endregion
 
-        const int BUFFER_COUNT = 16;  // driver buffers
+        const int BUFFER_COUNT = 50;  // driver buffers (1 second)
         const int BUFFER_MS    = 20;  // milliseconds per driver buffer
 
-        static readonly int[] SAMPLE_RATES  = { 44100, 48000, 96000, 192000 };
+        public static readonly int[] SAMPLE_RATES = { 44100, 48000, 96000, 192000 };
         static readonly int[] BLOCK_SIZES   = { 2048, 4096, 8192, 16384, 32768, 65536 };
 
         ComboBox  mi_ComboDevice;
@@ -167,6 +168,16 @@ namespace Transfer
         long      ms64_Written;      // total samples per channel written into the ring buffer
         long      ms64_BlockEnd;     // end of the block returned by the last Acquire()
         long      ms64_Skipped;      // samples skipped because the display was too slow
+
+        Thread    mi_Thread;         // copies the driver buffers into the ring buffer
+        volatile bool mb_StopThread;
+        volatile String ms_ThreadError;
+        Object    mi_Lock = new Object(); // protects mf_Ring and ms64_Written
+
+        long Written
+        {
+            get { lock (mi_Lock) return ms64_Written; }
+        }
 
         // ===================================== IWaterfallSource =====================================
 
@@ -247,7 +258,17 @@ namespace Transfer
             Utils.RegWriteString(eRegKey.AudioInput, mi_ComboDevice.Text + "|" + mi_ComboRate.Text + "|" + mi_ComboBlock.Text);
 
             // index 0 = "Windows default" --> WAVE_MAPPER
-            IntPtr u_Device = new IntPtr(mi_ComboDevice.SelectedIndex - 1);
+            // Ring buffer for at least 4 blocks or 2 seconds
+            Open(mi_ComboDevice.SelectedIndex - 1, mi_ComboDevice.Text, Math.Max(4 * ms32_Block, 2 * ms32_Rate));
+        }
+
+        /// <summary>
+        /// Opens the device and starts the recording into a ring buffer of s32_RingSize samples per channel.
+        /// s32_Device = -1 --> Windows default device. ms32_Rate must be set before.
+        /// </summary>
+        void Open(int s32_Device, String s_DeviceName, int s32_RingSize)
+        {
+            IntPtr u_Device = new IntPtr(s32_Device);
 
             // 32 bit float preserves the 24 bit resolution of the converter. Fallback: 16 bit integer.
             WAVEFORMAT k_Format = CreateFormat(true);
@@ -262,12 +283,10 @@ namespace Transfer
             if (s32_Error != MMSYSERR_NOERROR)
             {
                 mh_WaveIn = IntPtr.Zero;
-                throw new Exception("Error opening the audio input '" + mi_ComboDevice.Text + "' with " + ms32_Rate + " Hz:\n"
+                throw new Exception("Error opening the audio input '" + s_DeviceName + "' with " + ms32_Rate + " Hz:\n"
                                   + GetErrorText(s32_Error));
             }
 
-            // Ring buffer for at least 4 blocks or 2 seconds
-            int s32_RingSize = Math.Max(4 * ms32_Block, 2 * ms32_Rate);
             mf_Ring = new float[][] { new float[s32_RingSize], new float[s32_RingSize] };
 
             int s32_BufBytes = ms32_Rate * BUFFER_MS / 1000 * k_Format.nBlockAlign;
@@ -286,6 +305,13 @@ namespace Transfer
                 Check(waveInAddBuffer    (mh_WaveIn, mp_Headers[B], ms32_HdrSize));
             }
             Check(waveInStart(mh_WaveIn));
+
+            mb_StopThread  = false;
+            ms_ThreadError = null;
+            mi_Thread = new Thread(new ThreadStart(CollectThread));
+            mi_Thread.IsBackground = true;
+            mi_Thread.Priority     = ThreadPriority.AboveNormal;
+            mi_Thread.Start();
         }
 
         /// <summary>
@@ -301,11 +327,10 @@ namespace Transfer
 
             Stopwatch i_Watch = Stopwatch.StartNew();
             int s32_Timeout = 2000 + 2000 * ms32_Block / ms32_Rate;
-            while (ms64_Written - ms64_BlockEnd < ms32_Block)
+            while (Written - ms64_BlockEnd < ms32_Block)
             {
-                CollectBuffers();
-                if (ms64_Written - ms64_BlockEnd >= ms32_Block)
-                    break;
+                if (ms_ThreadError != null)
+                    throw new Exception(ms_ThreadError);
 
                 if (i_Watch.ElapsedMilliseconds > s32_Timeout)
                     throw new Exception("The audio input does not deliver data.\nIs the device still connected?");
@@ -316,19 +341,22 @@ namespace Transfer
                 Thread.Sleep(5);
             }
 
-            // The display is too slow: skip the old blocks, keep only the newest one
-            if (ms64_Written - ms64_BlockEnd >= 2 * ms32_Block)
+            float[] f_Block = new float[ms32_Block];
+            lock (mi_Lock)
             {
-                long s64_NewEnd = ms64_Written - ms32_Block;
-                ms64_Skipped += s64_NewEnd - ms64_BlockEnd;
-                ms64_BlockEnd = s64_NewEnd;
-            }
+                // The display is too slow: skip the old blocks, keep only the newest one
+                if (ms64_Written - ms64_BlockEnd >= 2 * ms32_Block)
+                {
+                    long s64_NewEnd = ms64_Written - ms32_Block;
+                    ms64_Skipped += s64_NewEnd - ms64_BlockEnd;
+                    ms64_BlockEnd = s64_NewEnd;
+                }
 
-            float[] f_Ring   = mf_Ring[s32_Channel - 1];
-            float[] f_Block  = new float[ms32_Block];
-            for (int S=0; S<ms32_Block; S++)
-            {
-                f_Block[S] = f_Ring[(int)((ms64_BlockEnd + S) % f_Ring.Length)];
+                float[] f_Ring = mf_Ring[s32_Channel - 1];
+                for (int S=0; S<ms32_Block; S++)
+                {
+                    f_Block[S] = f_Ring[(int)((ms64_BlockEnd + S) % f_Ring.Length)];
+                }
             }
             ms64_BlockEnd += ms32_Block;
 
@@ -348,6 +376,84 @@ namespace Transfer
             mb_Abort = true;
         }
 
+        // ===================================== Recording into the main window =====================================
+
+        /// <summary>
+        /// Called while recording. returns true to abort.
+        /// </summary>
+        public delegate bool delProgress(int s32_Recorded, int s32_Total);
+
+        /// <summary>
+        /// Records s32_Samples stereo samples and returns them as a Capture with the channels "Left" and "Right".
+        /// s32_Device = -1 --> Windows default device
+        /// returns null if f_Progress has returned true (abort). Throws on error.
+        /// </summary>
+        public Capture Record(int s32_Device, String s_DeviceName, int s32_Rate, int s32_Samples, delProgress f_Progress)
+        {
+            Stop();
+            mb_Abort     = false;
+            ms32_Rate    = s32_Rate;
+            ms64_Written = 0;
+
+            // The first 100 ms are not used: some converters need time to settle after the start
+            int s32_Skip = s32_Rate / 10;
+
+            // The ring buffer is larger than the recording: it does not wrap around
+            Open(s32_Device, s_DeviceName, s32_Skip + s32_Samples + s32_Rate);
+            try
+            {
+                Stopwatch i_Watch = Stopwatch.StartNew();
+                long s64_LastWritten = 0;
+                while (true)
+                {
+                    long s64_Written = Written;
+                    if (s64_Written >= s32_Skip + s32_Samples)
+                        break;
+
+                    if (ms_ThreadError != null)
+                        throw new Exception(ms_ThreadError);
+
+                    if (s64_Written != s64_LastWritten)
+                    {
+                        s64_LastWritten = s64_Written;
+                        i_Watch.Reset();
+                        i_Watch.Start();
+                    }
+                    else if (i_Watch.ElapsedMilliseconds > 2000)
+                    {
+                        throw new Exception("The audio input does not deliver data.\nIs the device still connected?");
+                    }
+
+                    int s32_Done = (int)Math.Max(0, Math.Min(s32_Samples, s64_Written - s32_Skip));
+                    if (f_Progress(s32_Done, s32_Samples))
+                        return null;
+
+                    Thread.Sleep(10);
+                }
+            }
+            finally
+            {
+                Stop();
+            }
+
+            Capture i_Capture = new Capture();
+            i_Capture.ms32_Samples    = s32_Samples;
+            i_Capture.ms64_SampleDist = (Int64)Math.Round((double)Utils.PICOS_PER_SECOND / s32_Rate);
+            i_Capture.ms32_AnalogRes  = Utils.MAX_ANAL_RES; // 24 bit, but the display uses at most 16 bit
+
+            for (int C=0; C<2; C++)
+            {
+                float[] f_Data = new float[s32_Samples];
+                Array.Copy(mf_Ring[C], s32_Skip, f_Data, 0, s32_Samples);
+
+                Channel i_Channel = new Channel(Channels[C]);
+                i_Channel.mf_Analog = f_Data;
+                i_Capture.mi_Channels.Add(i_Channel);
+            }
+            mf_Ring = null; // free memory
+            return i_Capture;
+        }
+
         /// <summary>
         /// Stops the recording and closes the device. Does not throw.
         /// </summary>
@@ -355,6 +461,13 @@ namespace Transfer
         {
             if (mh_WaveIn == IntPtr.Zero)
                 return;
+
+            if (mi_Thread != null)
+            {
+                mb_StopThread = true;
+                mi_Thread.Join();
+                mi_Thread = null;
+            }
 
             waveInReset(mh_WaveIn); // marks all buffers as done
             foreach (IntPtr p_Hdr in mp_Headers)
@@ -375,7 +488,28 @@ namespace Transfer
         // ===================================== Recording =====================================
 
         /// <summary>
+        /// Background thread: polls the driver buffers every 5 ms.
+        /// </summary>
+        void CollectThread()
+        {
+            while (!mb_StopThread)
+            {
+                try
+                {
+                    CollectBuffers();
+                }
+                catch (Exception Ex)
+                {
+                    ms_ThreadError = Ex.Message; // the GUI thread throws it in Acquire() / Record()
+                    return;
+                }
+                Thread.Sleep(5);
+            }
+        }
+
+        /// <summary>
         /// Copies all buffers that the driver has filled into the ring buffer and gives them back to the driver.
+        /// Called in the background thread.
         /// </summary>
         void CollectBuffers()
         {
@@ -388,12 +522,19 @@ namespace Transfer
 
                 int s32_BytesPerFrame = mb_Float ? 8 : 4; // 2 channels
                 int s32_Frames = (int)k_Hdr.dwBytesRecorded / s32_BytesPerFrame;
-                AppendToRing(k_Hdr.lpData, s32_Frames);
+                lock (mi_Lock)
+                {
+                    AppendToRing(k_Hdr.lpData, s32_Frames);
+                }
 
                 k_Hdr.dwFlags        &= ~(UInt32)WHDR_DONE;
                 k_Hdr.dwBytesRecorded = 0;
                 Marshal.StructureToPtr(k_Hdr, p_Hdr, false);
-                Check(waveInAddBuffer(mh_WaveIn, p_Hdr, ms32_HdrSize));
+
+                // Do not call Check() here: it would call Stop() which waits for this thread
+                int s32_Error = waveInAddBuffer(mh_WaveIn, p_Hdr, ms32_HdrSize);
+                if (s32_Error != MMSYSERR_NOERROR)
+                    throw new Exception("Audio input error: " + GetErrorText(s32_Error));
 
                 ms32_NextBuffer = (ms32_NextBuffer + 1) % BUFFER_COUNT;
             }

@@ -866,11 +866,32 @@
     <li><div>With trigger mode NORM and without a trigger event the memory is not updated and the same spectrum is added again. Use AUTO trigger.</div>
 </ul>
 
+<a name="AudioInput"></a>
+<h3>Audio Interface / Sound Card</h3>
+
+<div>An audio interface or sound card (e.g. Focusrite Scarlett, MOTU M2 / M4) can be used instead of an oscilloscope.</div>
+<div>Select <b>Audio Interface / Sound Card</b> as Oszi Model in the main window and click <b>Capture</b>. The window <b>Audio Input</b> opens:</div>
+<p>
+<table class="DataTable">
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Device</td><td>The recording device as listed by Windows (see below).</td></tr>
+<tr><td>Rate</td><td>Sample rate 44100 ... 192000 Hz.</td></tr>
+<tr><td>Duration</td><td>0.1 ... 60 seconds.</td></tr>
+<tr><td>Record</td><td>Records both channels (Left and Right) into the main window. There you can use <a href="#FFT">FFT Spectrum</a>,
+                       <a href="#XYPlot">X/Y Plot</a>, the cursor and the decoders and save the capture as OSZI file.<br>
+                       The first 100 ms after the start are not used, because some converters need time to settle.</td></tr>
+<tr><td>Waterfall FFT...</td><td>Opens the live <a href="#WaterfallAudio">Waterfall FFT</a> with the same device and sample rate.</td></tr>
+</table>
+<p>
+<div>After the recording the window shows the <b>peak level</b> of both channels in dBFS.</div>
+<div>If a channel has reached full scale, it shows <b>CLIPPED</b>: reduce the gain of the interface and record again.</div>
+<div>The samples in the main window are relative to full scale (1.0 = 0 dBFS), like an imported WAV file. They are not calibrated in Volt.</div>
+<div>A recording of 60 seconds at 192 kHz contains 23 million samples. This needs approx 200 MB of memory.</div>
+
 <a name="WaterfallAudio"></a>
 <h3>Waterfall FFT with an Audio Interface</h3>
 
-<div>An audio interface or sound card (e.g. Focusrite Scarlett, MOTU M2 / M4) can be used instead of an oscilloscope.</div>
-<div>Select <b>Audio Interface / Sound Card</b> as Oszi Model in the main window and click <b>Capture</b>. The Waterfall FFT opens directly.</div>
+<div>Click <b>Waterfall FFT...</b> in the window <a href="#AudioInput">Audio Input</a>.</div>
 <div>Additional settings in the toolbar:</div>
 <p>
 <table class="DataTable">
@@ -883,7 +904,7 @@
                        Example: 8192 samples at 48 kHz = 5.9 Hz resolution and 5.9 spectra per second.</td></tr>
 </table>
 <p>
-<div>The recording runs continuously: consecutive spectra have no gaps (status bar: <b>Gapless</b>).</div>
+<div>The recording runs continuously in a background thread: consecutive spectra have no gaps (status bar: <b>Gapless</b>).</div>
 <div>If the computer is too slow to display all spectra, old blocks are skipped and the waterfall stays in real time (status bar: <b>Skipped</b>).</div>
 <div>The samples are recorded as 32 bit float, so the full resolution of a 24 bit converter is preserved (dynamic range more than 100 dB).</div>
 <p>
@@ -899,7 +920,7 @@
 <div>Use an attenuator or a DI box and beware of ground loops through the USB cable.</div>
 <div>Audio interfaces are AC coupled: there is no DC and nothing below approx 10 Hz.</div>
 <p>
-<div>Recordings can also be imported as WAV file with the button <b>Open...</b> in the main window (FFT Spectrum and X/Y Plot).</div>
+<div>Recordings of other programs can be imported as WAV file with the button <b>Open...</b> in the main window.</div>
 <div>The audio input uses the Windows Multimedia API (winmm.dll). It is not available on Linux.</div>
 
 <a name="ScpiLibrary"></a>
