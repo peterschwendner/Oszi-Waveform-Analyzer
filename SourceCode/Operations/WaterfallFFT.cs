@@ -74,7 +74,7 @@ namespace Operations
             public float[]  mf_Amp;  // Volt peak per frequency bin
         }
 
-        const String MAX_FREQ_AUTO = "Nyquist";
+        const String MAX_FREQ_AUTO = "All";    // up to half the sample rate (Nyquist)
         const String SCALE_DB     = "dBV (RMS)";
         const String SCALE_LINEAR = "Volt (peak)";
 
@@ -135,15 +135,15 @@ namespace Operations
             mi_ComboChannel.Items.AddRange(new Object[] { "CH1", "CH2" });
             mi_ComboChannel.SelectedIndex = 0;
 
+            // Audio: show only the low frequencies. (The highest frequency that can be measured is half the sample rate.)
+            mi_ComboMaxFreq = AddCombo(i_Bar, "Max. frequency:", 75);
+            mi_ComboMaxFreq.Items.AddRange(new Object[] { MAX_FREQ_AUTO, "500 Hz", "1 kHz", "2 kHz", "5 kHz", "10 kHz", "20 kHz", "50 kHz", "100 kHz", "200 kHz", "500 kHz", "1 MHz" });
+            mi_ComboMaxFreq.SelectedIndex = 0;
+
             mi_ComboWindow = AddCombo(i_Bar, "Window:", 140);
             foreach (Fourier.eWindow e_Win in Enum.GetValues(typeof(Fourier.eWindow)))
                 mi_ComboWindow.Items.Add(Utils.GetDescriptionAttribute(e_Win));
             mi_ComboWindow.SelectedIndex = 0;
-
-            // Audio: show only the low frequencies. (The highest frequency that can be measured is half the sample rate.)
-            mi_ComboMaxFreq = AddCombo(i_Bar, "Max. freq:", 75);
-            mi_ComboMaxFreq.Items.AddRange(new Object[] { MAX_FREQ_AUTO, "500 Hz", "1 kHz", "2 kHz", "5 kHz", "10 kHz", "20 kHz", "50 kHz", "100 kHz", "200 kHz", "500 kHz", "1 MHz" });
-            mi_ComboMaxFreq.SelectedIndex = 0;
 
             mi_ComboScale = AddCombo(i_Bar, "Scale:", 90);
             mi_ComboScale.Items.AddRange(new Object[] { SCALE_DB, SCALE_LINEAR });
