@@ -299,7 +299,9 @@ namespace Transfer
         }
 
         /// <summary>
-        /// One step of the Waterfall FFT: release HOLD, wait for one sweep, activate HOLD and transfer only one channel.
+        /// One step of the Waterfall FFT: acquire a new waveform and transfer only one channel.
+        /// Refresh mode: release HOLD, wait for one sweep, activate HOLD.
+        /// SINGLE mode:  HOLD would freeze the memory. RES starts a new single acquisition, then wait for the trigger event.
         /// returns null if the user has aborted
         /// </summary>
         public Capture AcquireChannel(int s32_Chan)
@@ -307,14 +309,39 @@ namespace Transfer
             mb_Abort = false;
 
             // One sweep = 2048 samples with 200 samples per division
-            decimal d_TimeDiv = GetTimePerDiv(QueryByte("TBA?"));
-            int s32_SweepMs = (int)(d_TimeDiv * SAMPLES / 200 * 1000);
+            Byte    u8_TBA      = QueryByte("TBA?");
+            decimal d_TimeDiv   = GetTimePerDiv(u8_TBA);
+            int     s32_SweepMs = (int)(d_TimeDiv * SAMPLES / 200 * 1000);
 
-            ExecuteOperation(eOperation.Run);
-            if (!WaitMs(Math.Max(100, s32_SweepMs * 3 / 2 + 50)))
-                return null;
+            if ((u8_TBA & TBA_SINGLE) != 0)
+            {
+                if (QueryAscii("HLDWFM?") == '1')
+                    ExecuteOperation(eOperation.Run); // HLDWFM=0
 
-            ExecuteOperation(eOperation.Stop);
+                ExecuteOperation(eOperation.Single);  // RES
+
+                // TRGSTA = 2: "SINGLE RESET mode or acquisition not yet complete"
+                int s32_MaxWait = Math.Max(5000, s32_SweepMs * 3);
+                Stopwatch i_Watch = Stopwatch.StartNew();
+                while (QueryAscii("TRGSTA?") == '2')
+                {
+                    if (i_Watch.ElapsedMilliseconds > s32_MaxWait)
+                        throw new Exception(String.Format("SINGLE mode: No trigger event within {0} seconds.\n"
+                                                        + "Check the trigger level or switch the oscilloscope to refresh mode with AUTO trigger.",
+                                                        s32_MaxWait / 1000));
+                    if (!WaitMs(20))
+                        return null;
+                }
+            }
+            else
+            {
+                ExecuteOperation(eOperation.Run);
+                if (!WaitMs(Math.Max(100, s32_SweepMs * 3 / 2 + 50)))
+                    return null;
+
+                ExecuteOperation(eOperation.Stop);
+            }
+
             if (mb_Abort)
                 return null;
 
