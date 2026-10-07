@@ -81,6 +81,8 @@ namespace OsziWaveformAnalyzer
             HamegPoints,
             AudioInput,
             AudioRecord,
+            AudioCalib,
+            AudioUseCalib,
             // ------------
             RasterInterval,
             RasterUnit,

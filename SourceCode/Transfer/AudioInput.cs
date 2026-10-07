@@ -62,7 +62,9 @@ using Utils             = OsziWaveformAnalyzer.Utils;
 // Each Acquire() returns the next block of samples, so consecutive spectra have no gaps.
 // If the computer is too slow to display every block, the oldest blocks are skipped (the waterfall stays in real time).
 //
-// The values are relative to full scale: 1.0 = 0 dBFS. They are not calibrated in Volt.
+// The values are relative to full scale: 1.0 = 0 dBFS.
+// With a calibration per device and channel they are converted into Volt (see GetCalibration()).
+// The calibration is only valid for the gain setting of the interface at the time of the calibration.
 namespace Transfer
 {
     public class AudioInput : IWaterfallSource
@@ -168,6 +170,8 @@ namespace Transfer
         long      ms64_Written;      // total samples per channel written into the ring buffer
         long      ms64_BlockEnd;     // end of the block returned by the last Acquire()
         long      ms64_Skipped;      // samples skipped because the display was too slow
+        bool      mb_Calibrated;     // Waterfall FFT: convert into Volt
+        String    ms_DeviceName;
 
         Thread    mi_Thread;         // copies the driver buffers into the ring buffer
         volatile bool mb_StopThread;
@@ -179,6 +183,14 @@ namespace Transfer
             get { lock (mi_Lock) return ms64_Written; }
         }
 
+        /// <summary>
+        /// b_Calibrated = true --> the Waterfall FFT displays dBV (the channel must be calibrated)
+        /// </summary>
+        public AudioInput(bool b_Calibrated = false)
+        {
+            mb_Calibrated = b_Calibrated;
+        }
+
         // ===================================== IWaterfallSource =====================================
 
         public String Name
@@ -186,7 +198,7 @@ namespace Transfer
             get
             {
                 String s_Device = (mi_ComboDevice != null) ? mi_ComboDevice.Text : "";
-                return "Audio: " + s_Device;
+                return "Audio: " + s_Device + (mb_Calibrated ? "  (calibrated)" : "");
             }
         }
 
@@ -197,7 +209,7 @@ namespace Transfer
 
         public Fourier.eUnit Unit
         {
-            get { return Fourier.eUnit.FullScale; }
+            get { return mb_Calibrated ? Fourier.eUnit.Volt : Fourier.eUnit.FullScale; }
         }
 
         /// <summary>
@@ -251,6 +263,11 @@ namespace Transfer
             mb_Abort      = false;
             ms32_Rate     = int.Parse(mi_ComboRate.Text);
             ms32_Block    = int.Parse(mi_ComboBlock.Text);
+            ms_DeviceName = mi_ComboDevice.Text;
+
+            if (mb_Calibrated && double.IsNaN(GetCalibration(ms_DeviceName, 1)) && double.IsNaN(GetCalibration(ms_DeviceName, 2)))
+                throw new Exception("The device '" + ms_DeviceName + "' is not calibrated.\n"
+                                  + "Close the Waterfall FFT and click 'Calibrate...' in the window Audio Input.");
             ms64_Written  = 0;
             ms64_BlockEnd = 0;
             ms64_Skipped  = 0;
@@ -359,6 +376,17 @@ namespace Transfer
                 }
             }
             ms64_BlockEnd += ms32_Block;
+
+            if (mb_Calibrated)
+            {
+                double d_Cal = GetCalibration(ms_DeviceName, s32_Channel);
+                if (double.IsNaN(d_Cal))
+                    throw new Exception("The channel " + Channels[s32_Channel - 1] + " of the device '" + ms_DeviceName + "' is not calibrated.");
+
+                float f_Factor = (float)FullScaleVolt(d_Cal);
+                for (int S=0; S<ms32_Block; S++)
+                    f_Block[S] *= f_Factor;
+            }
 
             Channel i_Channel = new Channel(Channels[s32_Channel - 1]);
             i_Channel.mf_Analog = f_Block;
@@ -590,6 +618,96 @@ namespace Transfer
             k_Format.nBlockAlign     = (UInt16)(k_Format.nChannels * k_Format.wBitsPerSample / 8);
             k_Format.nAvgBytesPerSec = k_Format.nSamplesPerSec * k_Format.nBlockAlign;
             return k_Format;
+        }
+
+        // ===================================== Calibration =====================================
+
+        /// <summary>
+        /// The calibration is stored per device and channel as the level in dBV of a sine wave with full scale amplitude (0 dBFS).
+        /// Example: +10.0 --> a full scale sine wave has 3.16 Vrms = 4.47 Vpeak.
+        /// Registry: "In 1-2 (MOTU M Series)=10.00|9.85;Analogue 1 + 2 (8- Focusrite US=|12.3"
+        /// s32_Channel = 1 (Left) or 2 (Right). returns NaN if the channel is not calibrated.
+        /// </summary>
+        public static double GetCalibration(String s_Device, int s32_Channel)
+        {
+            String[] s_Values;
+            if (!ReadCalibrations().TryGetValue(CalibKey(s_Device), out s_Values))
+                return double.NaN;
+
+            double d_Value;
+            if (!double.TryParse(s_Values[s32_Channel - 1], NumberStyles.Float, CultureInfo.InvariantCulture, out d_Value))
+                return double.NaN;
+            return d_Value;
+        }
+
+        /// <summary>
+        /// d_DbV = NaN removes the calibration of this channel
+        /// </summary>
+        public static void SetCalibration(String s_Device, int s32_Channel, double d_DbV)
+        {
+            Dictionary<String, String[]> i_All = ReadCalibrations();
+            String   s_Key = CalibKey(s_Device);
+            String[] s_Values;
+            if (!i_All.TryGetValue(s_Key, out s_Values))
+            {
+                s_Values = new String[] { "", "" };
+                i_All[s_Key] = s_Values;
+            }
+            s_Values[s32_Channel - 1] = double.IsNaN(d_DbV) ? "" : d_DbV.ToString("0.00", CultureInfo.InvariantCulture);
+
+            StringBuilder i_Value = new StringBuilder();
+            foreach (KeyValuePair<String, String[]> i_Pair in i_All)
+            {
+                if (i_Pair.Value[0].Length == 0 && i_Pair.Value[1].Length == 0)
+                    continue; // no calibration left
+
+                if (i_Value.Length > 0) i_Value.Append(';');
+                i_Value.Append(i_Pair.Key).Append('=').Append(i_Pair.Value[0]).Append('|').Append(i_Pair.Value[1]);
+            }
+            Utils.RegWriteString(eRegKey.AudioCalib, i_Value.ToString());
+        }
+
+        /// <summary>
+        /// The separators of the registry value must not appear in the device name
+        /// </summary>
+        static String CalibKey(String s_Device)
+        {
+            return s_Device.Replace(";", "").Replace("=", "").Replace("|", "");
+        }
+
+        static Dictionary<String, String[]> ReadCalibrations()
+        {
+            Dictionary<String, String[]> i_All = new Dictionary<String, String[]>();
+            foreach (String s_Entry in Utils.RegReadString(eRegKey.AudioCalib, "").Split(';'))
+            {
+                int s32_Equal = s_Entry.LastIndexOf('=');
+                if (s32_Equal < 1)
+                    continue;
+
+                String[] s_Values = s_Entry.Substring(s32_Equal + 1).Split('|');
+                if (s_Values.Length == 2)
+                    i_All[s_Entry.Substring(0, s32_Equal)] = s_Values;
+            }
+            return i_All;
+        }
+
+        /// <summary>
+        /// Calibration in dBV --> the peak voltage of full scale (multiply the samples with this factor)
+        /// </summary>
+        public static double FullScaleVolt(double d_DbV)
+        {
+            return Math.Sqrt(2) * Math.Pow(10, d_DbV / 20);
+        }
+
+        /// <summary>
+        /// "+10.00 dBV (4.47 Vpeak)" or "not calibrated"
+        /// </summary>
+        public static String FormatCalibration(double d_DbV)
+        {
+            if (double.IsNaN(d_DbV))
+                return "not calibrated";
+            return String.Format(CultureInfo.InvariantCulture, "0 dBFS = {0:+0.00;-0.00} dBV ({1})",
+                                 d_DbV, Operations.SpectrumFFT.FormatVolt(FullScaleVolt(d_DbV)) + "p");
         }
 
         // ===================================== Helper =====================================

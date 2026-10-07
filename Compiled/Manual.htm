@@ -881,12 +881,29 @@
                        <a href="#XYPlot">X/Y Plot</a>, the cursor and the decoders and save the capture as OSZI file.<br>
                        The first 100 ms after the start are not used, because some converters need time to settle.</td></tr>
 <tr><td>Waterfall FFT...</td><td>Opens the live <a href="#WaterfallAudio">Waterfall FFT</a> with the same device and sample rate.</td></tr>
+<tr><td>Volt (calibrated)</td><td>Converts the samples into Volt with the calibration of the device (see below). The Waterfall FFT then displays dBV instead of dBFS.<br>
+                       Only possible if at least one channel of the device is calibrated. An uncalibrated channel stays in full scale and gets the name <i>(not calibrated)</i>.</td></tr>
+<tr><td>Calibrate...</td><td>Opens the <a href="#AudioCalibration">calibration</a> of the selected device.</td></tr>
 </table>
 <p>
 <div>After the recording the window shows the <b>peak level</b> of both channels in dBFS.</div>
 <div>If a channel has reached full scale, it shows <b>CLIPPED</b>: reduce the gain of the interface and record again.</div>
-<div>The samples in the main window are relative to full scale (1.0 = 0 dBFS), like an imported WAV file. They are not calibrated in Volt.</div>
+<div>Without calibration the samples in the main window are relative to full scale (1.0 = 0 dBFS), like an imported WAV file.</div>
 <div>A recording of 60 seconds at 192 kHz contains 23 million samples. This needs approx 200 MB of memory.</div>
+
+<a name="AudioCalibration"></a>
+<div><b><u>Calibration dBFS --&gt; dBV</u>:</b></div>
+<div>An audio interface measures relative to full scale. With a calibration the samples are converted into Volt.</div>
+<div>The calibration is stored per device and channel as the level of a full scale sine wave: e.g. <b>0 dBFS = +10.00 dBV</b> (4.47 Vpeak).</div>
+<ol>
+    <li><div>Connect a sine wave (approx 50 Hz ... 10 kHz) with known voltage, e.g. from a generator, measured with a multimeter (Vrms) or an oscilloscope.</div>
+    <li><div>Set the gain of the interface as you will use it. <span class="Error">The calibration is only valid for this gain setting!</span></div>
+    <li><div>Click <b>Calibrate...</b>, enter the voltage in Volt RMS (Vrms = Vpeak / 1.414) and click <b>Measure Left</b> or <b>Measure Right</b>.</div>
+    <li><div>Click <b>Save</b>. The value can also be entered directly, e.g. from the data sheet of the interface. An empty field removes the calibration.</div>
+</ol>
+<div>The measurement records 1 second and uses the FFT with the flat top window: it measures the amplitude of the sine wave exactly (better than 0.01 dB)</div>
+<div>and is not falsified by hum or noise as a RMS measurement would be. A clipped signal or a signal below -60 dBFS is rejected.</div>
+<div>Tip: Mark the position of the gain knob, or calibrate with the gain at minimum (line level), where the knob has a fixed end stop.</div>
 
 <a name="WaterfallAudio"></a>
 <h3>Waterfall FFT with an Audio Interface</h3>
@@ -908,8 +925,8 @@
 <div>If the computer is too slow to display all spectra, old blocks are skipped and the waterfall stays in real time (status bar: <b>Skipped</b>).</div>
 <div>The samples are recorded as 32 bit float, so the full resolution of a 24 bit converter is preserved (dynamic range more than 100 dB).</div>
 <p>
-<div>The levels are displayed in <b>dBFS</b>: a sine wave with the amplitude of full scale is 0 dBFS. They are not calibrated in Volt,</div>
-<div>because they depend on the gain knob of the interface. The scale always starts at 0 dBFS. Select <b>Colors</b> = 120 dB.</div>
+<div>The levels are displayed in <b>dBFS</b>: a sine wave with the amplitude of full scale is 0 dBFS. The scale always starts at 0 dBFS. Select <b>Colors</b> = 120 dB.</div>
+<div>If <b>Volt (calibrated)</b> is checked in the window Audio Input, the levels are displayed in <b>dBV</b> with the <a href="#AudioCalibration">calibration</a> of the device.</div>
 <p>
 <div><span class="Error">IMPORTANT:</span> Windows converts the sample rate of the device into the selected rate.</div>
 <div>If the device runs with 48 kHz in Windows and you select 96 kHz, there is nothing above 24 kHz in the spectrum.</div>
