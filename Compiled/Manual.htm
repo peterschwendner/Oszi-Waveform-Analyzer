@@ -774,6 +774,11 @@
 </ul>
 <div>The field <b>SCPI Command</b> in the Transfer window also works with the HM507.</div>
 <div>Binary bytes in the response are displayed in hex, for example <code>CH1:&lt;19&gt;</code>.</div>
+<p>
+<div>The HM507 does not use SCPI but its own Hameg command set: ASCII commands like <code>TBA?</code>, <code>CH1?</code> or <code>RDWFM1:</code> with binary responses.</div>
+<div>The interface (cable, N-8-2 with RTS/CTS, baudrate detection with SPACE CR) is described in the chapter <b>RS232 Interface - Remote Control</b>
+     on pages 42 and 43 of the <a href="https://docs.rs-online.com/af71/0900766b80296cd0.pdf" target="_blank">HM507 manual</a>.</div>
+<div>The command list itself is not part of the manual. Hameg delivered it on the CD of the oscilloscope.</div>
 
 <a name="Waterfall"></a>
 <h3>Waterfall FFT</h3>

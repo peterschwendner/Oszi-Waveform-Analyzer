@@ -35,6 +35,7 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 - Connected Hameg USB interfaces are detected and listed first. If the second part of the Hameg USB driver (`ftdiport.inf`) is missing, Windows creates no COM port (Device Manager: error code 28) and the Transfer window explains how to fix it.
 - Port settings like `19200 8N2 RTS` (baudrate, databits, parity, stopbits, handshake), stored separately for each oscilloscope serie.
 - HMO1522 and HM507 are tested with real oscilloscopes (transfer over RS232, then X/Y and FFT).
+- The HM507 interface (cable, N-8-2 RTS/CTS, baudrate detection with SPACE CR) is described in the chapter *RS232 Interface - Remote Control*, pages 42-43 of the [HM507 manual](https://docs.rs-online.com/af71/0900766b80296cd0.pdf). The command list itself is not part of the manual; Hameg delivered it on the CD of the oscilloscope.
 - The HM2008 support was written from the Hameg SCPI programming manual and tested against a protocol simulation, but not yet with real hardware. Feedback is welcome.
 - **Waterfall FFT**: a loop acquires one channel again and again (Run, wait one sweep, Stop, transfer), calculates the spectrum and adds it as a new row to a color waterfall until you click *Cancel*. The waterfall can be exported as PNG image and the collected spectra as CSV matrix (one line per spectrum, one column per frequency).
 
