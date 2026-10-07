@@ -127,6 +127,9 @@
     <Compile Include="Operations\SpectrumFFT.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Operations\WaterfallFFT.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Operations\XYPlot.cs">
       <SubType>Form</SubType>
     </Compile>

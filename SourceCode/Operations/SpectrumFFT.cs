@@ -725,6 +725,23 @@ namespace Operations
 
         public double[] Spectrum  { get { return md_Amp;      } }
         public double   BinWidth  { get { return md_BinWidth; } }
+        public double   FreqMin   { get { return md_FreqMin;  } }
+        public double   FreqMax   { get { return md_FreqMax;  } }
+
+        // Fired when the user zooms with the mouse (used to synchronize the Waterfall FFT)
+        public event EventHandler ZoomChanged;
+
+        /// <summary>
+        /// Sets the displayed frequency range (zoom) without firing ZoomChanged
+        /// </summary>
+        public void SetFrequencyRange(double d_Min, double d_Max)
+        {
+            if (d_Max <= d_Min)
+                return;
+            md_FreqMin = d_Min;
+            md_FreqMax = d_Max;
+            Invalidate();
+        }
 
         public SpectrumView()
         {
@@ -1022,6 +1039,8 @@ namespace Operations
                 {
                     md_FreqMin = d_F1;
                     md_FreqMax = d_F2;
+                    if (ZoomChanged != null)
+                        ZoomChanged(this, EventArgs.Empty);
                 }
             }
             ms32_DragX = -1;
@@ -1034,6 +1053,8 @@ namespace Operations
             md_FreqMin = 0;
             md_FreqMax = md_Rate / 2;
             Invalidate();
+            if (ZoomChanged != null)
+                ZoomChanged(this, EventArgs.Empty);
         }
     }
 }

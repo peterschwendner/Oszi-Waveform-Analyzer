@@ -53,11 +53,13 @@
             this.radioScreen = new System.Windows.Forms.RadioButton();
             this.radioMemory = new System.Windows.Forms.RadioButton();
             this.btnTransfer = new System.Windows.Forms.Button();
+            this.btnWaterfall = new System.Windows.Forms.Button();
             this.groupTransfer.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupTransfer
             // 
+            this.groupTransfer.Controls.Add(this.btnWaterfall);
             this.groupTransfer.Controls.Add(this.btnTransfer);
             this.groupTransfer.Controls.Add(this.radioMemory);
             this.groupTransfer.Controls.Add(this.radioScreen);
@@ -321,6 +323,17 @@
             this.btnTransfer.Text = "Transfer";
             this.btnTransfer.UseVisualStyleBackColor = true;
             this.btnTransfer.Click += new System.EventHandler(this.btnTransfer_Click);
+            //
+            // btnWaterfall
+            //
+            this.btnWaterfall.ForeColor = System.Drawing.Color.Black;
+            this.btnWaterfall.Location = new System.Drawing.Point(443, 19);
+            this.btnWaterfall.Name = "btnWaterfall";
+            this.btnWaterfall.Size = new System.Drawing.Size(85, 23);
+            this.btnWaterfall.TabIndex = 25;
+            this.btnWaterfall.Text = "Waterfall FFT";
+            this.btnWaterfall.UseVisualStyleBackColor = true;
+            this.btnWaterfall.Click += new System.EventHandler(this.btnWaterfall_Click);
             // 
             // PanelHameg
             // 
@@ -363,5 +376,6 @@
         private System.Windows.Forms.RadioButton radioScreen;
         private System.Windows.Forms.RadioButton radioMemory;
         private System.Windows.Forms.Button btnTransfer;
+        private System.Windows.Forms.Button btnWaterfall;
     }
 }

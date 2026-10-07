@@ -35,6 +35,7 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 - Port settings like `19200 8N2 RTS` (baudrate, databits, parity, stopbits, handshake), stored separately for each oscilloscope serie.
 - HMO1522 and HM507 are tested with real oscilloscopes (transfer over RS232, then X/Y and FFT).
 - The HM2008 support was written from the Hameg SCPI programming manual and tested against a protocol simulation, but not yet with real hardware. Feedback is welcome.
+- **Waterfall FFT**: a loop acquires one channel again and again (Run, wait one sweep, Stop, transfer), calculates the spectrum and adds it as a new row to a color waterfall until you click *Cancel*. The waterfall can be exported as PNG image and the collected spectra as CSV matrix (one line per spectrum, one column per frequency).
 
 ### Analysis windows
 
@@ -58,7 +59,7 @@ The folder then becomes the folder of the list *Input File* and of the button *S
 
 ### Documentation
 
-The manual [Compiled/Manual.htm](Compiled/Manual.htm) has new chapters *FFT Spectrum*, *X/Y Plot*, *Hameg Oscilloscopes*, *Option 4: COM Port (RS232)* and *WAV Files*.
+The manual [Compiled/Manual.htm](Compiled/Manual.htm) has new chapters *FFT Spectrum*, *X/Y Plot*, *Hameg Oscilloscopes*, *Waterfall FFT*, *Option 4: COM Port (RS232)* and *WAV Files*.
 The *Show Help* links in the new windows open these chapters.
 
 Copyrighted standards and vendor manuals are not mirrored in this repository. See [Documentation/Standards.md](Documentation/Standards.md) for references.

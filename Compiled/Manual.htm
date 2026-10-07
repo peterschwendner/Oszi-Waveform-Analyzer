@@ -763,6 +763,50 @@
 <div>The field <b>SCPI Command</b> in the Transfer window also works with the HM507.</div>
 <div>Binary bytes in the response are displayed in hex, for example <code>CH1:&lt;19&gt;</code>.</div>
 
+<a name="Waterfall"></a>
+<h3>Waterfall FFT</h3>
+
+<table class="TblImage">
+    <tr><td><img src="Images/WaterfallFFT.png" alt="Oszi Waveform Analyzer - Waterfall FFT" width="500" height="322"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/WaterfallFFT.png')">Show Full Size</span></td></tr>
+</table>
+<div>The button <b>Waterfall FFT</b> in the Transfer window of the Hameg oscilloscopes shows how a spectrum changes over time.</div>
+<div>Click <b>Start</b> and the program repeats these steps in a loop until you click <b>Cancel</b>:</div>
+<ol>
+    <li><div><b>Run</b>: the oscilloscope starts a new acquisition.</div>
+    <li><div>Wait for one sweep (Time/Div × divisions of the screen).</div>
+    <li><div><b>Stop</b> and transfer the visible screen of the selected channel.</div>
+    <li><div>Calculate the <a href="#FFT">FFT Spectrum</a> and add it as a new row at the top of the waterfall.</div>
+</ol>
+<div>The upper part shows the latest spectrum with its 5 strongest peaks.</div>
+<div>Below, each row is one spectrum, the newest at the top. The color shows the level in dBV (see the color bar at the right).</div>
+<div>The time axis at the left shows how many seconds ago a spectrum was acquired.</div>
+<div>The screenshot shows a test signal whose frequency rises from 10 kHz to 155 kHz and a constant weak 50 kHz tone.</div>
+<p>
+<table class="DataTable">
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Channel</td><td>The analog channel to analyze. It must be turned on in the oscilloscope.</td></tr>
+<tr><td>Window</td><td>The window function of the FFT (see <a href="#FFT">FFT Spectrum</a>).</td></tr>
+<tr><td>Scale</td><td>dBV or Volt for the latest spectrum and for the exported matrix. The waterfall colors are always in dBV.</td></tr>
+<tr><td>Colors</td><td>The dynamic range of the color scale. The top of the scale follows the strongest signal.<br>
+                       An 8 bit oscilloscope has a dynamic range of approx 48 dB, so 60 dB are a good choice.</td></tr>
+<tr><td>History</td><td>The count of spectra kept. When the waterfall is full, the oldest spectrum is removed.</td></tr>
+<tr><td>Export Image</td><td>Saves the latest spectrum and the waterfall as PNG image.</td></tr>
+<tr><td>Export Matrix</td><td>Saves all collected spectra as CSV file: one line per spectrum (oldest first) with the time and the seconds since the first spectrum,<br>
+                       one column per frequency. The header lines starting with # contain the sample rate, the FFT size and the unit.<br>
+                       The file can be opened in Excel, Python (<code>numpy.genfromtxt(file, delimiter=',', skip_header=6)[:, 2:]</code>) or Matlab.</td></tr>
+<tr><td>Clear</td><td>Removes all spectra.</td></tr>
+</table>
+<p>
+<div>Drag with the left mouse button in the spectrum or in the waterfall to <b>zoom</b> a frequency range. Double-click to reset the zoom. Both views always show the same frequencies.</div>
+<div>Move the mouse over the waterfall to see frequency, time and level.</div>
+<div>If you change the timebase of the oscilloscope while the loop is running, the waterfall starts again, because all rows must have the same frequency axis.</div>
+<div>Changing the channel or the window function also clears the waterfall.</div>
+<p>
+<div>The speed depends on the connection. At 115200 baud the HM507 transfers its 2048 samples in approx 0.2 seconds.</div>
+<div>The HMO sends 4 bytes per sample, so 10.000 samples take approx 3.5 seconds. A slow timebase also makes each step longer.</div>
+<div>The oscilloscope is in STOP mode after you click Cancel. Click <b>Run</b> to continue.</div>
+
 <a name="ScpiLibrary"></a>
 <h3>The SCPI Library for C# Programmers</h3>
 

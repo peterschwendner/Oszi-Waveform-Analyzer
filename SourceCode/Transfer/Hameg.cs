@@ -43,6 +43,7 @@ using System.Drawing;
 using System.Globalization;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 
 using eOsziSerie        = Transfer.TransferManager.eOsziSerie;
 using eConnectMode      = Transfer.SCPI.eConnectMode;
@@ -103,6 +104,10 @@ namespace Transfer
         Hameg.OsziConfig GetOsziConfiguration();           // throws
         void    ExecuteOperation(Hameg.eOperation e_Operation);
         Capture TransferAllChannels(bool b_Memory);        // returns null if aborted
+
+        // One step of the Waterfall FFT: start a new acquisition, wait one sweep, stop and transfer only channel s32_Chan.
+        // returns null if aborted
+        Capture AcquireChannel(int s32_Chan);
         void    AbortTransfer();
 
         // Sends a command typed by the user and returns the response.
@@ -160,6 +165,7 @@ namespace Transfer
         bool         mb_CombiScope;           // true --> HM1008 / HM1508 / HM2008 which have an analog and a digital mode
         bool         mb_Abort;
         String       ms_Progress;
+        int          ms32_Divisions;          // horizontal divisions of the screen (HMO: 12), 0 = not yet queried
 
         public OsziModel Model
         {
@@ -376,6 +382,77 @@ namespace Transfer
         /// </summary>
         public Capture TransferAllChannels(bool b_Memory)
         {
+            return TransferChannels(b_Memory, 0);
+        }
+
+        /// <summary>
+        /// One step of the Waterfall FFT: start a new acquisition, wait for one sweep, stop and transfer only one channel.
+        /// RUN / STOP works with all Hameg oscilloscopes, independent of the trigger mode.
+        /// returns null if the user has aborted
+        /// </summary>
+        public Capture AcquireChannel(int s32_Chan)
+        {
+            mb_Abort = false;
+
+            // Duration of one sweep: Time/Div * horizontal divisions (HMO: 12, CombiScope: 10)
+            decimal d_TimeDiv = GetOsziConfiguration().md_TimeBase;
+            if (ms32_Divisions == 0)
+            {
+                ms32_Divisions = 10;
+                if (!mb_UseTrace)
+                {
+                    try   { ms32_Divisions = Math.Max(1, (int)Math.Round(mi_Scpi.SendDoubleCommand(":TIMebase:DIVisions?"))); }
+                    catch (TimeoutException) { DiscardInput(); }
+                }
+            }
+            int s32_SweepMs = (int)(d_TimeDiv * ms32_Divisions * 1000);
+
+            ExecuteOperation(eOperation.Run);
+            if (!WaitMs(Math.Max(100, s32_SweepMs * 3 / 2 + 50)))
+                return null;
+
+            ExecuteOperation(eOperation.Stop);
+
+            // The CombiScope completes the current acquisition after STOP. Then the state changes from STOP to COMPLETE.
+            if (mb_UseTrace)
+            {
+                Stopwatch i_Watch = Stopwatch.StartNew();
+                while (GetAcquisitionState() == "STOP" && i_Watch.ElapsedMilliseconds < s32_SweepMs + 2000)
+                {
+                    if (!WaitMs(50))
+                        return null;
+                }
+            }
+
+            if (mb_Abort)
+                return null;
+
+            return TransferChannels(false, s32_Chan);
+        }
+
+        /// <summary>
+        /// Waits without blocking the GUI, so the user can click "Cancel".
+        /// returns false if the user has aborted.
+        /// </summary>
+        bool WaitMs(int s32_Milli)
+        {
+            Stopwatch i_Watch = Stopwatch.StartNew();
+            while (i_Watch.ElapsedMilliseconds < s32_Milli)
+            {
+                Application.DoEvents();
+                if (mb_Abort)
+                    return false;
+                Thread.Sleep(10);
+            }
+            return !mb_Abort;
+        }
+
+        /// <summary>
+        /// s32_OnlyChannel = 0 --> transfer all enabled channels and the logic pod
+        /// s32_OnlyChannel = 1 or 2 --> transfer only this analog channel (Waterfall FFT)
+        /// </summary>
+        Capture TransferChannels(bool b_Memory, int s32_OnlyChannel)
+        {
             mb_Abort = false;
 
             CheckDigitalMode();
@@ -388,6 +465,9 @@ namespace Transfer
             List<RxChannel> i_RxChannels = new List<RxChannel>();
             for (int s32_Chan=1; s32_Chan<=ANALOG_CHANNELS; s32_Chan++)
             {
+                if (s32_OnlyChannel > 0 && s32_Chan != s32_OnlyChannel)
+                    continue;
+
                 if (!IsChannelEnabled(s32_Chan))
                     continue;
 
@@ -413,7 +493,7 @@ namespace Transfer
             }
 
             // The logic channels of the HMO series (option HO3508 logic probe)
-            if (!mb_UseTrace)
+            if (!mb_UseTrace && s32_OnlyChannel == 0)
             {
                 RxChannel i_Pod = ReadPodHmo(b_Memory);
                 if (mb_Abort)
@@ -421,6 +501,9 @@ namespace Transfer
                 if (i_Pod != null)
                     i_RxChannels.Add(i_Pod);
             }
+
+            if (i_RxChannels.Count == 0 && s32_OnlyChannel > 0)
+                throw new Exception("Channel " + s32_OnlyChannel + " is turned off or the oscilloscope has not sent any data.");
 
             if (i_RxChannels.Count == 0)
                 throw new Exception("All channels are turned off or the oscilloscope has not sent any data.\n"

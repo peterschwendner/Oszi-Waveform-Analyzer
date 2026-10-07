@@ -42,6 +42,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 
 using eConnectMode      = Transfer.SCPI.eConnectMode;
 using eOperation        = Transfer.Hameg.eOperation;
@@ -294,6 +295,55 @@ namespace Transfer
         /// </summary>
         public Capture TransferAllChannels(bool b_Memory)
         {
+            return TransferChannels(0);
+        }
+
+        /// <summary>
+        /// One step of the Waterfall FFT: release HOLD, wait for one sweep, activate HOLD and transfer only one channel.
+        /// returns null if the user has aborted
+        /// </summary>
+        public Capture AcquireChannel(int s32_Chan)
+        {
+            mb_Abort = false;
+
+            // One sweep = 2048 samples with 200 samples per division
+            decimal d_TimeDiv = GetTimePerDiv(QueryByte("TBA?"));
+            int s32_SweepMs = (int)(d_TimeDiv * SAMPLES / 200 * 1000);
+
+            ExecuteOperation(eOperation.Run);
+            if (!WaitMs(Math.Max(100, s32_SweepMs * 3 / 2 + 50)))
+                return null;
+
+            ExecuteOperation(eOperation.Stop);
+            if (mb_Abort)
+                return null;
+
+            return TransferChannels(s32_Chan);
+        }
+
+        /// <summary>
+        /// Waits without blocking the GUI, so the user can click "Cancel".
+        /// returns false if the user has aborted.
+        /// </summary>
+        bool WaitMs(int s32_Milli)
+        {
+            Stopwatch i_Watch = Stopwatch.StartNew();
+            while (i_Watch.ElapsedMilliseconds < s32_Milli)
+            {
+                Application.DoEvents();
+                if (mb_Abort)
+                    return false;
+                Thread.Sleep(10);
+            }
+            return !mb_Abort;
+        }
+
+        /// <summary>
+        /// s32_OnlyChannel = 0 --> transfer all enabled channels
+        /// s32_OnlyChannel = 1 or 2 --> transfer only this channel (Waterfall FFT)
+        /// </summary>
+        Capture TransferChannels(int s32_OnlyChannel)
+        {
             mb_Abort    = false;
             ms_Warnings = null;
             List<String> i_Warnings = new List<String>();
@@ -313,7 +363,7 @@ namespace Transfer
             if (!b_Hold && !b_Single)
                 throw new ArgumentException("The oscilloscope must be in HOLD mode to transfer the channels.\n"
                                           + "Otherwise the memory is overwritten by new acquisitions while it is being transferred "
-                                          + "(this takes 1 second per channel at 19200 baud).\n"
+                                          + "(this takes 0.2 seconds per channel at 115200 baud).\n"
                                           + "Press the button 'Stop' to activate HOLD or use SINGLE mode.");
 
             if (b_Single && !b_Hold && QueryAscii("TRGSTA?") == '2')
@@ -348,6 +398,9 @@ namespace Transfer
 
             for (int s32_Chan=1; s32_Chan<=2; s32_Chan++)
             {
+                if (s32_OnlyChannel > 0 && s32_Chan != s32_OnlyChannel)
+                    continue;
+
                 Byte u8_Chan = QueryByte("CH" + s32_Chan + "?");
                 if ((u8_Chan & CH_ON) == 0)
                     continue;
@@ -406,6 +459,9 @@ namespace Transfer
                 i_Channel.mf_Analog = f_Analog;
                 i_Capture.mi_Channels.Add(i_Channel);
             }
+
+            if (i_Capture.mi_Channels.Count == 0 && s32_OnlyChannel > 0)
+                throw new Exception("Channel " + s32_OnlyChannel + " is turned off.");
 
             if (i_Capture.mi_Channels.Count == 0)
                 throw new Exception("Both channels are turned off.");

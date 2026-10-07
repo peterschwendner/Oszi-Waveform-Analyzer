@@ -52,6 +52,7 @@ using Utils             = OsziWaveformAnalyzer.Utils;
 using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using eOperation        = Transfer.Hameg.eOperation;
 using OsziConfig        = Transfer.Hameg.OsziConfig;
+using WaterfallFFT      = Operations.WaterfallFFT;
 
 namespace Transfer
 {
@@ -195,6 +196,7 @@ namespace Transfer
             btnRun   .BackColor = Color.PaleGreen;
             btnStop  .BackColor = Color.Salmon;
             btnSingle.BackColor = Color.BlanchedAlmond;
+            btnWaterfall.BackColor = Color.Plum;
 
             btnReset   .Visible = mi_Hameg.CanReset;
             radioMemory.Enabled = mi_Hameg.HasDeepMemory;
@@ -219,6 +221,7 @@ namespace Transfer
             btnRun   .BackColor = SystemColors.Control;
             btnStop  .BackColor = SystemColors.Control;
             btnSingle.BackColor = SystemColors.Control;
+            btnWaterfall.BackColor = SystemColors.Control;
 
             groupTransfer.Enabled = false;
         }
@@ -312,6 +315,34 @@ namespace Transfer
             btnTransfer.Text = "Transfer";
             OnRefreshTimer(null, null);
 
+            Utils.EndBusyOperation(mi_Form);
+        }
+
+        // ==========================================================
+
+        /// <summary>
+        /// Opens the Waterfall FFT, which acquires one channel after the other in a loop until the user clicks "Cancel".
+        /// The oscilloscope is in STOP mode afterwards.
+        /// </summary>
+        private void btnWaterfall_Click(object sender, EventArgs e)
+        {
+            if (!Utils.StartBusyOperation(mi_Form))
+                return;
+
+            mi_RefreshTimer.Stop();
+
+            String s_Source = lblSerie.Text;
+            if (mi_Hameg.Model != null && mi_Hameg.Model.ms_Model != null)
+                s_Source = (mi_Hameg.Model.ms_Brand + " " + mi_Hameg.Model.ms_Model).Trim();
+
+            using (WaterfallFFT i_Waterfall = new WaterfallFFT(s_Source,
+                                                                delegate(int s32_Chan) { return mi_Hameg.AcquireChannel(s32_Chan); },
+                                                                delegate() { mi_Hameg.AbortTransfer(); }))
+            {
+                i_Waterfall.ShowDialog(mi_Form);
+            }
+
+            OnRefreshTimer(null, null);
             Utils.EndBusyOperation(mi_Form);
         }
 
