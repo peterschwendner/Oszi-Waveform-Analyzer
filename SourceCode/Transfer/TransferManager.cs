@@ -150,6 +150,13 @@ namespace Transfer
             return e_OsziSerie == eOsziSerie.Hameg_HM507;
         }
 
+        public static bool IsHameg(eOsziSerie e_OsziSerie)
+        {
+            return e_OsziSerie == eOsziSerie.Hameg_HMO1522 ||
+                   e_OsziSerie == eOsziSerie.Hameg_HM2008  ||
+                   e_OsziSerie == eOsziSerie.Hameg_HM507;
+        }
+
         public static void FillComboOsziModel(ComboBox i_ComboOsziModel)
         {
             i_ComboOsziModel.Sorted = false; // IMPORTANT!

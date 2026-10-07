@@ -58,6 +58,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 using Utils             = OsziWaveformAnalyzer.Utils;
 using IDevice           = Platform.PlatformManager.IDevice;
@@ -398,6 +399,86 @@ namespace Transfer
                 if (!i_Combo.Items.Contains(s_Port))
                     i_Combo.Items.Add(s_Port);
             }
+        }
+
+        // ---------------------------------------------------
+
+        /// <summary>
+        /// The USB port of the Hameg interfaces HO720, HO730,... is not a USBTMC device.
+        /// It contains an FTDI chip with a Hameg product ID which Windows accesses as virtual COM port.
+        /// This requires the Hameg USB driver: ftdibus.inf for the USB device AND ftdiport.inf for the COM port.
+        /// </summary>
+        public class HamegUsbPort
+        {
+            public String ms_Interface; // "HAMEG HO720 USB"
+            public String ms_Port;      // "COM7" or null if the driver of the virtual COM port is not installed
+        }
+
+        static readonly String[,] HAMEG_USB_PIDS = { { "PID_ED71", "HO870" }, { "PID_ED72", "HO720" },
+                                                     { "PID_ED73", "HO730" }, { "PID_ED74", "HO820" } };
+
+        /// <summary>
+        /// Returns the Hameg USB interfaces that are currently connected and their COM port.
+        /// Windows only (reads the registry), returns an empty list on Linux. Does not throw.
+        /// </summary>
+        public static List<HamegUsbPort> FindHamegUsbPorts()
+        {
+            List<HamegUsbPort> i_List = new List<HamegUsbPort>();
+            try
+            {
+                List<String> i_Existing = new List<String>(SerialPort.GetPortNames());
+
+                // The service FTDIBUS lists the connected FTDI devices: "USB\VID_0403&PID_ED72\5&1a1e88e2&0&10"
+                using (RegistryKey i_BusEnum = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\FTDIBUS\Enum"))
+                using (RegistryKey i_Ftdi    = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\FTDIBUS"))
+                {
+                    if (i_BusEnum == null)
+                        return i_List; // no FTDI driver installed
+
+                    String[] s_Children = (i_Ftdi != null) ? i_Ftdi.GetSubKeyNames() : new String[0];
+
+                    int s32_Count = Convert.ToInt32(i_BusEnum.GetValue("Count", 0));
+                    for (int i=0; i<s32_Count; i++)
+                    {
+                        String[] s_Parts = Convert.ToString(i_BusEnum.GetValue(i.ToString())).Split('\\');
+                        if (s_Parts.Length != 3 || !s_Parts[1].ToUpper().StartsWith("VID_0403&"))
+                            continue;
+
+                        String s_Interface = null;
+                        for (int H=0; H<HAMEG_USB_PIDS.GetLength(0); H++)
+                        {
+                            if (s_Parts[1].ToUpper().EndsWith(HAMEG_USB_PIDS[H, 0]))
+                                s_Interface = "HAMEG " + HAMEG_USB_PIDS[H, 1] + " USB";
+                        }
+                        if (s_Interface == null)
+                            continue;
+
+                        HamegUsbPort i_Port = new HamegUsbPort();
+                        i_Port.ms_Interface = s_Interface;
+                        i_List.Add(i_Port);
+
+                        // The COM port is a child device: "FTDIBUS\VID_0403+PID_ED72+5&1a1e88e2&0&10\0000"
+                        // (with a serial number: "FTDIBUS\VID_0403+PID_ED72+12345678A\0000")
+                        String s_Prefix = s_Parts[1].Replace('&', '+') + "+" + s_Parts[2];
+                        foreach (String s_Child in s_Children)
+                        {
+                            if (!s_Child.StartsWith(s_Prefix, StringComparison.OrdinalIgnoreCase))
+                                continue;
+
+                            using (RegistryKey i_Param = i_Ftdi.OpenSubKey(s_Child + @"\0000\Device Parameters"))
+                            {
+                                String s_ComPort = (i_Param != null) ? i_Param.GetValue("PortName") as String : null;
+
+                                // The PortName remains in the registry when the driver is uninstalled
+                                if (s_ComPort != null && i_Existing.Contains(s_ComPort))
+                                    i_Port.ms_Port = s_ComPort;
+                            }
+                        }
+                    }
+                }
+            }
+            catch {}
+            return i_List;
         }
 
         // Sort "COM2" before "COM10"

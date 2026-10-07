@@ -722,7 +722,7 @@
 <p>
 <img src="Images/HamegTransfer.png" width="572" height="407" alt="Oszi Waveform Analyzer - Hameg Transfer over COM port">
 <p>
-<div>Hameg (today Rohde &amp; Schwarz) oscilloscopes are connected over their <b>RS232</b> interface.</div>
+<div>Hameg (today Rohde &amp; Schwarz) oscilloscopes are connected over their <b>RS232</b> interface or over the <b>USB</b> port of the interfaces HO720 / HO730.</div>
 <div>Select the oscilloscope serie, then <b>COM</b> in the Transfer window, the COM port and the <a href="#RS232Connection">port settings</a>.</div>
 <div>The port settings must match the settings in the interface menu of the oscilloscope.</div>
 <p>
@@ -737,9 +737,21 @@
 <div>The oscilloscope must be <b>stopped</b> before you click <b>Transfer</b>. Otherwise each channel would come from a different acquisition.</div>
 <div>RS232 is slow: at 115200 baud a transfer of 10.000 float samples takes approx 3.5 seconds. The progress is shown in the status bar and you can abort it.</div>
 <p>
+<div><b><u>USB (HMO series and CombiScopes HM2008, HM1508, HM1008)</u>:</b></div>
+<ul>
+    <li><div>The interface HO720 has a RS232 port and a USB port, the HO730 an Ethernet port and a USB port.</div>
+    <li><div>The USB port is not a USBTMC device but a <b>virtual COM port</b> (FTDI chip). Therefore select <b>COM</b>, not USB.</div>
+    <li><div>The connected Hameg interfaces are listed at the top of the COM ports and the status bar shows for example <code>HAMEG HO720 USB = COM7</code>.</div>
+    <li><div>The port settings work like with RS232. Select the same baudrate in the interface menu of the oscilloscope.</div>
+    <li><div>This requires the <b>Hameg USB driver</b> (HO720 / HO730 interface driver). It consists of 2 parts:<br>
+             <code>ftdibus.inf</code> for the USB device (Device Manager: <i>HAMEG HO720 USB</i>) and
+             <code>ftdiport.inf</code> for the COM port (<i>HAMEG HO720 USB Serial Port (VCP)</i>).</div>
+    <li><div>If only the first part is installed, the Device Manager shows a <i>USB Serial Port</i> with <b>error code 28</b> and there is no COM port.<br>
+             The Transfer window then displays a warning. Install the second part: right-click on <code>ftdiport.inf</code> and select <b>Install</b>,<br>
+             or as administrator: <code>pnputil /add-driver ftdiport.inf /install</code></div>
+</ul>
 <div><b><u>HMO Compact series</u>:</b></div>
 <ul>
-    <li><div>The HO720 interface has a RS232 port and a USB port. The USB port is a <b>virtual COM port</b>, so also select <b>COM</b> for it.</div>
     <li><div><b>Transfer Visible Screen</b> transfers the displayed samples, <b>Transfer Entire Memory</b> all samples in the display window.</div>
     <li><div>If the logic probe HO3508 is connected and POD 1 is on, the 8 digital channels are transferred too.</div>
     <li><div>If an old firmware does not support the commands :CHANnel:DATA, the :TRACe commands are used automatically.</div>

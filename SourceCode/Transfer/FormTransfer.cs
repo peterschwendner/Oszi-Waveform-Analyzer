@@ -265,6 +265,10 @@ namespace Transfer
                 comboDevices.DropDownStyle = ComboBoxStyle.DropDownList;
                 comboDevices.Text = Utils.RegReadString(eRegKey.ConnectUSB);
                 lblUsbEndp  .Text = "USB Device";
+
+                // The Hameg interfaces HO720 / HO730 are not USBTMC devices
+                if (TransferManager.IsHameg(me_OsziSerie))
+                    PrintStatus("The USB port of the Hameg interfaces HO720 / HO730 is a virtual COM port: select 'COM'.", Color.Blue);
             }
             if (radioTCP.Checked)
             {
@@ -288,7 +292,18 @@ namespace Transfer
                 try { SCPI.EnumerateSerialPorts(comboDevices); } // enumerating COM ports is instantaneous
                 catch {}
                 mb_ComPortsLoaded = true;
-                comboDevices.Text = ReadSerialSetting(0, comboDevices.Items.Count > 0 ? comboDevices.Items[0].ToString() : "COM1");
+
+                String s_HamegPort = null;
+                if (TransferManager.IsHameg(me_OsziSerie))
+                    s_HamegPort = LoadHamegUsbPorts();
+
+                String s_Port = ReadSerialSetting(0, null);
+                if (s_Port == null || (s_HamegPort != null && !comboDevices.Items.Contains(s_Port)))
+                    s_Port = s_HamegPort; // the stored port does not exist anymore (USB virtual COM ports may change their number)
+                if (s_Port == null)
+                    s_Port = comboDevices.Items.Count > 0 ? comboDevices.Items[0].ToString() : "COM1";
+
+                comboDevices.Text = s_Port;
                 lblUsbEndp  .Text = "COM Port";
             }
 
@@ -376,6 +391,47 @@ namespace Transfer
         }
 
         // ==========================================================
+
+        /// <summary>
+        /// Moves the virtual COM ports of connected Hameg USB interfaces (HO720, HO730) to the top of the list.
+        /// Shows an error if the driver of the virtual COM port is missing (Device Manager: "USB Serial Port", error code 28).
+        /// returns the first Hameg COM port or null
+        /// </summary>
+        String LoadHamegUsbPorts()
+        {
+            String s_First   = null;
+            String s_Status  = "";
+            String s_Missing = null;
+            List<SCPI.HamegUsbPort> i_Ports = SCPI.FindHamegUsbPorts();
+            for (int P=i_Ports.Count - 1; P>=0; P--)
+            {
+                SCPI.HamegUsbPort i_Port = i_Ports[P];
+                if (i_Port.ms_Port == null)
+                {
+                    s_Missing = i_Port.ms_Interface;
+                    continue;
+                }
+                comboDevices.Items.Remove(i_Port.ms_Port);
+                comboDevices.Items.Insert(0, i_Port.ms_Port);
+                s_First  = i_Port.ms_Port;
+                s_Status = i_Port.ms_Interface + " = " + i_Port.ms_Port + "   " + s_Status;
+            }
+
+            if (s_First != null)
+                PrintStatus(s_Status.Trim(), Color.Green);
+
+            if (s_Missing != null)
+            {
+                PrintStatus(s_Missing + " has no COM port: the driver is incomplete.", Color.Red);
+                MessageBox.Show(this, s_Missing + " is connected, but Windows has not created a virtual COM port for it.\n\n"
+                                    + "The Device Manager shows a 'USB Serial Port' with error code 28 (driver not installed).\n"
+                                    + "The Hameg USB driver consists of 2 parts: ftdibus.inf (USB device) and ftdiport.inf (COM port).\n"
+                                    + "Install ftdiport.inf of the Hameg USB driver: right-click on it and select 'Install'.\n\n"
+                                    + "Details in the help (chapter Hameg Oscilloscopes).",
+                                "Hameg USB driver", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            return s_First;
+        }
 
         /// <summary>
         /// Each oscilloscope model has its own COM port and port settings, because they differ (e.g. HMO: 8N1, HM507: 8N2 RTS).

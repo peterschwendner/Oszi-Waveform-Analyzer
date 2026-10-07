@@ -31,7 +31,8 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 | HM2008, HM1508, HM1008 (CombiScope) | 115200 8N2 RTS | SCPI `:TRACe` (8 bit values) | Simulation only |
 | HM507 | 115200 8N2 RTS | Proprietary binary protocol | Real HM507 |
 
-- New connection mode **COM** in the Transfer window for RS232 ports, USB to RS232 adapters and the USB virtual COM port of the Hameg HO720 interface.
+- New connection mode **COM** in the Transfer window for RS232 ports, USB to RS232 adapters and the USB virtual COM port of the Hameg HO720 / HO730 interfaces.
+- Connected Hameg USB interfaces are detected and listed first. If the second part of the Hameg USB driver (`ftdiport.inf`) is missing, Windows creates no COM port (Device Manager: error code 28) and the Transfer window explains how to fix it.
 - Port settings like `19200 8N2 RTS` (baudrate, databits, parity, stopbits, handshake), stored separately for each oscilloscope serie.
 - HMO1522 and HM507 are tested with real oscilloscopes (transfer over RS232, then X/Y and FFT).
 - The HM2008 support was written from the Hameg SCPI programming manual and tested against a protocol simulation, but not yet with real hardware. Feedback is welcome.
