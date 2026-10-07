@@ -90,6 +90,11 @@ namespace Transfer
         {
             base.OnLoad(e);
 
+            // FIRST: PrintStatus() is called when the RadioButtons are checked below
+            mi_StatusTimer = new WForms.Timer();
+            mi_StatusTimer.Tick += new EventHandler(OnStatusTimer);
+            mi_StatusTimer.Interval = 4000;
+
             this.Text = "Transfer  —  " + Utils.GetDescriptionAttribute(me_OsziSerie); // Window Title
 
             mi_Panel.OnLoad(me_OsziSerie);
@@ -132,10 +137,6 @@ namespace Transfer
                 radioRS232.Checked = true;
 
             textVxiLink.Text = Utils.RegReadString(eRegKey.LinkVXI, "inst0");
-
-            mi_StatusTimer = new WForms.Timer();
-            mi_StatusTimer.Tick += new EventHandler(OnStatusTimer);
-            mi_StatusTimer.Interval = 4000;
         }
 
         protected override void OnClosing(CancelEventArgs e)
