@@ -845,6 +845,11 @@ namespace Transfer
                 Debug.Print(">> TransmitString() command= \"" + s_Command + "\"");
             #endif
 
+            // "*OPC?" is sent after the command that is waited for: show both
+            if (s_Command != "*OPC?")
+                ms_LastCommand = s_Command;
+            else if (ms_LastCommand != null && !ms_LastCommand.Contains("*OPC?"))
+                ms_LastCommand += "   (then *OPC?)";
             Byte[] u8_TxCommand = Encoding.ASCII.GetBytes(s_Command + '\n');
             switch (me_Mode)
             {
@@ -1304,8 +1309,14 @@ namespace Transfer
         /// The TimeoutException has a sepcial treatment: 
         /// It is is handled in PanelRigol.SendManualCommand() when manually sending an invalid command.
         /// </summary>
+        // The last command sent. It is displayed in the timeout error message.
+        [ThreadStatic] static String ms_LastCommand;
+
         static void Throw(String s_Message, bool b_Timeout = false)
         {
+            if (b_Timeout && ms_LastCommand != null)
+                s_Message += "\n\nLast command: " + ms_LastCommand;
+
             #if TRACE_OUTPUT
                 Debug.Print("*** " + s_Message);
             #endif

@@ -799,6 +799,8 @@
 <tr><th>Setting</th><th>Meaning</th></tr>
 <tr><td>Channel</td><td>The analog channel to analyze. It must be turned on in the oscilloscope.</td></tr>
 <tr><td>Window</td><td>The window function of the FFT (see <a href="#FFT">FFT Spectrum</a>).</td></tr>
+<tr><td>Max. freq</td><td>Displays only the frequencies from 0 to this value, for example 20 kHz for audio signals. The peaks are searched only in this range.<br>
+                       This is a zoom: it does not change the resolution. See below how to measure audio signals.</td></tr>
 <tr><td>Scale</td><td>dBV or Volt for the latest spectrum and for the exported matrix. The waterfall colors are always in dBV.</td></tr>
 <tr><td>Colors</td><td>The dynamic range of the color scale. The top of the scale follows the strongest signal.<br>
                        An 8 bit oscilloscope has a dynamic range of approx 48 dB, so 60 dB are a good choice.</td></tr>
@@ -814,9 +816,30 @@
 <div>Move the mouse over the waterfall to see frequency, time and level.</div>
 <div>If you change the timebase of the oscilloscope while the loop is running, the waterfall starts again, because all rows must have the same frequency axis.</div>
 <div>Changing the channel or the window function also clears the waterfall.</div>
+<div>If the oscilloscope does not respond once (timeout), the step is repeated. The loop stops after 3 timeouts in a row.</div>
+<p>
+<div><b><u>Frequency range and resolution</u>:</b></div>
+<div>The waterfall transfers the samples displayed on the screen. The HMO1522 sent 6000 samples for its 12 divisions (measured at 2 ms/div).</div>
+<div>The status bar of the waterfall shows the real sample rate, highest frequency (Nyquist) and resolution.</div>
+<div>The <b>timebase</b> of the oscilloscope therefore determines the frequency range and the resolution:</div>
+<ul>
+    <li><div>Sample rate = 6000 / (12 × Time/Div). The highest frequency (Nyquist) is half the sample rate.</div>
+    <li><div>Resolution = 1 / (12 × Time/Div). Two frequencies closer than this cannot be separated.</div>
+</ul>
+<div>Examples for 6000 samples:</div>
+<table class="DataTable">
+<tr><th>Time/Div</th><th>Sample rate</th><th>Highest frequency</th><th>Resolution</th><th>Use</th></tr>
+<tr><td>2 ms</td><td>250 kSa/s</td><td>125 kHz</td><td>42 Hz</td><td>Ultrasound, switching power supplies</td></tr>
+<tr><td>5 ms</td><td>100 kSa/s</td><td>50 kHz</td><td>17 Hz</td><td>Audio with harmonics</td></tr>
+<tr><td>10 ms</td><td>50 kSa/s</td><td>25 kHz</td><td>8.3 Hz</td><td><b>Audio</b> (20 Hz ... 20 kHz)</td></tr>
+<tr><td>20 ms</td><td>25 kSa/s</td><td>12.5 kHz</td><td>4.2 Hz</td><td>Music, tones, hum</td></tr>
+</table>
+<div>For audio select 10 ms/div on the oscilloscope and <b>Max. freq</b> = 20 kHz. A slower timebase gives a finer resolution, but each step takes longer (one sweep).</div>
+<div><span class="Error">ATTENTION:</span> Frequencies above the highest frequency may not be removed by the oscilloscope. Then they appear mirrored at a wrong frequency (aliasing).</div>
 <p>
 <div>The speed depends on the connection. At 115200 baud the HM507 transfers its 2048 samples in approx 0.2 seconds.</div>
-<div>The HMO sends 4 bytes per sample, so 10.000 samples take approx 3.5 seconds. A slow timebase also makes each step longer.</div>
+<div>Over RS232 the HMO sends 4 bytes per sample, so the 6000 samples of the screen take approx 2 seconds.</div>
+<div>The USB port of the HO720 is much faster (the baudrate does not matter for USB): a step takes approx 0.9 seconds at 2 ms/div.</div>
 <div>The oscilloscope is in STOP mode after you click Cancel. Click <b>Run</b> to continue.</div>
 
 <a name="ScpiLibrary"></a>

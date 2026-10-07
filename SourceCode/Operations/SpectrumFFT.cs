@@ -731,6 +731,14 @@ namespace Operations
         // Fired when the user zooms with the mouse (used to synchronize the Waterfall FFT)
         public event EventHandler ZoomChanged;
 
+        // The highest frequency displayed without zoom (and after a double-click). 0 = half the sample rate (Nyquist)
+        public double MaxFrequency = 0;
+
+        double FullRangeMax(double d_Rate)
+        {
+            return (MaxFrequency > 0) ? Math.Min(MaxFrequency, d_Rate / 2) : d_Rate / 2;
+        }
+
         /// <summary>
         /// Sets the displayed frequency range (zoom) without firing ZoomChanged
         /// </summary>
@@ -759,7 +767,7 @@ namespace Operations
             if (!b_KeepZoom)
             {
                 md_FreqMin = 0;
-                md_FreqMax = d_Rate / 2;
+                md_FreqMax = FullRangeMax(d_Rate);
             }
             Invalidate();
         }
@@ -1051,7 +1059,7 @@ namespace Operations
         {
             base.OnMouseDoubleClick(e);
             md_FreqMin = 0;
-            md_FreqMax = md_Rate / 2;
+            md_FreqMax = FullRangeMax(md_Rate);
             Invalidate();
             if (ZoomChanged != null)
                 ZoomChanged(this, EventArgs.Empty);

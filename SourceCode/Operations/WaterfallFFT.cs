@@ -74,6 +74,7 @@ namespace Operations
             public float[]  mf_Amp;  // Volt peak per frequency bin
         }
 
+        const String MAX_FREQ_AUTO = "Nyquist";
         const String SCALE_DB     = "dBV (RMS)";
         const String SCALE_LINEAR = "Volt (peak)";
 
@@ -93,6 +94,7 @@ namespace Operations
         ComboBox      mi_ComboScale;
         ComboBox      mi_ComboRange;
         ComboBox      mi_ComboRows;
+        ComboBox      mi_ComboMaxFreq;
         Button        mi_BtnStart;
         Label         mi_LblInfo;
         SplitContainer mi_Split;
@@ -137,6 +139,11 @@ namespace Operations
             foreach (Fourier.eWindow e_Win in Enum.GetValues(typeof(Fourier.eWindow)))
                 mi_ComboWindow.Items.Add(Utils.GetDescriptionAttribute(e_Win));
             mi_ComboWindow.SelectedIndex = 0;
+
+            // Audio: show only the low frequencies. (The highest frequency that can be measured is half the sample rate.)
+            mi_ComboMaxFreq = AddCombo(i_Bar, "Max. freq:", 75);
+            mi_ComboMaxFreq.Items.AddRange(new Object[] { MAX_FREQ_AUTO, "500 Hz", "1 kHz", "2 kHz", "5 kHz", "10 kHz", "20 kHz", "50 kHz", "100 kHz", "200 kHz", "500 kHz", "1 MHz" });
+            mi_ComboMaxFreq.SelectedIndex = 0;
 
             mi_ComboScale = AddCombo(i_Bar, "Scale:", 90);
             mi_ComboScale.Items.AddRange(new Object[] { SCALE_DB, SCALE_LINEAR });
@@ -199,6 +206,7 @@ namespace Operations
 
             mi_ComboScale.SelectedIndexChanged += delegate { mi_Spectrum.ShowDb = mi_ComboScale.Text == SCALE_DB; mi_Spectrum.Invalidate(); };
             mi_ComboRange.SelectedIndexChanged += delegate { UpdateWaterfall(); };
+            mi_ComboMaxFreq.SelectedIndexChanged += delegate { ApplyMaxFrequency(); };
             mi_ComboRows .SelectedIndexChanged += delegate { TrimRows(); UpdateWaterfall(); };
             mi_ComboWindow .SelectedIndexChanged += delegate { ClearRows("Window function changed"); };
             mi_ComboChannel.SelectedIndexChanged += delegate { ClearRows("Channel changed"); };
@@ -237,6 +245,42 @@ namespace Operations
             return i_Button;
         }
 
+        /// <summary>
+        /// "20 kHz" --> 20000, "Nyquist" --> 0
+        /// </summary>
+        double SelectedMaxFrequency
+        {
+            get
+            {
+                String[] s_Parts = mi_ComboMaxFreq.Text.Split(' ');
+                if (s_Parts.Length != 2)
+                    return 0;
+                double d_Value = double.Parse(s_Parts[0], CultureInfo.InvariantCulture);
+                switch (s_Parts[1])
+                {
+                    case "kHz": return d_Value * 1e3;
+                    case "MHz": return d_Value * 1e6;
+                    default:    return d_Value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Displays the frequencies from 0 to the selected maximum in both views (this is a zoom, the FFT is not changed)
+        /// </summary>
+        void ApplyMaxFrequency()
+        {
+            double d_Max = SelectedMaxFrequency;
+            mi_Spectrum .MaxFrequency = d_Max;
+            mi_Waterfall.MaxFrequency = d_Max;
+            if (md_Rate <= 0)
+                return;
+
+            double d_Top = (d_Max > 0) ? Math.Min(d_Max, md_Rate / 2) : md_Rate / 2;
+            mi_Spectrum .SetFrequencyRange(0, d_Top);
+            mi_Waterfall.SetFrequencyRange(0, d_Top);
+        }
+
         int MaxRows
         {
             get { return int.Parse(mi_ComboRows.Text); }
@@ -270,9 +314,11 @@ namespace Operations
             mi_BtnStart.BackColor  = Color.Salmon;
             mi_ComboChannel.Enabled = false;
 
-            int s32_Channel = mi_ComboChannel.SelectedIndex + 1;
-            int s32_Steps   = 0;
-            String s_Error  = null;
+            int s32_Channel  = mi_ComboChannel.SelectedIndex + 1;
+            int s32_Steps    = 0;
+            int s32_Timeouts = 0; // consecutive
+            int s32_Retries  = 0; // total
+            String s_Error   = null;
             try
             {
                 while (!mb_Cancel)
@@ -280,17 +326,34 @@ namespace Operations
                     DateTime t_Start = DateTime.Now;
                     PrintInfo("Acquiring CH" + s32_Channel + " ...", Color.White);
 
-                    Capture i_Capture = mf_Acquire(s32_Channel);
+                    Capture i_Capture;
+                    try
+                    {
+                        i_Capture = mf_Acquire(s32_Channel);
+                    }
+                    catch (TimeoutException)
+                    {
+                        // A single lost response must not stop a loop that runs for minutes. Repeat the step.
+                        // (Before each command the SCPI class discards a late response.)
+                        if (++s32_Timeouts >= 3)
+                            throw;
+                        s32_Retries ++;
+                        continue;
+                    }
                     if (i_Capture == null || mb_Cancel)
                         break; // aborted
 
+                    s32_Timeouts = 0;
                     AddCapture(i_Capture);
                     s32_Steps ++;
 
-                    PrintInfo(String.Format("Step {0}   {1}   Duration: {2:F1} s   Rows: {3}   Samples: {4:N0}   FFT size: {5:N0}   Sample rate: {6}   Resolution: {7}",
-                                            s32_Steps, DateTime.Now.ToString("HH:mm:ss"), (DateTime.Now - t_Start).TotalSeconds,
-                                            mi_Rows.Count, ms32_Samples, ms32_FftSize, SpectrumFFT.FormatFreq(md_Rate),
-                                            SpectrumFFT.FormatFreq(md_Rate / ms32_Samples)), Color.White);
+                    String s_Info = String.Format("Step {0}   {1}   Duration: {2:F1} s   Rows: {3}   Samples: {4:N0}   FFT size: {5:N0}   Sample rate: {6}   Nyquist: {7}   Resolution: {8}",
+                                                  s32_Steps, DateTime.Now.ToString("HH:mm:ss"), (DateTime.Now - t_Start).TotalSeconds,
+                                                  mi_Rows.Count, ms32_Samples, ms32_FftSize, SpectrumFFT.FormatFreq(md_Rate),
+                                                  SpectrumFFT.FormatFreq(md_Rate / 2), SpectrumFFT.FormatFreq(md_Rate / ms32_Samples));
+                    if (s32_Retries > 0)
+                        s_Info += "   Repeated after timeout: " + s32_Retries;
+                    PrintInfo(s_Info, Color.White);
                     Application.DoEvents();
                 }
             }
@@ -396,11 +459,26 @@ namespace Operations
                 d_Refine = Fourier.AmplitudeSpectrum(f_Samples, 0, s32_Count, Fourier.eWindow.BlackmanHarris, true, out s32_Dummy);
             }
             mi_Spectrum.ShowDb = mi_ComboScale.Text == SCALE_DB;
-            mi_Spectrum.Peaks  = Fourier.FindPeaks(d_Amp, d_Refine, d_BinWidth, 5, s32_MinDist);
+            mi_Spectrum.Peaks  = FindPeaksBelow(Fourier.FindPeaks(d_Amp, d_Refine, d_BinWidth, 20, s32_MinDist), 5);
             mi_Spectrum.SetSpectrum(d_Amp, d_BinWidth, d_Rate);
 
             UpdateWaterfall();
             mi_Waterfall.SetFrequencyRange(mi_Spectrum.FreqMin, mi_Spectrum.FreqMax);
+        }
+
+        /// <summary>
+        /// Only the peaks in the displayed frequency range (Max. freq) are of interest
+        /// </summary>
+        List<Fourier.Peak> FindPeaksBelow(List<Fourier.Peak> i_All, int s32_Max)
+        {
+            double d_Max = SelectedMaxFrequency;
+            List<Fourier.Peak> i_Peaks = new List<Fourier.Peak>();
+            foreach (Fourier.Peak i_Peak in i_All)
+            {
+                if (i_Peaks.Count < s32_Max && (d_Max <= 0 || i_Peak.md_Frequency <= d_Max))
+                    i_Peaks.Add(i_Peak);
+            }
+            return i_Peaks;
         }
 
         void TrimRows()
@@ -568,6 +646,7 @@ namespace Operations
         static  int[] ms32_ColorMap = CreateColorMap();
 
         public event EventHandler ZoomChanged;
+        public double MaxFrequency = 0; // displayed without zoom, 0 = Nyquist
         public double FreqMin { get { return md_FreqMin; } }
         public double FreqMax { get { return md_FreqMax; } }
 
@@ -592,9 +671,14 @@ namespace Operations
             if (!b_KeepZoom)
             {
                 md_FreqMin = 0;
-                md_FreqMax = d_Rate / 2;
+                md_FreqMax = FullRangeMax(d_Rate);
             }
             Render();
+        }
+
+        double FullRangeMax(double d_Rate)
+        {
+            return (MaxFrequency > 0) ? Math.Min(MaxFrequency, d_Rate / 2) : d_Rate / 2;
         }
 
         public void SetFrequencyRange(double d_Min, double d_Max)
@@ -749,7 +833,8 @@ namespace Operations
                     g.DrawLine(i_Frame, X, r_Plot.Bottom, X, r_Plot.Bottom + 4);
                     String s_Label = SpectrumFFT.FormatFreq(d_F);
                     SizeF  k_Size  = g.MeasureString(s_Label, i_Font);
-                    g.DrawString(s_Label, i_Font, i_Text, X - k_Size.Width / 2, r_Plot.Bottom + 5);
+                    float  f_Left  = Math.Min(X - k_Size.Width / 2, r_Plot.Right - k_Size.Width + 4); // do not overlap "dBV"
+                    g.DrawString(s_Label, i_Font, i_Text, f_Left, r_Plot.Bottom + 5);
                 }
 
                 // ---- time axis: age of the rows relative to the newest ----
@@ -854,7 +939,7 @@ namespace Operations
         {
             base.OnMouseDoubleClick(e);
             md_FreqMin = 0;
-            md_FreqMax = md_Rate / 2;
+            md_FreqMax = FullRangeMax(md_Rate);
             Render();
             if (ZoomChanged != null)
                 ZoomChanged(this, EventArgs.Empty);
