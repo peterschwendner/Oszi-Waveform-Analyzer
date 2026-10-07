@@ -18,3 +18,7 @@ SourceCode/app.config
 
 # WAV files for testing (e.g. oscilloscope music) are copyrighted and must not be published
 Compiled/Samples/*.wav
+
+# Exports of the Waterfall FFT (own measurements, default file names)
+Compiled/Samples/Waterfall *.csv
+Compiled/Samples/Waterfall *.png
