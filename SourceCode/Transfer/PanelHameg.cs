@@ -53,6 +53,8 @@ using Capture           = OsziWaveformAnalyzer.Utils.Capture;
 using eOperation        = Transfer.Hameg.eOperation;
 using OsziConfig        = Transfer.Hameg.OsziConfig;
 using WaterfallFFT      = Operations.WaterfallFFT;
+using IWaterfallSource  = Operations.IWaterfallSource;
+using Fourier           = Operations.Fourier;
 
 namespace Transfer
 {
@@ -335,15 +337,39 @@ namespace Transfer
             if (mi_Hameg.Model != null && mi_Hameg.Model.ms_Model != null)
                 s_Source = (mi_Hameg.Model.ms_Brand + " " + mi_Hameg.Model.ms_Model).Trim();
 
-            using (WaterfallFFT i_Waterfall = new WaterfallFFT(s_Source,
-                                                                delegate(int s32_Chan) { return mi_Hameg.AcquireChannel(s32_Chan); },
-                                                                delegate() { mi_Hameg.AbortTransfer(); }))
+            using (WaterfallFFT i_Waterfall = new WaterfallFFT(new HamegWaterfallSource(mi_Hameg, s_Source)))
             {
                 i_Waterfall.ShowDialog(mi_Form);
             }
 
             OnRefreshTimer(null, null);
             Utils.EndBusyOperation(mi_Form);
+        }
+
+        /// <summary>
+        /// The Hameg oscilloscope as source of the Waterfall FFT
+        /// </summary>
+        class HamegWaterfallSource : IWaterfallSource
+        {
+            IHamegScope mi_Hameg;
+            String      ms_Name;
+
+            public HamegWaterfallSource(IHamegScope i_Hameg, String s_Name)
+            {
+                mi_Hameg = i_Hameg;
+                ms_Name  = s_Name;
+            }
+
+            public String        Name     { get { return ms_Name; } }
+            public String[]      Channels { get { return new String[] { "CH1", "CH2" }; } }
+            public Fourier.eUnit Unit     { get { return Fourier.eUnit.Volt; } }
+            public String        StepInfo { get { return null; } }
+
+            public void    AddControls(FlowLayoutPanel i_Bar) {}
+            public void    Start() {}
+            public Capture Acquire(int s32_Channel) { return mi_Hameg.AcquireChannel(s32_Channel); }
+            public void    Abort() { mi_Hameg.AbortTransfer(); }
+            public void    Stop()  {}
         }
 
         // ==========================================================

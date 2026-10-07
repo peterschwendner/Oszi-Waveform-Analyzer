@@ -210,6 +210,41 @@ namespace Operations
             return 20.0 * Math.Log10(Math.Max(d_VoltPeak / Math.Sqrt(2), 1e-12));
         }
 
+        /// <summary>
+        /// Oscilloscopes deliver Volt. Audio interfaces deliver values relative to full scale (1.0 = maximum of the A/D converter).
+        /// </summary>
+        public enum eUnit
+        {
+            Volt,
+            FullScale,
+        }
+
+        /// <summary>
+        /// Volt      --> dBV (RMS): 1 Vrms = 0 dBV
+        /// FullScale --> dBFS: a sine wave with the amplitude of full scale = 0 dBFS (AES17)
+        /// </summary>
+        public static double ToDb(double d_Peak, eUnit e_Unit)
+        {
+            if (e_Unit == eUnit.FullScale)
+                return 20.0 * Math.Log10(Math.Max(d_Peak, 1e-12));
+            return ToDbV(d_Peak);
+        }
+
+        public static String DbName(eUnit e_Unit)
+        {
+            return (e_Unit == eUnit.FullScale) ? "dBFS" : "dBV";
+        }
+
+        /// <summary>
+        /// Linear value: "12.5 mV" or "0.0125 FS"
+        /// </summary>
+        public static String FormatLinear(double d_Peak, eUnit e_Unit)
+        {
+            if (e_Unit == eUnit.FullScale)
+                return d_Peak.ToString("0.#####", CultureInfo.InvariantCulture) + " FS";
+            return SpectrumFFT.FormatVolt(d_Peak);
+        }
+
         public class Peak
         {
             public double md_Frequency; // Hz, interpolated between bins
@@ -708,7 +743,6 @@ namespace Operations
         const int MARGIN_RIGHT  = 20;
         const int MARGIN_TOP    = 12;
         const int MARGIN_BOTTOM = 28;
-        const double DB_RANGE   = 100; // dynamic range displayed
 
         double[] md_Amp;
         double   md_BinWidth;
@@ -720,6 +754,8 @@ namespace Operations
 
         public Color              TraceColor = Color.Yellow;
         public bool               ShowDb     = true;
+        public Fourier.eUnit      Unit       = Fourier.eUnit.Volt;
+        public double             DbRange    = 100; // dynamic range displayed
         public bool               LogFreq    = false;
         public List<Fourier.Peak> Peaks      = new List<Fourier.Peak>();
 
@@ -813,8 +849,10 @@ namespace Operations
 
             if (ShowDb)
             {
-                d_Top    = Math.Ceiling((Fourier.ToDbV(d_Max) + 5) / 10) * 10;
-                d_Bottom = d_Top - DB_RANGE;
+                // Full scale is a fixed reference: 0 dBFS is always the top
+                if (Unit == Fourier.eUnit.FullScale) d_Top = 0;
+                else                                 d_Top = Math.Ceiling((Fourier.ToDb(d_Max, Unit) + 5) / 10) * 10;
+                d_Bottom = d_Top - DbRange;
             }
             else
             {
@@ -825,7 +863,7 @@ namespace Operations
 
         double ValueOf(double d_Amp)
         {
-            return ShowDb ? Fourier.ToDbV(d_Amp) : d_Amp;
+            return ShowDb ? Fourier.ToDb(d_Amp, Unit) : d_Amp;
         }
 
         /// <summary>
@@ -866,7 +904,7 @@ namespace Operations
                 {
                     float Y = (float)(r_Plot.Bottom - (d_Y - d_Bottom) / (d_Top - d_Bottom) * r_Plot.Height);
                     g.DrawLine(i_Grid, r_Plot.Left, Y, r_Plot.Right, Y);
-                    String s_Label = ShowDb ? d_Y.ToString("0", CultureInfo.InvariantCulture) + " dBV" : SpectrumFFT.FormatVolt(d_Y);
+                    String s_Label = ShowDb ? d_Y.ToString("0", CultureInfo.InvariantCulture) + " " + Fourier.DbName(Unit) : Fourier.FormatLinear(d_Y, Unit);
                     SizeF k_Size = g.MeasureString(s_Label, i_Font);
                     g.DrawString(s_Label, i_Font, i_Text, r_Plot.Left - k_Size.Width - 3, Y - k_Size.Height / 2);
                 }
@@ -994,8 +1032,8 @@ namespace Operations
 
         String FormatValue(double d_Amp)
         {
-            return ShowDb ? Fourier.ToDbV(d_Amp).ToString("0.0", CultureInfo.InvariantCulture) + " dBV"
-                          : SpectrumFFT.FormatVolt(d_Amp);
+            return ShowDb ? Fourier.ToDb(d_Amp, Unit).ToString("0.0", CultureInfo.InvariantCulture) + " " + Fourier.DbName(Unit)
+                          : Fourier.FormatLinear(d_Amp, Unit);
         }
 
         float ValueToY(double d_Amp, double d_Bottom, double d_Top, Rectangle r_Plot)

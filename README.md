@@ -39,6 +39,15 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 - The HM2008 support was written from the Hameg SCPI programming manual and tested against a protocol simulation, but not yet with real hardware. Feedback is welcome.
 - **Waterfall FFT**: a loop acquires one channel again and again (Run, wait one sweep, Stop, transfer), calculates the spectrum and adds it as a new row to a color waterfall until you click *Cancel*. The waterfall can be exported as PNG image and the collected spectra as CSV matrix (one line per spectrum, one column per frequency).
 
+### Live audio input
+
+Select **Audio Interface / Sound Card** as Oszi Model and click **Capture**: the Waterfall FFT records continuously from an
+audio interface or sound card (e.g. Focusrite Scarlett 2i2, MOTU M4) over the Windows Multimedia API (winmm.dll, no additional libraries).
+
+- Device, sample rate (44.1 ... 192 kHz) and samples per spectrum (2048 ... 65536) are selectable, left or right channel.
+- Gapless recording as 32 bit float (full 24 bit resolution); levels in dBFS. If the display is too slow, old blocks are skipped.
+- Tested with a Focusrite Scarlett 2i2 and a MOTU M4. Windows only.
+
 ### Analysis windows
 
 Right-click on the analog signal of a channel:

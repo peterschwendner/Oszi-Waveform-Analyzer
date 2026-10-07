@@ -51,6 +51,7 @@ using Channel           = OsziWaveformAnalyzer.Utils.Channel;
 using eRegKey           = OsziWaveformAnalyzer.Utils.eRegKey;
 using Utils             = OsziWaveformAnalyzer.Utils;
 using CsvParser         = ExImport.CsvParser;
+using WaterfallFFT      = Operations.WaterfallFFT;
 
 namespace Transfer
 {
@@ -92,6 +93,9 @@ namespace Transfer
 
             [Description("Hameg HM507 (RS232 only)")] // proprietary binary protocol, also HM504 (analog only, no waveforms)
             Hameg_HM507,
+
+            [Description("Audio Interface / Sound Card (live Waterfall FFT)")] // e.g. Focusrite Scarlett, MOTU M4
+            Audio_Input,
 
             // TODO: Add more oscilloscope brands like Tektronix, Rhode & Schwarz, Siglent, ...
         }
@@ -202,6 +206,14 @@ namespace Transfer
                     i_Panel = new PanelHameg();
                     break;
 
+                case eOsziSerie.Audio_Input:
+                    // There is no Transfer window: the audio input is used directly by the Waterfall FFT
+                    using (WaterfallFFT i_Waterfall = new WaterfallFFT(new AudioInput()))
+                    {
+                        i_Waterfall.ShowDialog(Utils.FormMain);
+                    }
+                    return;
+
                 // TODO: Add Tektronix, Rhode & Schwarz, Siglent, ...
 
                 default:
@@ -242,6 +254,9 @@ namespace Transfer
                 case eOsziSerie.Hameg_HM2008:
                 case eOsziSerie.Hameg_HM507:
                     throw new Exception("For " + i_ComboOsziModel.Text + " file import is not implemented.\nUse 'Transfer' to read the waveforms over RS232, USB or TCP.");
+
+                case eOsziSerie.Audio_Input:
+                    throw new Exception("Audio recordings can be imported as WAV file with the button 'Open...'.");
 
                 case eOsziSerie.OWON_1022:
                     if (s_FileExt == ".cap") return ExImport.OWON.ParseBinaryFile(s_Path, ref b_Abort);

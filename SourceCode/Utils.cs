@@ -79,6 +79,7 @@ namespace OsziWaveformAnalyzer
             LinkVXI,
             SerialSettings,
             HamegPoints,
+            AudioInput,
             // ------------
             RasterInterval,
             RasterUnit,

@@ -54,33 +54,53 @@ using PlatformManager   = Platform.PlatformManager;
 namespace Operations
 {
     /// <summary>
-    /// Waterfall FFT: an automatic loop acquires one channel from the oscilloscope, calculates its spectrum
+    /// The source of the waveforms for the Waterfall FFT: an oscilloscope (Volt) or an audio interface (full scale).
+    /// All functions are called in the GUI thread.
+    /// </summary>
+    public interface IWaterfallSource
+    {
+        String        Name     { get; } // window title and CSV header
+        String[]      Channels { get; } // "CH1", "CH2" or "Left", "Right"
+        Fourier.eUnit Unit     { get; }
+        String        StepInfo { get; } // additional information for the status bar or null
+
+        // Additional settings in the toolbar (e.g. device and sample rate). They are disabled while the loop is running.
+        void AddControls(FlowLayoutPanel i_Bar);
+
+        // Called before the loop starts (open the device). Throws on error.
+        void Start();
+
+        // Acquires one channel (1 based). Returns null if Abort() was called. Throws on error.
+        Capture Acquire(int s32_Channel);
+
+        // Called when the user clicks "Cancel" or closes the window
+        void Abort();
+
+        // Called after the loop has finished (close the device). Must not throw.
+        void Stop();
+    }
+
+    /// <summary>
+    /// Waterfall FFT: an automatic loop acquires one channel from the oscilloscope or audio interface, calculates its spectrum
     /// and adds it as a new row to the waterfall, until the user clicks "Cancel".
-    /// The newest spectrum is at the top. The color shows the level in dBV.
+    /// The newest spectrum is at the top. The color shows the level in dBV (or dBFS).
     /// The waterfall can be exported as PNG image and the collected spectra as CSV matrix.
     ///
-    /// This window does not know the oscilloscope. The caller passes a function that acquires one channel.
+    /// This window does not know the oscilloscope. The caller passes an IWaterfallSource.
     /// </summary>
     public class WaterfallFFT : Form
     {
-        /// <summary>
-        /// Acquires one channel from the oscilloscope. Returns null if the user has aborted. Throws on error.
-        /// </summary>
-        public delegate Capture delAcquire(int s32_Channel);
-
         class Row
         {
             public DateTime mi_Time;
-            public float[]  mf_Amp;  // Volt peak per frequency bin
+            public float[]  mf_Amp;  // Volt peak (or full scale peak) per frequency bin
         }
 
         const String MAX_FREQ_AUTO = "All";    // up to half the sample rate (Nyquist)
-        const String SCALE_DB     = "dBV (RMS)";
-        const String SCALE_LINEAR = "Volt (peak)";
 
-        delAcquire   mf_Acquire;
-        Action       mf_Abort;
-        String       ms_Source;
+        IWaterfallSource mi_Source;
+        Fourier.eUnit    me_Unit;
+        List<Control>    mi_SourceControls = new List<Control>();
         List<Row>    mi_Rows = new List<Row>(); // newest first
         double       md_Rate;
         int          ms32_FftSize;
@@ -101,21 +121,21 @@ namespace Operations
         SpectrumView  mi_Spectrum;
         WaterfallView mi_Waterfall;
 
-        /// <summary>
-        /// s_Source = name of the oscilloscope for the window title and the CSV header
-        /// f_Abort  = aborts a running transfer (called when the user clicks "Cancel")
-        /// </summary>
-        public WaterfallFFT(String s_Source, delAcquire f_Acquire, Action f_Abort)
+        public WaterfallFFT(IWaterfallSource i_Source)
         {
-            ms_Source  = s_Source;
-            mf_Acquire = f_Acquire;
-            mf_Abort   = f_Abort;
+            mi_Source = i_Source;
+            me_Unit   = i_Source.Unit;
             CreateControls();
+        }
+
+        bool ShowDb
+        {
+            get { return mi_ComboScale.SelectedIndex == 0; }
         }
 
         void CreateControls()
         {
-            Text          = "Waterfall FFT  —  " + ms_Source;
+            Text          = "Waterfall FFT  —  " + mi_Source.Name;
             Icon          = Utils.FormMain != null ? Utils.FormMain.Icon : null;
             BackColor     = Color.DimGray;
             ForeColor     = Color.White;
@@ -131,9 +151,15 @@ namespace Operations
             i_Bar.MinimumSize  = new Size(0, 32);
             i_Bar.Padding      = new Padding(4, 4, 4, 0);
 
-            mi_ComboChannel = AddCombo(i_Bar, "Channel:", 55);
-            mi_ComboChannel.Items.AddRange(new Object[] { "CH1", "CH2" });
+            mi_ComboChannel = AddCombo(i_Bar, "Channel:", 60);
+            mi_ComboChannel.Items.AddRange(mi_Source.Channels);
             mi_ComboChannel.SelectedIndex = 0;
+
+            // Device, sample rate,... of an audio interface
+            int s32_First = i_Bar.Controls.Count;
+            mi_Source.AddControls(i_Bar);
+            for (int C=s32_First; C<i_Bar.Controls.Count; C++)
+                mi_SourceControls.Add(i_Bar.Controls[C]);
 
             // Audio: show only the low frequencies. (The highest frequency that can be measured is half the sample rate.)
             mi_ComboMaxFreq = AddCombo(i_Bar, "Max. frequency:", 75);
@@ -145,13 +171,17 @@ namespace Operations
                 mi_ComboWindow.Items.Add(Utils.GetDescriptionAttribute(e_Win));
             mi_ComboWindow.SelectedIndex = 0;
 
-            mi_ComboScale = AddCombo(i_Bar, "Scale:", 90);
-            mi_ComboScale.Items.AddRange(new Object[] { SCALE_DB, SCALE_LINEAR });
+            mi_ComboScale = AddCombo(i_Bar, "Scale:", 105);
+            if (me_Unit == Fourier.eUnit.FullScale)
+                mi_ComboScale.Items.AddRange(new Object[] { "dBFS", "Full scale (peak)" });
+            else
+                mi_ComboScale.Items.AddRange(new Object[] { "dBV (RMS)", "Volt (peak)" });
             mi_ComboScale.SelectedIndex = 0;
 
+            // 8 bit oscilloscopes: approx 48 dB dynamic range, 24 bit audio interfaces: more than 100 dB
             mi_ComboRange = AddCombo(i_Bar, "Colors:", 70);
-            mi_ComboRange.Items.AddRange(new Object[] { "40 dB", "60 dB", "80 dB", "100 dB", "120 dB" });
-            mi_ComboRange.SelectedIndex = 2;
+            mi_ComboRange.Items.AddRange(new Object[] { "40 dB", "60 dB", "80 dB", "100 dB", "120 dB", "140 dB" });
+            mi_ComboRange.SelectedIndex = (me_Unit == Fourier.eUnit.FullScale) ? 4 : 2;
 
             mi_ComboRows = AddCombo(i_Bar, "History:", 70);
             mi_ComboRows.Items.AddRange(new Object[] { "50", "100", "300", "1000" });
@@ -185,9 +215,11 @@ namespace Operations
             mi_Spectrum = new SpectrumView();
             mi_Spectrum.Dock       = DockStyle.Fill;
             mi_Spectrum.TraceColor = Color.Yellow;
+            mi_Spectrum.Unit       = me_Unit;
 
             mi_Waterfall = new WaterfallView();
             mi_Waterfall.Dock = DockStyle.Fill;
+            mi_Waterfall.Unit = me_Unit;
 
             mi_Split = new SplitContainer();
             mi_Split.Dock          = DockStyle.Fill;
@@ -204,8 +236,11 @@ namespace Operations
             mi_Spectrum.ZoomChanged  += delegate { mi_Waterfall.SetFrequencyRange(mi_Spectrum.FreqMin, mi_Spectrum.FreqMax); };
             mi_Waterfall.ZoomChanged += delegate { mi_Spectrum.SetFrequencyRange(mi_Waterfall.FreqMin, mi_Waterfall.FreqMax); };
 
-            mi_ComboScale.SelectedIndexChanged += delegate { mi_Spectrum.ShowDb = mi_ComboScale.Text == SCALE_DB; mi_Spectrum.Invalidate(); };
-            mi_ComboRange.SelectedIndexChanged += delegate { UpdateWaterfall(); };
+            mi_ComboScale.SelectedIndexChanged += delegate { mi_Spectrum.ShowDb = ShowDb; mi_Spectrum.Invalidate(); };
+            mi_ComboRange.SelectedIndexChanged += delegate { UpdateSpectrumRange(); UpdateWaterfall(); };
+            UpdateSpectrumRange();
+
+            Text = "Waterfall FFT  —  " + mi_Source.Name; // AFTER AddControls() (the name of the audio device)
             mi_ComboMaxFreq.SelectedIndexChanged += delegate { ApplyMaxFrequency(); };
             mi_ComboRows .SelectedIndexChanged += delegate { TrimRows(); UpdateWaterfall(); };
             mi_ComboWindow .SelectedIndexChanged += delegate { ClearRows("Window function changed"); };
@@ -281,6 +316,20 @@ namespace Operations
             mi_Waterfall.SetFrequencyRange(0, d_Top);
         }
 
+        int ColorRange
+        {
+            get { return int.Parse(mi_ComboRange.Text.Split(' ')[0]); }
+        }
+
+        /// <summary>
+        /// The spectrum displays 20 dB more than the colors of the waterfall (at least 100 dB)
+        /// </summary>
+        void UpdateSpectrumRange()
+        {
+            mi_Spectrum.DbRange = Math.Max(100, ColorRange + 20);
+            mi_Spectrum.Invalidate();
+        }
+
         int MaxRows
         {
             get { return int.Parse(mi_ComboRows.Text); }
@@ -296,7 +345,7 @@ namespace Operations
             {
                 mb_Cancel = true;
                 mi_BtnStart.Enabled = false; // until the loop has finished
-                mf_Abort();                  // abort a running transfer
+                mi_Source.Abort();           // abort a running transfer
                 return;
             }
             RunLoop();
@@ -313,6 +362,8 @@ namespace Operations
             mi_BtnStart.Text       = "Cancel";
             mi_BtnStart.BackColor  = Color.Salmon;
             mi_ComboChannel.Enabled = false;
+            foreach (Control i_Ctrl in mi_SourceControls)
+                i_Ctrl.Enabled = false;
 
             int s32_Channel  = mi_ComboChannel.SelectedIndex + 1;
             int s32_Steps    = 0;
@@ -321,15 +372,19 @@ namespace Operations
             String s_Error   = null;
             try
             {
+                mi_Source.Start();
+                Text = "Waterfall FFT  —  " + mi_Source.Name;
+
                 while (!mb_Cancel)
                 {
                     DateTime t_Start = DateTime.Now;
-                    PrintInfo("Acquiring CH" + s32_Channel + " ...", Color.White);
+                    if (s32_Steps == 0)
+                        PrintInfo("Acquiring " + mi_ComboChannel.Text + " ...", Color.White);
 
                     Capture i_Capture;
                     try
                     {
-                        i_Capture = mf_Acquire(s32_Channel);
+                        i_Capture = mi_Source.Acquire(s32_Channel);
                     }
                     catch (TimeoutException)
                     {
@@ -353,6 +408,8 @@ namespace Operations
                                                   SpectrumFFT.FormatFreq(md_Rate / 2), SpectrumFFT.FormatFreq(md_Rate / ms32_Samples));
                     if (s32_Retries > 0)
                         s_Info += "   Repeated after timeout: " + s32_Retries;
+                    if (mi_Source.StepInfo != null)
+                        s_Info += "   " + mi_Source.StepInfo;
                     PrintInfo(s_Info, Color.White);
                     Application.DoEvents();
                 }
@@ -361,8 +418,11 @@ namespace Operations
             {
                 s_Error = Ex.Message;
             }
+            mi_Source.Stop();
 
             mb_Running = false;
+            foreach (Control i_Ctrl in mi_SourceControls)
+                i_Ctrl.Enabled = true;
             mi_BtnStart.Text        = "Start";
             mi_BtnStart.BackColor   = Color.PaleGreen;
             mi_BtnStart.Enabled     = true;
@@ -391,7 +451,7 @@ namespace Operations
                 e.Cancel = true;
                 mb_CloseAfterLoop = true;
                 mb_Cancel = true;
-                mf_Abort();
+                mi_Source.Abort();
                 return;
             }
             base.OnFormClosing(e);
@@ -424,13 +484,13 @@ namespace Operations
                 }
             }
             if (f_Samples == null)
-                throw new Exception("The oscilloscope has not sent analog data.");
+                throw new Exception("The source has not delivered analog data.");
 
             int    s32_Count = Math.Min(i_Capture.ms32_Samples, Fourier.MAX_FFT_SIZE);
             double d_Rate    = (double)(Utils.PICOS_PER_SECOND / i_Capture.ms64_SampleDist);
 
             if (mi_Rows.Count > 0 && (d_Rate != md_Rate || s32_Count != ms32_Samples))
-                ClearRows("The timebase of the oscilloscope has changed --> the waterfall has been restarted");
+                ClearRows("The sample rate or the count of samples has changed --> the waterfall has been restarted");
 
             Fourier.eWindow e_Window = (Fourier.eWindow)mi_ComboWindow.SelectedIndex;
             int s32_FftSize;
@@ -458,7 +518,7 @@ namespace Operations
                 int s32_Dummy;
                 d_Refine = Fourier.AmplitudeSpectrum(f_Samples, 0, s32_Count, Fourier.eWindow.BlackmanHarris, true, out s32_Dummy);
             }
-            mi_Spectrum.ShowDb = mi_ComboScale.Text == SCALE_DB;
+            mi_Spectrum.ShowDb = ShowDb;
             mi_Spectrum.Peaks  = FindPeaksBelow(Fourier.FindPeaks(d_Amp, d_Refine, d_BinWidth, 20, s32_MinDist), 5);
             mi_Spectrum.SetSpectrum(d_Amp, d_BinWidth, d_Rate);
 
@@ -505,7 +565,7 @@ namespace Operations
                 i_Times.Add(i_Row.mi_Time);
             }
             double d_BinWidth = ms32_FftSize > 0 ? md_Rate / ms32_FftSize : 0;
-            mi_Waterfall.SetData(i_Amps, i_Times, d_BinWidth, md_Rate, MaxRows, int.Parse(mi_ComboRange.Text.Split(' ')[0]));
+            mi_Waterfall.SetData(i_Amps, i_Times, d_BinWidth, md_Rate, MaxRows, ColorRange);
         }
 
         // =====================================================================================================
@@ -547,7 +607,7 @@ namespace Operations
 
         /// <summary>
         /// Saves the collected spectra as CSV matrix: one row per spectrum (oldest first), one column per frequency.
-        /// The unit depends on the Scale (dBV RMS or Volt peak).
+        /// The unit depends on the Scale (dBV RMS or Volt peak, dBFS or full scale peak).
         /// </summary>
         void OnExportMatrix(object sender, EventArgs e)
         {
@@ -580,18 +640,18 @@ namespace Operations
         /// </summary>
         public int ExportMatrix(String s_Path)
         {
-            bool   b_Db       = mi_ComboScale.Text == SCALE_DB;
+            bool   b_Db       = ShowDb;
             double d_BinWidth = md_Rate / ms32_FftSize;
             int    s32_Bins   = mi_Rows[0].mf_Amp.Length;
             CultureInfo i_Inv = CultureInfo.InvariantCulture;
 
             using (StreamWriter i_Writer = new StreamWriter(s_Path, false, Encoding.UTF8))
             {
-                i_Writer.WriteLine("# Waterfall FFT,{0},CH{1}", ms_Source.Replace(',', ' '), mi_ComboChannel.SelectedIndex + 1);
+                i_Writer.WriteLine("# Waterfall FFT,{0},{1}", mi_Source.Name.Replace(',', ' '), mi_ComboChannel.Text);
                 i_Writer.WriteLine("# Window,{0}", mi_ComboWindow.Text);
                 i_Writer.WriteLine(String.Format(i_Inv, "# Sample rate [Hz],{0:G10},Samples,{1},FFT size,{2},Bin width [Hz],{3:G10}",
                                                  md_Rate, ms32_Samples, ms32_FftSize, d_BinWidth));
-                i_Writer.WriteLine("# Unit,{0}", b_Db ? "dBV (RMS)" : "Volt (peak)");
+                i_Writer.WriteLine("# Unit,{0}", mi_ComboScale.Text);
                 i_Writer.WriteLine("# Rows = spectra (oldest first), columns = frequencies [Hz]");
 
                 StringBuilder i_Line = new StringBuilder("Time,Elapsed [s]");
@@ -609,7 +669,7 @@ namespace Operations
                     for (int k=0; k<s32_Bins; k++)
                     {
                         i_Line.Append(',');
-                        if (b_Db) i_Line.Append(Fourier.ToDbV(i_Row.mf_Amp[k]).ToString("F2", i_Inv));
+                        if (b_Db) i_Line.Append(Fourier.ToDb(i_Row.mf_Amp[k], me_Unit).ToString("F2", i_Inv));
                         else      i_Line.Append(i_Row.mf_Amp[k].ToString("G6", i_Inv));
                     }
                     i_Writer.WriteLine(i_Line.ToString());
@@ -647,6 +707,7 @@ namespace Operations
 
         public event EventHandler ZoomChanged;
         public double MaxFrequency = 0; // displayed without zoom, 0 = Nyquist
+        public Fourier.eUnit Unit = Fourier.eUnit.Volt;
         public double FreqMin { get { return md_FreqMin; } }
         public double FreqMax { get { return md_FreqMax; } }
 
@@ -748,7 +809,9 @@ namespace Operations
             foreach (float[] f_Amp in mi_Amps)
                 foreach (float f in f_Amp)
                     d_Max = Math.Max(d_Max, f);
-            md_DbTop = Math.Ceiling(Fourier.ToDbV(d_Max) / 10) * 10;
+            md_DbTop = Math.Ceiling(Fourier.ToDb(d_Max, Unit) / 10) * 10;
+            if (Unit == Fourier.eUnit.FullScale)
+                md_DbTop = 0; // full scale is a fixed reference
 
             int W = r_Plot.Width;
             int H = ms32_MaxRows;
@@ -775,7 +838,7 @@ namespace Operations
                     for (int k=s32_Bin0[X]; k<=s32_Bin1[X]; k++)
                         f_Max = Math.Max(f_Max, f_Amp[k]);
 
-                    double d_Rel = (Fourier.ToDbV(f_Max) - (md_DbTop - md_DbRange)) / md_DbRange;
+                    double d_Rel = (Fourier.ToDb(f_Max, Unit) - (md_DbTop - md_DbRange)) / md_DbRange;
                     int s32_Idx = (int)(Math.Max(0, Math.Min(1, d_Rel)) * 255);
                     s32_Pixels[R * W + X] = ms32_ColorMap[s32_Idx];
                 }
@@ -833,7 +896,7 @@ namespace Operations
                     g.DrawLine(i_Frame, X, r_Plot.Bottom, X, r_Plot.Bottom + 4);
                     String s_Label = SpectrumFFT.FormatFreq(d_F);
                     SizeF  k_Size  = g.MeasureString(s_Label, i_Font);
-                    float  f_Left  = Math.Min(X - k_Size.Width / 2, r_Plot.Right - k_Size.Width + 4); // do not overlap "dBV"
+                    float  f_Left  = Math.Min(X - k_Size.Width / 2, r_Plot.Right - k_Size.Width + 4); // do not overlap "dBV" / "dBFS"
                     g.DrawString(s_Label, i_Font, i_Text, f_Left, r_Plot.Bottom + 5);
                 }
 
@@ -866,7 +929,7 @@ namespace Operations
                     String s_Label = d_Db.ToString("0", CultureInfo.InvariantCulture);
                     g.DrawString(s_Label, i_Font, i_Text, r_Bar.Right + 3, Y - 7);
                 }
-                g.DrawString("dBV", i_Font, i_Text, r_Bar.Left - 2, r_Bar.Bottom + 5);
+                g.DrawString(Fourier.DbName(Unit), i_Font, i_Text, r_Bar.Left - 2, r_Bar.Bottom + 5);
 
                 // ---- zoom rectangle and mouse readout ----
                 if (ms32_DragX >= 0 && mk_Mouse.X >= 0)
@@ -881,9 +944,9 @@ namespace Operations
                     {
                         double d_F = XToFreq(mk_Mouse.X, r_Plot);
                         int    k   = Math.Max(0, Math.Min(mi_Amps[R].Length - 1, (int)Math.Round(d_F / md_BinWidth)));
-                        String s_Read = String.Format(CultureInfo.InvariantCulture, "{0}   {1}   {2:0.0} dBV",
+                        String s_Read = String.Format(CultureInfo.InvariantCulture, "{0}   {1}   {2:0.0} " + Fourier.DbName(Unit),
                                                       SpectrumFFT.FormatFreq(k * md_BinWidth), mi_Times[R].ToString("HH:mm:ss"),
-                                                      Fourier.ToDbV(mi_Amps[R][k]));
+                                                      Fourier.ToDb(mi_Amps[R][k], Unit));
                         SizeF k_Size = g.MeasureString(s_Read, i_Font);
                         using (Brush i_Back = new SolidBrush(Color.FromArgb(0xC0, 0, 0, 0)))
                             g.FillRectangle(i_Back, r_Plot.Left + 3, r_Plot.Top + 3, k_Size.Width + 4, k_Size.Height);

@@ -788,6 +788,7 @@
     <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/WaterfallFFT.png')">Show Full Size</span></td></tr>
 </table>
 <div>The button <b>Waterfall FFT</b> in the Transfer window of the Hameg oscilloscopes shows how a spectrum changes over time.</div>
+<div>An <a href="#WaterfallAudio">audio interface</a> can also be used as source.</div>
 <div>Click <b>Start</b> and the program repeats these steps in a loop until you click <b>Cancel</b>:</div>
 <ol>
     <li><div><b>Run</b>: the oscilloscope starts a new acquisition.</div>
@@ -864,6 +865,42 @@
     <li><div>The 8 bit A/D converter has a dynamic range of approx 48 dB. Select <b>Colors</b> = 60 dB.</div>
     <li><div>With trigger mode NORM and without a trigger event the memory is not updated and the same spectrum is added again. Use AUTO trigger.</div>
 </ul>
+
+<a name="WaterfallAudio"></a>
+<h3>Waterfall FFT with an Audio Interface</h3>
+
+<div>An audio interface or sound card (e.g. Focusrite Scarlett, MOTU M2 / M4) can be used instead of an oscilloscope.</div>
+<div>Select <b>Audio Interface / Sound Card</b> as Oszi Model in the main window and click <b>Capture</b>. The Waterfall FFT opens directly.</div>
+<div>Additional settings in the toolbar:</div>
+<p>
+<table class="DataTable">
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Channel</td><td>Left or right channel of the stereo input (e.g. input 1 or 2 of the interface).</td></tr>
+<tr><td>Device</td><td>The recording device as listed by Windows, e.g. <i>In 1-2 (MOTU M Series)</i> or <i>Analogue 1 + 2 (Focusrite USB Audio)</i>.<br>
+                       Windows shortens the names to 31 characters.</td></tr>
+<tr><td>Rate</td><td>Sample rate 44100 ... 192000 Hz. The highest frequency is half the sample rate.</td></tr>
+<tr><td>Samples</td><td>Samples per spectrum (2048 ... 65536). More samples give a finer resolution but fewer spectra per second.<br>
+                       Example: 8192 samples at 48 kHz = 5.9 Hz resolution and 5.9 spectra per second.</td></tr>
+</table>
+<p>
+<div>The recording runs continuously: consecutive spectra have no gaps (status bar: <b>Gapless</b>).</div>
+<div>If the computer is too slow to display all spectra, old blocks are skipped and the waterfall stays in real time (status bar: <b>Skipped</b>).</div>
+<div>The samples are recorded as 32 bit float, so the full resolution of a 24 bit converter is preserved (dynamic range more than 100 dB).</div>
+<p>
+<div>The levels are displayed in <b>dBFS</b>: a sine wave with the amplitude of full scale is 0 dBFS. They are not calibrated in Volt,</div>
+<div>because they depend on the gain knob of the interface. The scale always starts at 0 dBFS. Select <b>Colors</b> = 120 dB.</div>
+<p>
+<div><span class="Error">IMPORTANT:</span> Windows converts the sample rate of the device into the selected rate.</div>
+<div>If the device runs with 48 kHz in Windows and you select 96 kHz, there is nothing above 24 kHz in the spectrum.</div>
+<div>Set the same sample rate in the Windows sound settings: <i>Sound &gt; Recording &gt; Properties of the device &gt; Advanced &gt; Default Format</i>.</div>
+<div>The anti-aliasing filter of the converter removes the frequencies close to half the sample rate (e.g. above approx 21 kHz at 48 kHz).</div>
+<p>
+<div><span class="Error">ATTENTION:</span> The inputs of an audio interface are made for audio levels. Do not connect them to mains powered circuits or higher voltages.</div>
+<div>Use an attenuator or a DI box and beware of ground loops through the USB cable.</div>
+<div>Audio interfaces are AC coupled: there is no DC and nothing below approx 10 Hz.</div>
+<p>
+<div>Recordings can also be imported as WAV file with the button <b>Open...</b> in the main window (FFT Spectrum and X/Y Plot).</div>
+<div>The audio input uses the Windows Multimedia API (winmm.dll). It is not available on Linux.</div>
 
 <a name="ScpiLibrary"></a>
 <h3>The SCPI Library for C# Programmers</h3>
