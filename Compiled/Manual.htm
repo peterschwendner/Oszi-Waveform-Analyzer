@@ -286,6 +286,341 @@
 <a name="FFT"></a>
 <h1>FFT Spectrum</h1>
 
+<table class="TblImage">
+    <tr><td><img src="Images/FftSpectrum.png" alt="Oszi Waveform Analyzer - FFT Spectrum" width="458" height="280"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/FftSpectrum.png')">Show Full Size</span></td></tr>
+</table>
+<div>Right-click on the analog signal of a channel and select <b>FFT Spectrum</b> to see which frequencies the signal contains.</div>
+<div>The spectrum opens in a separate window. It is not modal, so you can open multiple spectra and continue working in the main window.</div>
+<div>The screenshot shows a 10 kHz square wave with its odd harmonics at 30, 50, 70 and 90 kHz.</div>
+<p>
+<table class="DataTable">
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Window</td><td><b>Hann</b>: good all-round window.<br>
+                        <b>Blackman-Harris</b>: separates a weak signal close to a strong one (lowest leakage).<br>
+                        <b>Flat Top</b>: measures the <b>amplitude</b> exactly, but frequencies close together are not separated.<br>
+                        <b>Rectangular</b>: no window, only for signals with an integer count of periods in the capture.</td></tr>
+<tr><td>Scale</td><td><b>dBV (RMS)</b>: 0 dBV = 1 Volt RMS, like most oscilloscopes. <b>Volt (peak)</b>: amplitude of a sine wave.</td></tr>
+<tr><td>Range</td><td><b>Entire capture</b> or only the <b>visible screen</b>. Zoom into the signal in the main window to analyze only a part of it.<br>
+                       <b>Cursor → mouse</b>: the range between the cursor and the position where you right-clicked (see <a href="#XYPlot">X/Y Plot</a>).</td></tr>
+<tr><td>Log frequency</td><td>Logarithmic frequency axis. Useful if the sample rate is much higher than the signal frequency.</td></tr>
+<tr><td>Remove DC</td><td>Removes the average voltage, otherwise the DC component may hide low frequencies.</td></tr>
+<tr><td>Export CSV</td><td>Saves frequency, amplitude in Volt and in dBV of all frequency bins.</td></tr>
+<tr><td>Peaks → Decoder tab</td><td>Writes the 20 strongest peaks as a table into the tab <b>Decoder</b> of the main window:<br>
+                       frequency, dBV, Volt peak, Volt RMS, level relative to the strongest peak and the number of the harmonic.<br>
+                       The timestamp jumps to the analyzed signal. The table can be saved as RTF file like a decoder result.<br>
+                       This replaces the result of a decoder that was displayed before in this tab.</td></tr>
+</table>
+<p>
+<div>The 5 strongest peaks are marked and listed in the upper right corner.</div>
+<div>Their frequency is interpolated between the FFT bins and is much more accurate than the bin distance.</div>
+<div>Move the mouse over the spectrum to see frequency and level. Drag with the left mouse button to <b>zoom</b> a frequency range. Double-click to reset the zoom.</div>
+<p>
+<div>The status bar shows the <b>resolution</b> (sample rate / count of samples). Two frequencies closer than this cannot be separated.</div>
+<div>The highest frequency is half the sample rate (Nyquist). A longer capture gives a finer resolution, a faster sample rate a higher maximum frequency.</div>
+<p>
+<div><span class="Error">ATTENTION:</span> An 8 bit oscilloscope has a dynamic range of approx 48 dB.</div>
+<div>Everything more than approx 50 dB below the strongest signal is quantization noise of the A/D converter.</div>
+<div>The FFT uses at most 4 Mega samples. For longer captures zoom in and select <b>Visible screen</b>.</div>
+
+
+<a name="XYPlot"></a>
+<h1>X/Y Plot</h1>
+
+<table class="TblImage">
+    <tr><td><img src="Images/XYPlot.png" alt="Oszi Waveform Analyzer - X/Y Plot" width="318" height="300"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/XYPlot.png')">Show Full Size</span></td></tr>
+</table>
+<div>Right-click on the analog signal of a channel and select <b>X/Y Plot</b> to display one channel versus another channel.</div>
+<div>This works like the XY mode of an oscilloscope, but with a capture that was recorded in normal Yt mode.</div>
+<div>So you can capture both channels and decide later to look at them as X/Y (Lissajous figure).</div>
+<p>
+<div>Select the channels for the X and Y axis and the range (entire capture or visible screen).</div>
+<p>
+<div>To display an exact <b>time range</b>, use the <a href="#MeasureTime">cursor</a>:</div>
+<ol>
+<li><div>Right-click at the start of the range and select <b>Set the cursor to the mouse position</b>.</div>
+<li><div>Right-click at the end of the range and select <b>X/Y Plot</b> (or <b>FFT Spectrum</b>).</div>
+</ol>
+<div>The window opens with the range <b>Cursor → mouse</b>, which shows the duration of the range.</div>
+<div>While an X/Y or FFT window is open, the analyzed range is <b>shaded</b> in the main window in the color of the channel.</div>
+<div>So you always see which part of the signal the window shows. The shading disappears when the window is closed.</div>
+<div>This is useful for oscilloscope music, where each image is drawn in a few milliseconds and the images change quickly.</div>
+<p>
+<div><b>Connect samples</b> draws lines between the samples, which is important if there are only few samples per period.</div>
+<div><b>Same Volt/Div</b> uses the same scale for both axes, so that a circle stays a circle.</div>
+<div>The brightness of each pixel shows how often the trace passes through it, like the phosphor of an analog oscilloscope.</div>
+<p>
+<div>The status bar shows the peak-to-peak voltages and the <b>phase</b> between the channels, calculated from their correlation.</div>
+<div>The phase is only correct if both signals have the <b>same frequency</b>. It is always between 0° and 180°: +45° and -45° show the same value.</div>
+<div>The screenshot shows two sine waves with a phase shift of 45°.</div>
+<p>
+<div>The demo file <b>X-Y Plot Square 1 kHz.oszi</b> contains the channels X and Y which draw a <b>square</b> in the X/Y Plot (phase 90°).</div>
+<div>Its channels are trapezoid waves, so they are also a good test for the <a href="#FFT">FFT Spectrum</a>:</div>
+<div>the fundamental is 1.146 V at 1 kHz and the odd harmonics 3, 5, 7, 9 kHz fall off with 1/n² (1/9, 1/25, 1/49, 1/81).</div>
+
+
+<a name="SplitHalfDuplex"></a>
+<h1>Splitting a Half Duplex Communication</h1>
+
+<div>If you have a half duplex UART communication like for example a pinpad with a chipcard,</div>
+<div>you see on the oscilloscope the Rx and the Tx data alternatingly but you will not be able to see</div>
+<div>which bytes were sent by the pinpad and which bytes were sent by the smartcard.</div>
+<p>
+<div>How is it possible to separate a half duplex data transfer on one wire into Rx and Tx channels?</div>
+<div>It is possible with 2 additional diodes and a resistor and Oszi Waveform Analyzer.</div>
+<p>
+<img src="Images/DiagramAnalyzeHalfduplex.png" class="Img" width="736" height="370" alt="Oszi Waveform Analyzer - Separate half duplex transfer">
+<p>
+<div>Open the UART demo file <b>ISO 7816 Halfduplex Signal with Noise 51182 Baud.oszi</b></div>
+<div>It contains the data transfer of an Ingenico pinpad reading a VISA credit card over diodes.</div>
+<div>There is a lot of noise on the signal that comes from the 4.76 MHz clock which the pinpad sends to the card.</div>
+<div>Apply a <b>noise suppression</b> of 22% and 13 repetitions to both channels and you get this:</div>
+<p>
+<img src="Images/HalfduplexWithDiodes.png" width="606" height="223" alt="Oszi Waveform Analyzer - Half Duplex with diodes">
+<p>
+<div>While one side pulls the data line to 0 Volt, the other side sees a voltage of 0.6 Volt.</div>
+<div>The 0.6 Volt difference is the forward voltage of the 1N4148.</div>
+<p>
+<img src="Images/HalfduplexSubtraction.png" width="606" height="223" alt="Oszi Waveform Analyzer - Half Duplex Difference">
+<p>
+<div>Create a new channel using Math Operation <b>Subtract Channel A - B</b>.</div>
+<div>Now you get a 0.6 Volt negative signal for the pinpad and positive for the smartcard.</div>
+<p>
+<img src="Images/HalfduplexAD.png" width="606" height="277" alt="Oszi Waveform Analyzer - Half Duplex A/D">
+<p>
+<div>Then apply an A/D conversion once at +0.26 Volt and once at -0.28 Volt threshold.</div>
+<p>
+<img src="Images/HalfduplexDecoded.png" width="606" height="177" alt="Oszi Waveform Analyzer - Half Duplex decoded">
+<p>
+<div>Use menu option <b>Invert channel</b> to invert the smartcard channel.</div>
+<div>Finally select menu option <b>Decode asynchronous data</b>, then enable <b>Decode two halfduplex channels</b>.</div>
+<div>Set Baudrate: 51182 baud, Startbit: Low, Parity: Even, Stopbits: Two.</div>
+<div>Mission accomplished: Now you see the bytes from the pinpad and the smartcard separated.</div>
+
+
+
+<a name="DecodeAsync"></a>
+<h1>Decode Asynchronous Data</h1>
+
+<div>UART communication in all it's derivates like RS232, RS422, RS485, Smartcard,... either half duplex or full duplex</div>
+<div>can be decoded after A/D conversion. The result is printed as coloured richtext output.</div>
+<p>
+<div>Additionally to decoding the bytes you can implement <b>Post Decoders</b> for specific UART traffic that show the meaning of the bytes.</div>
+<div>I have designed Oszi Waveform Analyzer from the first day to be <b>easily expandable</b>.</div>
+<div>You can write your own Post Decoder class for UART, I²C Bus and SPI Bus and register it in the <b>PostDecoderManager</b>.</div>
+
+<a name="PostISO7816"></a>
+<h3>Post Decoder ISO 7816</h3>
+<div>The post decoder ISO 7816 decodes the communication between a pinpad and a smartcard.</div>
+<div><i>The original example capture of a pinpad reading a credit card is not included in this redistribution.</i></div>
+<p>
+<div><i>Illustration removed from this redistribution; see the textual description.</i></div>
+<p>
+<div>After the pinpad has pulled the Reset line the card sends autonomously the ATR (Answer to Reset) packet.</div>
+<div>The pinpad sends a clock of 4.76 MHz and both start communication with a baudrate of 1/372 of the clock = 12795 baud.</div>
+<div>Then pinpad and card switch to a baudrate of 4/372 of the clock = 51182 Baud which the card requests in it's ATR packet.</div>
+<div>See <b>ISO 7816-03.pdf</b> in subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a>.</div>
+<div>You must enable the post decoder ISO7618 which calculates and switches the baudrate otherwise you will see a lot of errors.</div>
+
+<a name="PostISO14230"></a>
+<h3>Post Decoder ISO 14230</h3>
+<div>The next screenshot shows the UART demo file <b>ISO 14230 K-Line Bus-Init 10400 Baud.oszi</b>.</div>
+<div>It is captured from a motorbike ECU (Engine Control Unit). For more info read the help file of my software</div>
+<div> <a href="https://netcult.ch/elmue/Hud%20Ecu%20Hacker/#ISO_14230" target="_blank">HUD ECU Hacker</a> which communicates over K-Line and CAN bus with ECU's from motorbikes, cars, trucks and vessels.</div>
+<div>The white lines have been added by the Post Decoder.</div>
+<p>
+<img src="Images/PostDecoderIso14230.png" width="731" height="393" alt="Oszi Waveform Analyzer - ISO 14230 decoder">
+<p>
+<p>
+<div><i>The example captures of RS232 commands sent from a POS (Point of Sale) to a pinpad are not included in this redistribution.</i></div>
+
+
+<a name="DecodeSync"></a>
+<h1>Decode Synchronous Data</h1>
+
+<div>Synchronous data refers to anything that has a Clock and a Data line.</div>
+<div>This may be a half-duplex or full-duplex <b>SPI bus</b> or a chip with a simple shift register.</div>
+<div>For example the Sanyo LC75821 is an LCD display driver with a 56 bit shift register:</div>
+<div>Oszi Waveform Analyzer supports packets up to 64 bit. If you have longer data you must decode them as bytes.</div>
+
+<p>
+<div><i>Illustration removed from this redistribution; see the textual description.</i></div>
+<p>
+<div>Open the SPI demo file <b>ISO 14443 RFID Mifare Card with PN532 over SPI Mode 0.oszi</b></div>
+<div>which shows the SPI bus communication between a Teensy processor and a Philips PN532 chip.</div>
+<div>The <b>PN532</b> is an RFID and NFC transmission chip that can read and write RFID cards at 13.56 MHz.</div>
+<div>I use this chip in my project <a href="https://netcult.ch/elmue/RFID-Secure-Doorlock" target="_blank">RFID Secure Doorlock</a>, a high-security door opener with RFID cards using DES or AES encryption.</div>
+<div>In this project you find the detailed description and the programming manual of the PN532.</div>
+<p>
+<img src="Images/SpiDecoded.png" width="683" height="274" alt="Oszi Waveform Analyzer - SPI Bus decoder">
+
+<a name="PostPN532_SPI"></a>
+<h3>Post Decoder PN532 over SPI</h3>
+
+<div>You can implement <b>Post Decoders</b> for specific chips which process the SPI data and show the meaning of the bytes.</div>
+<div>I implemented this for the Philips PN532:</div>
+<p>
+<img src="Images/PostDecoderPn532Spi.png" width="683" height="447" alt="Oszi Waveform Analyzer - PN532 SPI decoder">
+<p>
+<div>Here you see the PN532 reading an RFID Mifare Classic card.</div>
+<div>The white lines have been added by the Post Decoder.</div>
+
+
+
+<a name="DecodeI2C"></a>
+<h1>Decode I²C Bus</h1>
+
+<div>The same Philips PN532 chip from the last chapter can also be configured to operate over I²C Bus.</div>
+<div>Open the I²C demo file <b>ISO 14443 RFID Mifare Card with PN532 over I2C.oszi</b></div>
+<p>
+<img src="Images/I2cDecoded.png" width="881" height="153" alt="Oszi Waveform Analyzer - I2C Bus decoder">
+
+
+<a name="PostPN532_I2C"></a>
+<h3>Post Decoder PN532 over I²C</h3>
+
+<div>You can implement <b>Post Decoders</b> for specific chips which process the I²C data and show the meaning of the bytes.</div>
+<div>I implemented this for the Philips PN532:</div>
+<p>
+<img src="Images/PostDecoderPn532I2c.png" width="683" height="446" alt="Oszi Waveform Analyzer - I2C Bus decoder">
+<p>
+<div>Here you see the PN532 reading an RFID Mifare Desfire card.</div>
+<div>The white lines have been added by the Post Decoder.</div>
+
+<a name="DecodeUSB"></a>
+<h1>Decode USB Bus</h1>
+
+<div>The USB Full Speed decoder analyzes captures from the D+ and D- wires of a USB cable.</div>
+<div>It decodes the USB tokens, detects several errors, verifies the CRC's, and decodes SETUP packets.</div>
+<p>
+<img src="Images/UsbFullspeedOszi.png" width="764" height="415" alt="Oszi Waveform Analyzer - USB Full speed decoder">
+<p>
+<div>Here you see a host IN request for endpoint 1 of the USB device with bus address 3. The devices responds with NAK.</div>
+<p>
+<div><span class="Error">ATTENTION:</span></div>
+<div>When you capture on a USB cable you do not only see the USB traffic with the connected USB device.</div>
+<div>All traffic from the host computer comes from the USB Root Hub on the mainboard or an external USB hub.</div>
+<div>The USB hubs do <b>not filter</b> host requests. If you connect the oscilloscope to the USB cable of the device 3</div>
+<div>you will also see <b>host requests</b> to USB devices with addresses 2, 4, 7,... that are connected to the same hub.</div>
+<div>But you will not see the <b>responses</b> of any other device than device 3. This may be confusing in the beginning.</div>
+<p>
+<img src="Images/UsbFullspeedDevices.png" width="770" height="378" alt="Oszi Waveform Analyzer - USB Full speed decoder">
+<p>
+<div>Oszi Waveform Analyzer detectes automatically to which device you have connected and decodes only traffic with this device.</div>
+<p>
+<img src="Images/UsbFullspeedDecode.png" width="869" height="216" alt="Oszi Waveform Analyzer - USB Full speed decoder">
+<div>Read Part 3 in the excellent <b>USB Tutorial.chm</b> in subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a>.</div>
+
+
+<a name="DecodeCAN"></a>
+<h1>Decode CAN Bus</h1>
+
+<div>The CAN bus decoder is the most complex of all decoders (1100 lines of code).</div>
+<div>It can also decode <b>CAN FD</b> (Flexible Datarate) with two different baudrates and up to 64 data bytes per packet.</div>
+<div>It has a fully implemented <b>error detection</b> (timing errors, bit stuffing errorrs, parity errors, CRC errors,...)</div>
+<div>It is a great help if you have to analyze errors in a CAN network.</div>
+<p>
+<img src="Images/CanFdBaudrateSwitch.png" width="856" height="495" alt="Oszi Waveform Analyzer - CAN FD Packet BRS bit">
+<p>
+<div>When decoding CAN Classic you don't have to care about the samplepoint.</div>
+<div>But the CAN FD protocol switches the baudrate at the <b>samplepoint</b> of the BRS (Baud Rate Switch) bit.</div>
+<div>This makes the samplepoint crucial for a correct decoding.</div>
+<div>You cannot decode CAN FD packets if you don't know the samplepoint of the CAN network.</div>
+<div>The CAN network may even use a different samplepoint for each baudrate.</div>
+<p>
+<img src="Images/CanFdSamplepoint.png" width="625" height="158" class="Img" alt="Oszi Waveform Analyzer - CAN Bus Samplepoint">
+<p>
+<div>This image is from the file <b>Bosch CAN FD.pdf</b> that you find in subfolder <a href="https://github.com/Elmue/Oszi-Waveform-Analyzer/tree/main/Documentation" target="_blank">Documentation</a>.</div>
+<div>In this example one bit of a CAN packet is divided into 15 time quantums.</div>
+<div>The samplepoint is after the eleventh quantum which results in a samplepoint at 11/15 = 73.33%</div>
+<div>The BRS bit uses the standard baudrate until the samplepoint and the rest of the bit uses the CAN FD baudrate.</div>
+<p>
+<div><b><u>Example:</u></b></div>
+<div>Standard baudrate = 500 kBaud = 2 µs / bit</div>
+<div>CAN FD baudrate = 2 MBaud = 500 ns / bit</div>
+<div>Both samplepoints = 50.0% &rarr; BRS bit = 50.0% of 2 µs + 50.0% of 500 ns = 1000 + 250 &nbsp;= 1250 ns</div>
+<div>Both samplepoints = 87.5% &rarr; BRS bit = 87.5% of 2 µs + 12.5% of 500 ns = 1750 + 62.5 = 1812.5 ns</div>
+<div>As you see the difference is 562.5 ns which is more than the length of one entire bit.</div>
+<div>If you enter an invalid samplepoint, all bits after the BRS bit will be decoded wrongly.</div>
+<p>
+<img src="Images/CorrectingSamplepoint.png" width="512" height="167" alt="Oszi Waveform Analyzer - CAN Bus Samplepoint">
+<p>
+<div>If you don't know the samplepoint of your CAN network, Oszi Waveform Analzyer helps you to find it.</div>
+<div>When you enter the wrong samplepoint you will see a lot of decoding errors.</div>
+<div>Adjust the samplepoint until the <b>real</b> end and the <b>calculated</b> end of the BRS bit match.</div>
+<div>The calculated end of the BRS and the DL1 bits, where baudrate is switched, are displayed with a <b>magenta line</b>.</div>
+<div>If the samplepoint is correct the magenta line will be covered by the <b>white line</b> of the start of the next bit.</div>
+<div>The <b>ESI</b> (Error State Indicator) bit after the BRS bit is normally low, except the CAN controller reports errors.</div>
+<div>CAN nodes and Oszi Waveform Analyzer <b>re-synchronize</b> on received edges from recessive to dominant.</div>
+<p>
+<img src="Images/CanDecoderResult.png" width="529" height="431" alt="Oszi Waveform Analyzer - CAN Bus Samplepoint">
+<p>
+<div>This is the decoder result of the J1939 CAN bus traffic of a <a href="https://kenworth.com" target="_blank">Kenworth truck</a>.</div>
+<p>
+<div>If you work with CAN bus I highly recommend that you download my software <a href="https://netcult.ch/elmue/Hud%20Ecu%20Hacker" target="_blank">HUD ECU Hacker</a></div>
+<div>which also decodes <b>ISO15765</b> and <b>J1939</b> and has a <b>CAN bus debugger</b> where you can send packets manually.</div>
+<div>It supports multiple cheap CAN bus adapters ($20 USD).</div>
+<div>You can even write <b>macro scripts</b> to transmit / receive and decode CAN bus traffic.</div>
+
+
+<a name="DecodeMagStripe"></a>
+<h1>Decode Magnetic Stripe Tracks</h1>
+
+<div>You think the magnetic stripe on cards is from the past and obsolete?</div>
+<div>It may be in your country, but I can assure you that still in the year 2025 it is used in other parts of the world.</div>
+<p>
+<div>Who needs this if there are magnetic stripe readers ready to buy?</div>
+<div>I work on an automation robot for QA of POS (Point of Sale) and have to simulate a user sliding a card through a card reader.</div>
+<div>A special hardware of my robot injects a magnetic field for each track with 3 tiny coils inside the card slot.</div>
+<p>
+<div>The analog signals of the magnetic stripe tracks are captured with this amplifier:</div>
+<div><i>The original example capture of a bank card is not included in this redistribution.</i></div>
+<p>
+<img src="Images/DiagramMagneticTrackAmplifier.png" width="443" height="336" class="Img" alt="Oszi Waveform Analyzer - Magnetic Stripe Track Amplifier">
+<p>
+<div>The MagStripe decoder was a challenge, not because of the decoding, but because the A/D conversion of the analog signals is difficult.</div>
+<div>The analog sine wave must be converted into a square wave of 50% duty cycle, otherwise the decoder will not work.</div>
+<div>The track data is encoded using 2 frequencies, one beeing the double of the other.</div>
+<div>One half period of the slow frequency encodes a binay 'zero' and an entire period of the high frequency encodes a binay 'one'.</div>
+<div>The <a href="#AD_Conversion">A/D conversion</a> must be very precise because a half period already encodes one bit.</div>
+<div>The analog signal is dancing up and down. A fix threshold does not work here.</div>
+<div>Here you see a perfect conversion of Track 1 using Adaptive A/D:</div>
+<p>
+<div><i>Illustration removed from this redistribution; see the textual description.</i></div>
+<div>Track 2 is the most difficult track. Oszi Waveform Analzyer tries Min/Max A/D conversion if Adaptive A/D does not work.</div>
+<div>The frequency of Track 1 is 14/5 times higher than the frequency of Track 2.</div>
+<div>Additionally the baudrate is varying, it depends on the manual <b>sliding speed</b>. The decoder must permanently re-synchronize to the signal.</div>
+<div>Additionally the entire data may come reverse, depending on the <b>sliding direction</b> of the card.</div>
+<p>
+<div><i>Illustration removed from this redistribution; see the textual description.</i></div>
+<p>
+<div>The Magnetic Stripe decoder shows the decoded characters of each track. Track 3 is empty on bank cards.</div>
+
+<a name="DecodeIR"></a>
+<h1>Decode Infrared Remote Control</h1>
+
+<div>I implemented this decoder because I already had the code ready in my project <a href="https://netcult.ch/elmue/IR-Computer-Remote-Control" target="_blank">Infrared Remote Control for the Computer</a></div>
+<div>which can control the MP3 player on the computer with the IR remote control of a TV, amplifier, DVD player, SAT tuner or whatever. </div>
+<div>It connects over USB to the computer and injects keystrokes which control any music player that can be controlled by the keyboard.</div>
+<p>
+<div>It uses a universal decoder which first detects the length of one bit and then measures how many bits are High or Low.</div>
+<div>The bit lengths are converted into characters ("A" for 1 bit, "B" for 2 bit,...) and then a CRC is calculated for each button.</div>
+<div>This works with ANY remote control, no matter what baudrate or data format.</div>
+<p>
+<img src="Images/InfraredDecoder.png" width="739" height="65" alt="Oszi Waveform Analyzer - Infrared Remote Control Decoder">
+<p>
+<div><i>Illustration removed from this redistribution; see the textual description.</i></div>
+
+
+<a name="WaveformTransfer"></a>
+<h1>Waveform Transfer to the Computer</h1>
+
+<a name="Ultrascope"></a>
+<h3>Rigol UltraScope</h3>
+
+<div>Once upon a time I used <b>UltraScope</b> to transfer captures to the computer.</div>
+<p>
 <div><i>Third-party software screenshot removed from this redistribution.</i></div>
 <div><b>Rigol UltraScope</b> requires that you first install the huge <b>UltraSigma</b> (<b>530 Megabyte</b> installer).</div>
 <div>UltraScope is nothing more than a remote control of the oscillosope.</div>
@@ -669,7 +1004,7 @@
 <li><div>Although this is already a very good compression, you can additionaly apply a <b><u>ZIP Compression</u></b>.</div>
     <div>This decreases the file size even more.</div>
     <div>Look at the demo OSZI files which are installed with the program and study their file size.</div>
-    <div>The file <b>ISO 7816 Smartcard 12795 + 51182 Baud - Clk 4,76 MHz.oszi</b> has 3 channels with 2 million samples and occupies 5 kB.</div>
+    <div>For example a smartcard capture with 3 channels and 2 million samples occupies only 5 kB.</div>
 </ul>
 <div>The OSZI file can store up to <b>255 cannels</b>. Each channel can have analog data or digital data or both.</div>
 <div>Also the <b>names</b> are stored that you have assigned to the channels.</div>
