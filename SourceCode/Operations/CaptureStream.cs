@@ -61,9 +61,12 @@ namespace Operations
     /// for the Waterfall FFT or the Live X/Y display.
     /// The playback runs in real time or with another speed. "Max" (Waterfall FFT only) calculates as fast as possible.
     ///
-    /// Sound: WAV files and audio recordings are played on the audio output at speed 1 x.
+    /// Sound: at speed 1 x the capture is played on the audio output.
     /// Then the played samples of the audio output are the clock of the display (synchronous picture and sound).
     /// Without sound the clock is a Stopwatch.
+    /// Captures with an audio sample rate (8 ... 192 kHz) are played directly. Captures of an oscilloscope (up to 10 MSa/s)
+    /// are converted to 48 kHz: each output sample is the average of the source samples in its time slot (suppresses aliasing).
+    /// So a short capture played with Loop sounds with the correct pitch.
     /// </summary>
     public class CaptureStream : IWaterfallSource, IXYStream
     {
@@ -88,7 +91,9 @@ namespace Operations
         bool          mb_SoundOn;        // the audio output is the clock
         bool          mb_Playing;        // between Start() and Stop()
         String        ms_SoundError;
-        long          ms64_OutPos;       // next sample of the audio output (background thread)
+        double        md_OutPos;         // next source sample of the audio output (background thread)
+        int           ms32_OutRate;      // sample rate of the audio output
+        double        md_OutStep;        // source samples per output sample (1 = no conversion)
         volatile bool mb_OutLoop;
         int           ms32_OutLeft;      // index in mi_Analog
         int           ms32_OutRight;
@@ -124,11 +129,14 @@ namespace Operations
             }
             ms32_StartX = Math.Max(0, mi_Analog.IndexOf(i_Clicked));
 
-            // Any capture with an audio sample rate can be played (a WAV file, an audio recording, also saved as OSZI file).
-            // Samples above full scale (e.g. Volt) are attenuated, so that the sound is not clipped.
-            if (md_Rate < 8000 || md_Rate > 192000)
+            // Audio sample rates are played directly, others are converted to 48 kHz
+            ms32_OutRate = (md_Rate >= 8000 && md_Rate <= 192000) ? (int)Math.Round(md_Rate) : 48000;
+            md_OutStep   = md_Rate / ms32_OutRate;
+
+            // Above 10 MSa/s the conversion would need too much CPU (more than 200 samples per output sample)
+            if (md_Rate > 10e6)
             {
-                ms_NoSound = "only 8 ... 192 kHz";
+                ms_NoSound = "max. 10 MSa/s";
             }
             else
             {
@@ -138,7 +146,11 @@ namespace Operations
                     foreach (float f_Value in i_Chan.mf_Analog)
                         f_Peak = Math.Max(f_Peak, Math.Abs(f_Value));
                 }
-                if (f_Peak > 1)
+                // Full scale (WAV file, audio recording): original level, attenuated only if it would clip.
+                // Volt (oscilloscope): normalized to half full scale (-6 dBFS).
+                if (!mi_Capture.mb_FullScale && f_Peak > 0)
+                    mf_SoundGain = 0.5f / f_Peak;
+                else if (f_Peak > 1)
                     mf_SoundGain = 1 / f_Peak;
             }
         }
@@ -263,7 +275,7 @@ namespace Operations
             get
             {
                 if (mb_SoundOn)
-                    return md_Anchor + mi_Output.PlayedSamples;
+                    return md_Anchor + mi_Output.PlayedSamples * md_OutStep;
                 return md_Anchor + mi_Watch.Elapsed.TotalSeconds * md_Rate * Speed;
             }
         }
@@ -283,11 +295,11 @@ namespace Operations
                 ms32_OutLeft  = 0;
                 ms32_OutRight = Math.Min(1, mi_Analog.Count - 1); // mono --> both sides
             }
-            ms64_OutPos   = ms64_Pos;
+            md_OutPos     = ms64_Pos;
             ms_SoundError = null;
             try
             {
-                mi_Output.Start(SampleRate, FillOutput);
+                mi_Output.Start(ms32_OutRate, FillOutput);
                 mb_SoundOn = true;
             }
             catch (Exception Ex)
@@ -302,7 +314,7 @@ namespace Operations
             if (mb_SoundOn)
             {
                 // The clock continues with the Stopwatch at the position that has been played
-                md_Anchor += mi_Output.PlayedSamples;
+                md_Anchor += mi_Output.PlayedSamples * md_OutStep;
                 mi_Output.Stop();
                 mb_SoundOn = false;
             }
@@ -318,15 +330,46 @@ namespace Operations
             int     s32_Len = mi_Capture.ms32_Samples;
             for (int S=0; S<s32_Count; S++)
             {
-                if (ms64_OutPos >= s32_Len)
+                if (md_OutPos >= s32_Len)
                 {
                     if (!mb_OutLoop)
                         return S; // the rest is silence
-                    ms64_OutPos = 0;
+                    md_OutPos -= s32_Len;
                 }
-                f_Left [S] = f_SrcL[ms64_OutPos] * mf_SoundGain;
-                f_Right[S] = f_SrcR[ms64_OutPos] * mf_SoundGain;
-                ms64_OutPos ++;
+
+                float f_L, f_R;
+                if (md_OutStep == 1)
+                {
+                    int s32_Pos = (int)md_OutPos;
+                    f_L = f_SrcL[s32_Pos];
+                    f_R = f_SrcR[s32_Pos];
+                }
+                else if (md_OutStep < 1) // upsampling: linear interpolation
+                {
+                    int   s32_Pos  = (int)md_OutPos;
+                    int   s32_Next = (s32_Pos + 1) % s32_Len;
+                    float f_Frac   = (float)(md_OutPos - s32_Pos);
+                    f_L = f_SrcL[s32_Pos] + (f_SrcL[s32_Next] - f_SrcL[s32_Pos]) * f_Frac;
+                    f_R = f_SrcR[s32_Pos] + (f_SrcR[s32_Next] - f_SrcR[s32_Pos]) * f_Frac;
+                }
+                else // downsampling: average of all source samples in the time slot of this output sample
+                {
+                    int s32_First = (int)md_OutPos;
+                    int s32_Last  = (int)(md_OutPos + md_OutStep);
+                    float f_SumL = 0, f_SumR = 0;
+                    for (int P=s32_First; P<s32_Last; P++)
+                    {
+                        int s32_Pos = P % s32_Len;
+                        f_SumL += f_SrcL[s32_Pos];
+                        f_SumR += f_SrcR[s32_Pos];
+                    }
+                    int s32_Count2 = Math.Max(1, s32_Last - s32_First);
+                    f_L = f_SumL / s32_Count2;
+                    f_R = f_SumR / s32_Count2;
+                }
+                f_Left [S] = f_L * mf_SoundGain;
+                f_Right[S] = f_R * mf_SoundGain;
+                md_OutPos += md_OutStep;
             }
             return s32_Count;
         }
