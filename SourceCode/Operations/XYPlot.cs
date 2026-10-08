@@ -256,9 +256,12 @@ namespace Operations
             }
 
             Text = "X/Y Plot  —  X: " + i_ChanX.ms_Name + "   Y: " + i_ChanY.ms_Name;
-            ShowRange(this, i_ChanX, mi_ComboRange.Text == RANGE_ALL, s32_Start, s32_End, OsziPanel.GetChannelColor(i_ChanY));
+
+            // The color of the X channel: this is the channel that the user has right-clicked (like in the FFT Spectrum)
+            Color c_Color = OsziPanel.GetChannelColor(i_ChanX);
+            ShowRange(this, i_ChanX, mi_ComboRange.Text == RANGE_ALL, s32_Start, s32_End, c_Color);
             mi_View.SetData(i_ChanX.mf_Analog, i_ChanY.mf_Analog, s32_Start, s32_End,
-                            mi_CheckLines.Checked, mi_CheckEqual.Checked, OsziPanel.GetChannelColor(i_ChanY));
+                            mi_CheckLines.Checked, mi_CheckEqual.Checked, c_Color);
 
             double d_Corr = Correlation(i_ChanX.mf_Analog, i_ChanY.mf_Analog, s32_Start, s32_End);
             String s_Phase = double.IsNaN(d_Corr) ? "?" : (Math.Acos(d_Corr) * 180 / Math.PI).ToString("0.0", CultureInfo.InvariantCulture) + "°";
