@@ -959,7 +959,8 @@
 <tr><td>Sound</td><td>Plays the file on the Windows default audio output at speed <b>1 x</b>. The picture is synchronous with the sound:<br>
                        the played samples of the audio output are the clock of the display. At other speeds there is no sound.<br>
                        The Waterfall FFT plays the first two channels (a stereo file), the Live X/Y plays the channels X and Y.<br>
-                       Only for WAV files and audio recordings (8 ... 192 kHz). Captures of an oscilloscope are not played.</td></tr>
+                       Only for captures with an audio sample rate (8 ... 192 kHz), otherwise the checkbox shows the reason.<br>
+                       Samples above full scale (e.g. Volt) are attenuated so that the sound is not clipped. Speed, Loop and Sound can be changed while playing.</td></tr>
 <tr><td>Samples</td><td>(Waterfall FFT) Samples per spectrum. The status bar shows the position in the file.</td></tr>
 <tr><td>X, Y</td><td>(Live X/Y) The channels for X and Y.</td></tr>
 </table>

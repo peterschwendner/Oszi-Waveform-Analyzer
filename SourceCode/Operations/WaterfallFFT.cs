@@ -103,7 +103,8 @@ namespace Operations
 
         IWaterfallSource mi_Source;
         Fourier.eUnit    me_Unit;
-        List<Control>    mi_SourceControls = new List<Control>();
+        List<Control>    mi_SourceControls  = new List<Control>();
+        List<Control>    mi_DisabledByLoop  = new List<Control>(); // re-enabled when the loop has finished
         List<Row>    mi_Rows = new List<Row>(); // newest first
         double       md_Rate;
         int          ms32_FftSize;
@@ -374,8 +375,18 @@ namespace Operations
             mi_BtnStart.Text       = "Cancel";
             mi_BtnStart.BackColor  = Color.Salmon;
             mi_ComboChannel.Enabled = false;
+
+            // e.g. the device of an audio input cannot be changed while recording.
+            // Controls with the Tag "KeepEnabled" (e.g. speed and sound of a file) can be changed while playing.
+            mi_DisabledByLoop.Clear();
             foreach (Control i_Ctrl in mi_SourceControls)
-                i_Ctrl.Enabled = false;
+            {
+                if (i_Ctrl.Enabled && !"KeepEnabled".Equals(i_Ctrl.Tag))
+                {
+                    i_Ctrl.Enabled = false;
+                    mi_DisabledByLoop.Add(i_Ctrl);
+                }
+            }
 
             int s32_Channel  = mi_ComboChannel.SelectedIndex + 1;
             int s32_Steps    = 0;
@@ -435,7 +446,7 @@ namespace Operations
             mi_Source.Stop();
 
             mb_Running = false;
-            foreach (Control i_Ctrl in mi_SourceControls)
+            foreach (Control i_Ctrl in mi_DisabledByLoop)
                 i_Ctrl.Enabled = true;
             mi_BtnStart.Text        = "Start";
             mi_BtnStart.BackColor   = Color.PaleGreen;

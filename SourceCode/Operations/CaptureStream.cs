@@ -92,6 +92,11 @@ namespace Operations
         volatile bool mb_OutLoop;
         int           ms32_OutLeft;      // index in mi_Analog
         int           ms32_OutRight;
+        float         mf_SoundGain = 1;  // < 1 if the samples exceed full scale (e.g. Volt)
+        String        ms_NoSound;        // the reason why the capture cannot be played, null = OK
+
+        // The Waterfall FFT does not disable these controls while it runs
+        const String KEEP_ENABLED = "KeepEnabled";
 
         long          ms64_Pos;          // next sample to play
         double        md_Played;         // seconds played since the start (also over loops)
@@ -118,6 +123,24 @@ namespace Operations
                     mi_Analog.Add(i_Chan);
             }
             ms32_StartX = Math.Max(0, mi_Analog.IndexOf(i_Clicked));
+
+            // Any capture with an audio sample rate can be played (a WAV file, an audio recording, also saved as OSZI file).
+            // Samples above full scale (e.g. Volt) are attenuated, so that the sound is not clipped.
+            if (md_Rate < 8000 || md_Rate > 192000)
+            {
+                ms_NoSound = "only 8 ... 192 kHz";
+            }
+            else
+            {
+                float f_Peak = 0;
+                foreach (Channel i_Chan in mi_Analog)
+                {
+                    foreach (float f_Value in i_Chan.mf_Analog)
+                        f_Peak = Math.Max(f_Peak, Math.Abs(f_Value));
+                }
+                if (f_Peak > 1)
+                    mf_SoundGain = 1 / f_Peak;
+            }
         }
 
         public int StartChannel
@@ -173,6 +196,7 @@ namespace Operations
             mi_ComboSpeed.Items.AddRange(mb_ForXY ? SPEEDS_XY : SPEEDS_WF);
             mi_ComboSpeed.Text = "1 x";
             mi_ComboSpeed.SelectedIndexChanged += delegate { Restart(); };
+            mi_ComboSpeed.Tag = KEEP_ENABLED;
 
             mi_CheckLoop = new CheckBox();
             mi_CheckLoop.Text     = "Loop";
@@ -180,15 +204,17 @@ namespace Operations
             mi_CheckLoop.Checked  = mb_ForXY;
             mi_CheckLoop.Margin   = new Padding(8, 4, 0, 0);
             mi_CheckLoop.CheckedChanged += delegate { mb_OutLoop = mi_CheckLoop.Checked; };
+            mi_CheckLoop.Tag = KEEP_ENABLED;
             i_Bar.Controls.Add(mi_CheckLoop);
             mb_OutLoop = mi_CheckLoop.Checked;
 
-            // Only audio signals can be played (not the Volt of an oscilloscope with MHz sample rate)
+            // Only signals with an audio sample rate can be played (not an oscilloscope capture with MHz sample rate)
             mi_CheckSound = new CheckBox();
-            mi_CheckSound.Text     = "Sound";
+            mi_CheckSound.Text     = CanPlaySound ? "Sound" : "Sound (" + ms_NoSound + ")";
             mi_CheckSound.AutoSize = true;
             mi_CheckSound.Enabled  = CanPlaySound;
             mi_CheckSound.Checked  = CanPlaySound;
+            mi_CheckSound.Tag      = CanPlaySound ? KEEP_ENABLED : null;
             mi_CheckSound.Margin   = new Padding(8, 4, 0, 0);
             mi_CheckSound.CheckedChanged += delegate { Restart(); };
             i_Bar.Controls.Add(mi_CheckSound);
@@ -196,7 +222,7 @@ namespace Operations
 
         bool CanPlaySound
         {
-            get { return mi_Capture.mb_FullScale && md_Rate >= 8000 && md_Rate <= 192000; }
+            get { return ms_NoSound == null; }
         }
 
         static ComboBox AddCombo(FlowLayoutPanel i_Bar, String s_Label, int s32_Width)
@@ -298,8 +324,8 @@ namespace Operations
                         return S; // the rest is silence
                     ms64_OutPos = 0;
                 }
-                f_Left [S] = f_SrcL[ms64_OutPos];
-                f_Right[S] = f_SrcR[ms64_OutPos];
+                f_Left [S] = f_SrcL[ms64_OutPos] * mf_SoundGain;
+                f_Right[S] = f_SrcR[ms64_OutPos] * mf_SoundGain;
                 ms64_OutPos ++;
             }
             return s32_Count;
