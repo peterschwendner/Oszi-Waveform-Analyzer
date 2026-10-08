@@ -231,7 +231,7 @@ namespace Transfer
         public void AddControls(FlowLayoutPanel i_Bar)
         {
             mi_ComboDevice = AddCombo(i_Bar, "Device:", 200);
-            mi_ComboDevice.Items.Add("Windows default");
+            mi_ComboDevice.Items.Add(DEFAULT_DEVICE);
             foreach (String s_Name in EnumerateDevices())
                 mi_ComboDevice.Items.Add(s_Name);
             Utils.ComboAdjustDropDownWidth(mi_ComboDevice);
@@ -274,18 +274,17 @@ namespace Transfer
 
             Utils.RegWriteString(eRegKey.AudioInput, mi_ComboDevice.Text + "|" + mi_ComboRate.Text + "|" + mi_ComboBlock.Text);
 
-            // index 0 = "Windows default" --> WAVE_MAPPER
             // Ring buffer for at least 4 blocks or 2 seconds
-            Open(mi_ComboDevice.SelectedIndex - 1, mi_ComboDevice.Text, Math.Max(4 * ms32_Block, 2 * ms32_Rate));
+            Open(mi_ComboDevice.Text, Math.Max(4 * ms32_Block, 2 * ms32_Rate));
         }
 
         /// <summary>
         /// Opens the device and starts the recording into a ring buffer of s32_RingSize samples per channel.
-        /// s32_Device = -1 --> Windows default device. ms32_Rate must be set before.
+        /// ms32_Rate must be set before.
         /// </summary>
-        void Open(int s32_Device, String s_DeviceName, int s32_RingSize)
+        void Open(String s_DeviceName, int s32_RingSize)
         {
-            IntPtr u_Device = new IntPtr(s32_Device);
+            IntPtr u_Device = new IntPtr(FindDevice(s_DeviceName));
 
             // 32 bit float preserves the 24 bit resolution of the converter. Fallback: 16 bit integer.
             WAVEFORMAT k_Format = CreateFormat(true);
@@ -404,6 +403,105 @@ namespace Transfer
             mb_Abort = true;
         }
 
+        // ===================================== Streaming (Live X/Y) =====================================
+
+        public int SampleRate
+        {
+            get { return ms32_Rate; }
+        }
+
+        /// <summary>
+        /// Samples skipped in ReadStream() because the display was too slow
+        /// </summary>
+        public long SkippedSamples
+        {
+            get { return ms64_Skipped; }
+        }
+
+        /// <summary>
+        /// Starts a continuous recording of both channels for ReadStream(). The ring buffer holds the last 2 seconds.
+        /// Throws.
+        /// </summary>
+        public void StartStream(String s_DeviceName, int s32_Rate)
+        {
+            Stop();
+            mb_Abort      = false;
+            ms32_Rate     = s32_Rate;
+            ms_DeviceName = s_DeviceName;
+            ms64_Written  = 0;
+            ms64_BlockEnd = 0;
+            ms64_Skipped  = 0;
+            Open(s_DeviceName, 2 * s32_Rate);
+        }
+
+        /// <summary>
+        /// Copies all samples recorded since the last call into f_Left and f_Right.
+        /// If more samples are waiting than fit into the arrays, the oldest are skipped (b_Skipped = true).
+        /// returns the count of samples copied. Throws if the recording thread has failed.
+        /// </summary>
+        public int ReadStream(float[] f_Left, float[] f_Right, out bool b_Skipped)
+        {
+            if (ms_ThreadError != null)
+                throw new Exception(ms_ThreadError);
+
+            lock (mi_Lock)
+            {
+                long s64_New = ms64_Written - ms64_BlockEnd;
+                b_Skipped = s64_New > f_Left.Length;
+                if (b_Skipped)
+                {
+                    ms64_Skipped += s64_New - f_Left.Length;
+                    ms64_BlockEnd = ms64_Written - f_Left.Length;
+                    s64_New       = f_Left.Length;
+                }
+
+                int s32_Size = mf_Ring[0].Length;
+                for (int S=0; S<s64_New; S++)
+                {
+                    int s32_Pos = (int)((ms64_BlockEnd + S) % s32_Size);
+                    f_Left [S] = mf_Ring[0][s32_Pos];
+                    f_Right[S] = mf_Ring[1][s32_Pos];
+                }
+                ms64_BlockEnd += s64_New;
+                return (int)s64_New;
+            }
+        }
+
+        /// <summary>
+        /// Returns the last s32_Count samples of both channels (in full scale) as a Capture with the channels "Left" and "Right".
+        /// Also works after Stop(). returns null if nothing has been recorded.
+        /// </summary>
+        public Capture GetLastSamples(int s32_Count)
+        {
+            if (mf_Ring == null)
+                return null;
+
+            Capture i_Capture = new Capture();
+            lock (mi_Lock)
+            {
+                s32_Count = (int)Math.Min(s32_Count, Math.Min(ms64_Written, mf_Ring[0].Length));
+                if (s32_Count < Utils.MIN_VALID_SAMPLES)
+                    return null;
+
+                int  s32_Size  = mf_Ring[0].Length;
+                long s64_Start = ms64_Written - s32_Count;
+                for (int C=0; C<2; C++)
+                {
+                    float[] f_Data = new float[s32_Count];
+                    for (int S=0; S<s32_Count; S++)
+                        f_Data[S] = mf_Ring[C][(int)((s64_Start + S) % s32_Size)];
+
+                    Channel i_Channel = new Channel(Channels[C]);
+                    i_Channel.mf_Analog = f_Data;
+                    i_Capture.mi_Channels.Add(i_Channel);
+                }
+            }
+            i_Capture.ms32_Samples    = s32_Count;
+            i_Capture.ms64_SampleDist = (Int64)Math.Round((double)Utils.PICOS_PER_SECOND / ms32_Rate);
+            i_Capture.ms32_AnalogRes  = Utils.MAX_ANAL_RES;
+            return i_Capture;
+        }
+
         // ===================================== Recording into the main window =====================================
 
         /// <summary>
@@ -413,10 +511,9 @@ namespace Transfer
 
         /// <summary>
         /// Records s32_Samples stereo samples and returns them as a Capture with the channels "Left" and "Right".
-        /// s32_Device = -1 --> Windows default device
         /// returns null if f_Progress has returned true (abort). Throws on error.
         /// </summary>
-        public Capture Record(int s32_Device, String s_DeviceName, int s32_Rate, int s32_Samples, delProgress f_Progress)
+        public Capture Record(String s_DeviceName, int s32_Rate, int s32_Samples, delProgress f_Progress)
         {
             Stop();
             mb_Abort     = false;
@@ -427,7 +524,7 @@ namespace Transfer
             int s32_Skip = s32_Rate / 10;
 
             // The ring buffer is larger than the recording: it does not wrap around
-            Open(s32_Device, s_DeviceName, s32_Skip + s32_Samples + s32_Rate);
+            Open(s_DeviceName, s32_Skip + s32_Samples + s32_Rate);
             try
             {
                 Stopwatch i_Watch = Stopwatch.StartNew();
@@ -711,6 +808,25 @@ namespace Transfer
         }
 
         // ===================================== Helper =====================================
+
+        public const String DEFAULT_DEVICE = "Windows default";
+
+        /// <summary>
+        /// The device ID of waveIn is the index in the list of devices. It changes when a device is connected or disconnected.
+        /// Therefore the device is searched by its name immediately before it is opened.
+        /// returns -1 (WAVE_MAPPER) for the Windows default device. Throws if the device is not connected.
+        /// </summary>
+        static int FindDevice(String s_DeviceName)
+        {
+            if (s_DeviceName == DEFAULT_DEVICE)
+                return WAVE_MAPPER;
+
+            int s32_Index = EnumerateDevices().IndexOf(s_DeviceName);
+            if (s32_Index < 0)
+                throw new Exception("The audio input '" + s_DeviceName + "' is not connected.\n"
+                                  + "Connect it or select another device. (Close and open the window to update the list of devices.)");
+            return s32_Index;
+        }
 
         /// <summary>
         /// Returns the names of all audio input devices. Windows truncates the names to 31 characters.

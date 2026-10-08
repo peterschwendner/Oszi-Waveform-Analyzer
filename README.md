@@ -46,6 +46,9 @@ audio interface or sound card (e.g. Focusrite Scarlett 2i2, MOTU M4) over the Wi
 
 - **Record**: 0.1 ... 60 seconds stereo (Left, Right) into the main window, for FFT Spectrum, X/Y Plot, decoders and saving as OSZI file.
   The peak level of both channels is shown afterwards, with a warning if a channel was clipped.
+- **Live X/Y...**: continuous X/Y display (Left = X, Right = Y) like an analog oscilloscope in XY mode, approx 60 frames per second.
+  Simulated phosphor with persistence, bright turning points (slow beam), auto zoom, snapshot of the last second into the main window.
+  Ideal for oscilloscope music (e.g. with the loopback input of a MOTU M4).
 - **Waterfall FFT...**: live waterfall. Device, sample rate (44.1 ... 192 kHz) and samples per spectrum (2048 ... 65536) are selectable, left or right channel.
 - Gapless recording in a background thread as 32 bit float (full 24 bit resolution); levels in dBFS. If the display is too slow, old blocks are skipped.
 - **Calibration dBFS → dBV** per device and channel: measure a sine wave with known voltage (flat top FFT, exact to 0.01 dB) or enter the value.

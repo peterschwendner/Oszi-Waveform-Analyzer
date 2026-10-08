@@ -881,6 +881,7 @@
                        <a href="#XYPlot">X/Y Plot</a>, the cursor and the decoders and save the capture as OSZI file.<br>
                        The first 100 ms after the start are not used, because some converters need time to settle.</td></tr>
 <tr><td>Waterfall FFT...</td><td>Opens the live <a href="#WaterfallAudio">Waterfall FFT</a> with the same device and sample rate.</td></tr>
+<tr><td>Live X/Y...</td><td>Opens the <a href="#LiveXY">Live X/Y</a> display with the same device and sample rate.</td></tr>
 <tr><td>Volt (calibrated)</td><td>Converts the samples into Volt with the calibration of the device (see below). The Waterfall FFT then displays dBV instead of dBFS.<br>
                        Only possible if at least one channel of the device is calibrated. An uncalibrated channel stays in full scale and gets the name <i>(not calibrated)</i>.</td></tr>
 <tr><td>Calibrate...</td><td>Opens the <a href="#AudioCalibration">calibration</a> of the selected device.</td></tr>
@@ -904,6 +905,38 @@
 <div>The measurement records 1 second and uses the FFT with the flat top window: it measures the amplitude of the sine wave exactly (better than 0.01 dB)</div>
 <div>and is not falsified by hum or noise as a RMS measurement would be. A clipped signal or a signal below -60 dBFS is rejected.</div>
 <div>Tip: Mark the position of the gain knob, or calibrate with the gain at minimum (line level), where the knob has a fixed end stop.</div>
+
+<a name="LiveXY"></a>
+<h3>Live X/Y with an Audio Interface</h3>
+
+<table class="TblImage">
+    <tr><td><img src="Images/LiveXY.png" alt="Oszi Waveform Analyzer - Live X/Y" width="380" height="380"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/LiveXY.png')">Show Full Size</span></td></tr>
+</table>
+<div>Click <b>Live X/Y...</b> in the window <a href="#AudioInput">Audio Input</a>. The left channel moves the beam horizontally (X), the right channel vertically (Y),</div>
+<div>like an analog oscilloscope in XY mode. This is ideal for oscilloscope music, Lissajous figures and the phase of stereo signals.</div>
+<div>The screenshot shows a Lissajous figure with the frequency ratio 3:2.</div>
+<p>
+<div>The display simulates the phosphor of a cathode ray tube: the beam leaves a trace which fades with the selected persistence.</div>
+<div>A fast moving beam is dimmer than a slow one, so the turning points of a figure are brighter, exactly like on an analog oscilloscope.</div>
+<div>The recording runs continuously, the display is updated approx 60 times per second.</div>
+<p>
+<table class="DataTable">
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Stop / Start</td><td>Stop freezes the image. The recorded samples remain available for the Snapshot.</td></tr>
+<tr><td>Zoom</td><td><b>Auto</b> follows the amplitude of the signal (1-2-5 steps). 1 x = full scale at the edge of the graticule.</td></tr>
+<tr><td>Persistence</td><td>Afterglow of the phosphor: 10 ms ... 3 s. A short persistence shows fast changes, a long one shows the whole figure.</td></tr>
+<tr><td>Brightness</td><td>Intensity of the beam. Small figures need less brightness than large ones.</td></tr>
+<tr><td>Beam</td><td><b>Lines</b> connects the samples like the continuous beam of an analog oscilloscope. <b>Dots</b> shows only the samples.</td></tr>
+<tr><td>Swap X/Y</td><td>Left = Y, Right = X.</td></tr>
+<tr><td>Snapshot 1 s</td><td>Stores the last second of both channels in the main window, where you can use the <a href="#XYPlot">X/Y Plot</a>, FFT or save the capture.</td></tr>
+<tr><td>Export Image</td><td>Saves the current image as PNG.</td></tr>
+</table>
+<p>
+<div>The status bar shows the frames per second, the peak level of X and Y and the scale. <b>CLIPPED</b> means that the gain of the interface is too high.</div>
+<div>If <b>Volt (calibrated)</b> is checked and both channels are <a href="#AudioCalibration">calibrated</a>, the scale is in Volt.</div>
+<div>Tip: With the device <i>Loopback (MOTU M Series)</i> the MOTU records what the computer plays.</div>
+<div>So you can watch oscilloscope music from a media player without any cable.</div>
 
 <a name="WaterfallAudio"></a>
 <h3>Waterfall FFT with an Audio Interface</h3>

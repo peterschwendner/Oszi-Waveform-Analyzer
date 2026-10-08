@@ -70,6 +70,7 @@ namespace Transfer
         Button      mi_BtnRecord;
         Button      mi_BtnWaterfall;
         Button      mi_BtnCalibrate;
+        Button      mi_BtnLiveXY;
         ProgressBar mi_Progress;
         Label       mi_LblStatus;
         bool        mb_Recording;
@@ -87,13 +88,13 @@ namespace Transfer
             MinimizeBox     = false;
             ShowInTaskbar   = false;
             StartPosition   = FormStartPosition.CenterParent;
-            ClientSize      = new Size(520, 225);
+            ClientSize      = new Size(520, 257);
 
             mi_ComboDevice   = AddCombo(this, "Device:",   12, 300);
             mi_ComboRate     = AddCombo(this, "Rate:",     44, 100);
             mi_ComboDuration = AddCombo(this, "Duration:", 76, 100);
 
-            mi_ComboDevice.Items.Add("Windows default");
+            mi_ComboDevice.Items.Add(AudioInput.DEFAULT_DEVICE);
             foreach (String s_Name in AudioInput.EnumerateDevices())
                 mi_ComboDevice.Items.Add(s_Name);
             Utils.ComboAdjustDropDownWidth(mi_ComboDevice);
@@ -113,11 +114,11 @@ namespace Transfer
             mi_CheckVolt = new CheckBox();
             mi_CheckVolt.Text     = "Volt (calibrated)";
             mi_CheckVolt.AutoSize = true;
-            mi_CheckVolt.Location = new Point(14, 110);
+            mi_CheckVolt.Location = new Point(14, 142);
             Controls.Add(mi_CheckVolt);
 
             mi_LblCalib = new Label();
-            mi_LblCalib.Location = new Point(135, 104);
+            mi_LblCalib.Location = new Point(135, 136);
             mi_LblCalib.Size     = new Size(250, 30);
             Controls.Add(mi_LblCalib);
 
@@ -129,7 +130,11 @@ namespace Transfer
             mi_BtnWaterfall.BackColor = Color.Plum;
             mi_BtnWaterfall.Click    += new EventHandler(OnWaterfallClick);
 
-            mi_BtnCalibrate = AddButton(this, "Calibrate...", 390, 104, 115);
+            mi_BtnLiveXY = AddButton(this, "Live X/Y...", 390, 104, 115);
+            mi_BtnLiveXY.BackColor = Color.PaleGreen;
+            mi_BtnLiveXY.Click    += new EventHandler(OnLiveXYClick);
+
+            mi_BtnCalibrate = AddButton(this, "Calibrate...", 390, 136, 115);
             mi_BtnCalibrate.BackColor = Color.BlanchedAlmond;
             mi_BtnCalibrate.Click    += new EventHandler(OnCalibrateClick);
 
@@ -142,12 +147,12 @@ namespace Transfer
             Controls.Add(i_Help);
 
             mi_Progress = new ProgressBar();
-            mi_Progress.Location = new Point(12, 145);
+            mi_Progress.Location = new Point(12, 177);
             mi_Progress.Size     = new Size(493, 16);
             Controls.Add(mi_Progress);
 
             mi_LblStatus = new Label();
-            mi_LblStatus.Location  = new Point(12, 168);
+            mi_LblStatus.Location  = new Point(12, 200);
             mi_LblStatus.Size      = new Size(493, 50);
             mi_LblStatus.Text      = "Records both channels into the main window, where you can use FFT Spectrum, X/Y Plot and save the capture.";
             Controls.Add(mi_LblStatus);
@@ -193,11 +198,6 @@ namespace Transfer
             return i_Button;
         }
 
-        int DeviceID
-        {
-            get { return mi_ComboDevice.SelectedIndex - 1; } // -1 = Windows default
-        }
-
         /// <summary>
         /// Shows the calibration of the selected device. "Volt" can only be checked if at least one channel is calibrated.
         /// </summary>
@@ -236,6 +236,7 @@ namespace Transfer
         {
             mi_BtnWaterfall.Enabled  = b_Enable;
             mi_BtnCalibrate.Enabled  = b_Enable;
+            mi_BtnLiveXY.Enabled     = b_Enable;
             mi_ComboDevice.Enabled   = b_Enable;
             mi_ComboRate.Enabled     = b_Enable;
             mi_ComboDuration.Enabled = b_Enable;
@@ -275,7 +276,7 @@ namespace Transfer
             String  s_Error   = null;
             try
             {
-                i_Capture = new AudioInput().Record(DeviceID, mi_ComboDevice.Text, s32_Rate, s32_Samples, OnProgress);
+                i_Capture = new AudioInput().Record(mi_ComboDevice.Text, s32_Rate, s32_Samples, OnProgress);
             }
             catch (Exception Ex)
             {
@@ -373,10 +374,30 @@ namespace Transfer
             }
         }
 
+        /// <summary>
+        /// Volt is only used if both channels are calibrated (X and Y must have the same unit)
+        /// </summary>
+        void OnLiveXYClick(object sender, EventArgs e)
+        {
+            SaveSettings();
+            double d_Left  = AudioInput.GetCalibration(mi_ComboDevice.Text, 1);
+            double d_Right = AudioInput.GetCalibration(mi_ComboDevice.Text, 2);
+            bool   b_Volt  = UseVolt && !double.IsNaN(d_Left) && !double.IsNaN(d_Right);
+            if (UseVolt && !b_Volt)
+                PrintStatus("Live X/Y uses full scale, because Volt requires the calibration of both channels.", Color.FromArgb(0xFF, 0xD0, 0x80));
+
+            using (FormLiveXY i_LiveXY = new FormLiveXY(mi_ComboDevice.Text, int.Parse(mi_ComboRate.Text), b_Volt,
+                                                        b_Volt ? AudioInput.FullScaleVolt(d_Left)  : 1.0,
+                                                        b_Volt ? AudioInput.FullScaleVolt(d_Right) : 1.0))
+            {
+                i_LiveXY.ShowDialog(this);
+            }
+        }
+
         void OnCalibrateClick(object sender, EventArgs e)
         {
             SaveSettings();
-            using (FormCalibrate i_Calib = new FormCalibrate(DeviceID, mi_ComboDevice.Text, int.Parse(mi_ComboRate.Text)))
+            using (FormCalibrate i_Calib = new FormCalibrate(mi_ComboDevice.Text, int.Parse(mi_ComboRate.Text)))
             {
                 i_Calib.ShowDialog(this);
             }
@@ -407,7 +428,6 @@ namespace Transfer
     /// </summary>
     public class FormCalibrate : Form
     {
-        int      ms32_Device;
         String   ms_Device;
         int      ms32_Rate;
         TextBox  mi_TextKnown;
@@ -416,9 +436,8 @@ namespace Transfer
         Label    mi_LblStatus;
         bool     mb_Measuring;
 
-        public FormCalibrate(int s32_Device, String s_Device, int s32_Rate)
+        public FormCalibrate(String s_Device, int s32_Rate)
         {
-            ms32_Device = s32_Device;
             ms_Device   = s_Device;
             ms32_Rate   = s32_Rate;
 
@@ -532,7 +551,7 @@ namespace Transfer
             PrintStatus("Measuring ...", Color.White);
             try
             {
-                Capture i_Capture = new AudioInput().Record(ms32_Device, ms_Device, ms32_Rate, ms32_Rate, delegate { Application.DoEvents(); return false; });
+                Capture i_Capture = new AudioInput().Record(ms_Device, ms32_Rate, ms32_Rate, delegate { Application.DoEvents(); return false; });
                 float[] f_Samples = i_Capture.mi_Channels[s32_Chan - 1].mf_Analog;
 
                 double d_Freq;

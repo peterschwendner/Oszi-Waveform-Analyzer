@@ -22,3 +22,4 @@ Compiled/Samples/*.wav
 # Exports of the Waterfall FFT (own measurements, default file names)
 Compiled/Samples/Waterfall *.csv
 Compiled/Samples/Waterfall *.png
+Compiled/Samples/LiveXY *.png
