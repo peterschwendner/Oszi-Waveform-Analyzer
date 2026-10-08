@@ -78,6 +78,7 @@
     <Compile Include="Transfer\HamegHM507.cs" />
     <Compile Include="Transfer\TransferManager.cs" />
     <Compile Include="Transfer\AudioInput.cs" />
+    <Compile Include="Transfer\AudioOutput.cs" />
     <Compile Include="Transfer\FormAudio.cs">
       <SubType>Form</SubType>
     </Compile>

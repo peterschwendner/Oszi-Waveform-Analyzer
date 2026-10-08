@@ -71,16 +71,17 @@ namespace Transfer
     {
         #region winmm.dll
 
-        const int  MMSYSERR_NOERROR = 0;
-        const int  WAVERR_BADFORMAT = 32;
-        const int  CALLBACK_NULL    = 0;
-        const int  WHDR_DONE        = 0x01;
-        const int  WAVE_MAPPER      = -1;
-        const UInt16 WAVE_FORMAT_PCM        = 1;
-        const UInt16 WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
+        // internal: also used by AudioOutput
+        internal const int  MMSYSERR_NOERROR = 0;
+        internal const int  WAVERR_BADFORMAT = 32;
+        internal const int  CALLBACK_NULL    = 0;
+        internal const int  WHDR_DONE        = 0x01;
+        internal const int  WAVE_MAPPER      = -1;
+        internal const UInt16 WAVE_FORMAT_PCM        = 1;
+        internal const UInt16 WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
 
         // KSDATAFORMAT_SUBTYPE_IEEE_FLOAT
-        static readonly Guid SUBTYPE_FLOAT = new Guid("00000003-0000-0010-8000-00aa00389b71");
+        internal static readonly Guid SUBTYPE_FLOAT = new Guid("00000003-0000-0010-8000-00aa00389b71");
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         struct WAVEINCAPS
@@ -97,7 +98,7 @@ namespace Transfer
 
         // WAVEFORMATEXTENSIBLE (40 byte). With wFormatTag = WAVE_FORMAT_PCM and cbSize = 0 it is used as WAVEFORMATEX.
         [StructLayout(LayoutKind.Sequential, Pack = 2)]
-        struct WAVEFORMAT
+        internal struct WAVEFORMAT
         {
             public UInt16 wFormatTag;
             public UInt16 nChannels;
@@ -112,7 +113,7 @@ namespace Transfer
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        struct WAVEHDR
+        internal struct WAVEHDR
         {
             public IntPtr lpData;
             public UInt32 dwBufferLength;
@@ -292,12 +293,12 @@ namespace Transfer
             IntPtr u_Device = new IntPtr(FindDevice(s_DeviceName));
 
             // 32 bit float preserves the 24 bit resolution of the converter. Fallback: 16 bit integer.
-            WAVEFORMAT k_Format = CreateFormat(true);
+            WAVEFORMAT k_Format = CreateFormat(true, ms32_Rate);
             int s32_Error = waveInOpen(out mh_WaveIn, u_Device, ref k_Format, IntPtr.Zero, IntPtr.Zero, CALLBACK_NULL);
             mb_Float = true;
             if (s32_Error == WAVERR_BADFORMAT)
             {
-                k_Format  = CreateFormat(false);
+                k_Format  = CreateFormat(false, ms32_Rate);
                 s32_Error = waveInOpen(out mh_WaveIn, u_Device, ref k_Format, IntPtr.Zero, IntPtr.Zero, CALLBACK_NULL);
                 mb_Float  = false;
             }
@@ -700,11 +701,14 @@ namespace Transfer
             ms64_Written += s32_Frames;
         }
 
-        WAVEFORMAT CreateFormat(bool b_Float)
+        /// <summary>
+        /// Stereo, 32 bit float or 16 bit integer
+        /// </summary>
+        internal static WAVEFORMAT CreateFormat(bool b_Float, int s32_Rate)
         {
             WAVEFORMAT k_Format = new WAVEFORMAT();
             k_Format.nChannels      = 2;
-            k_Format.nSamplesPerSec = (UInt32)ms32_Rate;
+            k_Format.nSamplesPerSec = (UInt32)s32_Rate;
             if (b_Float)
             {
                 k_Format.wFormatTag          = WAVE_FORMAT_EXTENSIBLE;

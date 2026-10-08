@@ -47,6 +47,7 @@ using System.Windows.Forms;
 using IOperation        = Operations.OperationManager.IOperation;
 using GraphMenuItem     = Operations.OperationManager.GraphMenuItem;
 using IXYStream         = Transfer.IXYStream;
+using AudioOutput       = Transfer.AudioOutput;
 using FormLiveXY        = Transfer.FormLiveXY;
 using Utils             = OsziWaveformAnalyzer.Utils;
 using OsziPanel         = OsziWaveformAnalyzer.OsziPanel;
@@ -59,6 +60,10 @@ namespace Operations
     /// Plays a capture (e.g. an imported WAV file or an audio recording) like a live signal
     /// for the Waterfall FFT or the Live X/Y display.
     /// The playback runs in real time or with another speed. "Max" (Waterfall FFT only) calculates as fast as possible.
+    ///
+    /// Sound: WAV files and audio recordings are played on the audio output at speed 1 x.
+    /// Then the played samples of the audio output are the clock of the display (synchronous picture and sound).
+    /// Without sound the clock is a Stopwatch.
     /// </summary>
     public class CaptureStream : IWaterfallSource, IXYStream
     {
@@ -77,6 +82,16 @@ namespace Operations
         ComboBox      mi_ComboX;
         ComboBox      mi_ComboY;
         CheckBox      mi_CheckLoop;
+        CheckBox      mi_CheckSound;
+
+        AudioOutput   mi_Output = new AudioOutput();
+        bool          mb_SoundOn;        // the audio output is the clock
+        bool          mb_Playing;        // between Start() and Stop()
+        String        ms_SoundError;
+        long          ms64_OutPos;       // next sample of the audio output (background thread)
+        volatile bool mb_OutLoop;
+        int           ms32_OutLeft;      // index in mi_Analog
+        int           ms32_OutRight;
 
         long          ms64_Pos;          // next sample to play
         double        md_Played;         // seconds played since the start (also over loops)
@@ -164,7 +179,24 @@ namespace Operations
             mi_CheckLoop.AutoSize = true;
             mi_CheckLoop.Checked  = mb_ForXY;
             mi_CheckLoop.Margin   = new Padding(8, 4, 0, 0);
+            mi_CheckLoop.CheckedChanged += delegate { mb_OutLoop = mi_CheckLoop.Checked; };
             i_Bar.Controls.Add(mi_CheckLoop);
+            mb_OutLoop = mi_CheckLoop.Checked;
+
+            // Only audio signals can be played (not the Volt of an oscilloscope with MHz sample rate)
+            mi_CheckSound = new CheckBox();
+            mi_CheckSound.Text     = "Sound";
+            mi_CheckSound.AutoSize = true;
+            mi_CheckSound.Enabled  = CanPlaySound;
+            mi_CheckSound.Checked  = CanPlaySound;
+            mi_CheckSound.Margin   = new Padding(8, 4, 0, 0);
+            mi_CheckSound.CheckedChanged += delegate { Restart(); };
+            i_Bar.Controls.Add(mi_CheckSound);
+        }
+
+        bool CanPlaySound
+        {
+            get { return mi_Capture.mb_FullScale && md_Rate >= 8000 && md_Rate <= 192000; }
         }
 
         static ComboBox AddCombo(FlowLayoutPanel i_Bar, String s_Label, int s32_Width)
@@ -183,13 +215,18 @@ namespace Operations
         }
 
         /// <summary>
-        /// The real time clock starts again at the current position (after Start or a change of the speed)
+        /// The clock starts again at the current position (after Start or a change of the speed or of the sound)
         /// </summary>
         void Restart()
         {
+            StopSound();
             md_Anchor = ms64_Pos;
             mi_Watch.Reset();
             mi_Watch.Start();
+
+            // (The Waterfall FFT disables the controls while it runs: do not check mi_CheckSound.Enabled)
+            if (mb_Playing && mi_CheckSound != null && mi_CheckSound.Checked && CanPlaySound && Speed == 1)
+                StartSound();
         }
 
         /// <summary>
@@ -197,7 +234,75 @@ namespace Operations
         /// </summary>
         double TargetPos
         {
-            get { return md_Anchor + mi_Watch.Elapsed.TotalSeconds * md_Rate * Speed; }
+            get
+            {
+                if (mb_SoundOn)
+                    return md_Anchor + mi_Output.PlayedSamples;
+                return md_Anchor + mi_Watch.Elapsed.TotalSeconds * md_Rate * Speed;
+            }
+        }
+
+        // ===================================== Sound =====================================
+
+        void StartSound()
+        {
+            // Waterfall: the first two channels (a stereo file), Live X/Y: the channels X and Y
+            if (mb_ForXY)
+            {
+                ms32_OutLeft  = mi_ComboX.SelectedIndex;
+                ms32_OutRight = mi_ComboY.SelectedIndex;
+            }
+            else
+            {
+                ms32_OutLeft  = 0;
+                ms32_OutRight = Math.Min(1, mi_Analog.Count - 1); // mono --> both sides
+            }
+            ms64_OutPos   = ms64_Pos;
+            ms_SoundError = null;
+            try
+            {
+                mi_Output.Start(SampleRate, FillOutput);
+                mb_SoundOn = true;
+            }
+            catch (Exception Ex)
+            {
+                ms_SoundError = Ex.Message;
+                mb_SoundOn    = false;
+            }
+        }
+
+        void StopSound()
+        {
+            if (mb_SoundOn)
+            {
+                // The clock continues with the Stopwatch at the position that has been played
+                md_Anchor += mi_Output.PlayedSamples;
+                mi_Output.Stop();
+                mb_SoundOn = false;
+            }
+        }
+
+        /// <summary>
+        /// Called in the background thread of the audio output
+        /// </summary>
+        int FillOutput(float[] f_Left, float[] f_Right, int s32_Count)
+        {
+            float[] f_SrcL  = mi_Analog[ms32_OutLeft] .mf_Analog;
+            float[] f_SrcR  = mi_Analog[ms32_OutRight].mf_Analog;
+            int     s32_Len = mi_Capture.ms32_Samples;
+            for (int S=0; S<s32_Count; S++)
+            {
+                if (ms64_OutPos >= s32_Len)
+                {
+                    if (!mb_OutLoop)
+                        return S; // the rest is silence
+                    ms64_OutPos = 0;
+                }
+                f_Left [S] = f_SrcL[ms64_OutPos];
+                f_Right[S] = f_SrcR[ms64_OutPos];
+                ms64_OutPos ++;
+            }
+            return s32_Count;
         }
 
         String PositionInfo
@@ -208,6 +313,10 @@ namespace Operations
                                               FileName, ms64_Pos / md_Rate, TotalSeconds);
                 if (mb_End)
                     s_Info += "   End of file";
+                if (mb_SoundOn)
+                    s_Info += "   Sound";
+                if (ms_SoundError != null)
+                    s_Info += "   " + ms_SoundError;
                 return s_Info;
             }
         }
@@ -247,7 +356,8 @@ namespace Operations
 
         public void Start()
         {
-            mb_Abort = false;
+            mb_Abort   = false;
+            mb_Playing = true;
             if (mb_End || ms64_Pos >= mi_Capture.ms32_Samples)
             {
                 ms64_Pos = 0; // play again from the beginning
@@ -272,8 +382,9 @@ namespace Operations
                     mb_End = true;
                     return null;
                 }
-                ms64_Pos = 0;
-                Restart();
+                // The clock (and the sound) continues: the beginning of the capture is reached at TargetPos = length
+                md_Anchor -= mi_Capture.ms32_Samples;
+                ms64_Pos   = 0;
             }
 
             // Wait in real time (not for "Max")
@@ -315,6 +426,8 @@ namespace Operations
 
         public void Stop()
         {
+            mb_Playing = false;
+            StopSound();
             mi_Watch.Stop();
         }
 
@@ -408,7 +521,7 @@ namespace Operations
 
         public void StopStream()
         {
-            mi_Watch.Stop();
+            Stop();
         }
 
         public Capture GetLastSamples(int s32_Count)

@@ -956,6 +956,10 @@
 <tr><td>Speed</td><td><b>1 x</b> plays in real time. Slower or faster speeds are possible, e.g. 0.001 x for a capture of an oscilloscope with a high sample rate.<br>
                        The Waterfall FFT has the speed <b>Max</b>: it calculates the spectra of the whole file as fast as possible (a 10 second WAV file in less than 1 second).</td></tr>
 <tr><td>Loop</td><td>Starts again at the beginning at the end of the file. Without Loop the Waterfall FFT stops at the end: "End of file".</td></tr>
+<tr><td>Sound</td><td>Plays the file on the Windows default audio output at speed <b>1 x</b>. The picture is synchronous with the sound:<br>
+                       the played samples of the audio output are the clock of the display. At other speeds there is no sound.<br>
+                       The Waterfall FFT plays the first two channels (a stereo file), the Live X/Y plays the channels X and Y.<br>
+                       Only for WAV files and audio recordings (8 ... 192 kHz). Captures of an oscilloscope are not played.</td></tr>
 <tr><td>Samples</td><td>(Waterfall FFT) Samples per spectrum. The status bar shows the position in the file.</td></tr>
 <tr><td>X, Y</td><td>(Live X/Y) The channels for X and Y.</td></tr>
 </table>
