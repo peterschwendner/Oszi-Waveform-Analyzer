@@ -54,6 +54,59 @@ using PlatformManager   = Platform.PlatformManager;
 namespace Transfer
 {
     /// <summary>
+    /// The source of the Live X/Y display: an audio input or a capture that is played (Operations.CaptureStream)
+    /// </summary>
+    public interface IXYStream
+    {
+        String  Name             { get; } // window title
+        int     SampleRate       { get; }
+        double  SamplesPerSecond { get; } // SampleRate * playback speed
+        long    SkippedSamples   { get; }
+        String  StatusInfo       { get; } // e.g. the position in a file, or null
+        bool    CanSnapshot      { get; } // the last second can be stored in the main window
+
+        // Additional settings in the toolbar (e.g. channels and speed of a capture)
+        void    AddControls(FlowLayoutPanel i_Bar);
+        // Throws
+        void    StartStream();
+        // Copies all new samples since the last call (X and Y). Skips the oldest if they do not fit. Throws.
+        int     ReadStream(float[] f_X, float[] f_Y, out bool b_Skipped);
+        void    StopStream();
+        Capture GetLastSamples(int s32_Count);
+    }
+
+    /// <summary>
+    /// The audio input as source of the Live X/Y display: Left = X, Right = Y
+    /// </summary>
+    public class AudioXYStream : IXYStream
+    {
+        AudioInput mi_Audio = new AudioInput();
+        String     ms_Device;
+        int        ms32_Rate;
+        bool       mb_Volt;
+
+        public AudioXYStream(String s_Device, int s32_Rate, bool b_Volt)
+        {
+            ms_Device = s_Device;
+            ms32_Rate = s32_Rate;
+            mb_Volt   = b_Volt;
+        }
+
+        public String Name             { get { return "Audio: " + ms_Device + (mb_Volt ? "  (calibrated)" : ""); } }
+        public int    SampleRate       { get { return ms32_Rate; } }
+        public double SamplesPerSecond { get { return ms32_Rate; } }
+        public long   SkippedSamples   { get { return mi_Audio.SkippedSamples; } }
+        public String StatusInfo       { get { return null; } }
+        public bool   CanSnapshot      { get { return true; } }
+
+        public void    AddControls(FlowLayoutPanel i_Bar) {}
+        public void    StartStream() { mi_Audio.StartStream(ms_Device, ms32_Rate); }
+        public int     ReadStream(float[] f_X, float[] f_Y, out bool b_Skipped) { return mi_Audio.ReadStream(f_X, f_Y, out b_Skipped); }
+        public void    StopStream() { mi_Audio.Stop(); }
+        public Capture GetLastSamples(int s32_Count) { return mi_Audio.GetLastSamples(s32_Count); }
+    }
+
+    /// <summary>
     /// Live X/Y display of an audio input like an analog oscilloscope in XY mode: Left = X, Right = Y.
     /// The beam leaves a trace on the phosphor which fades with the selected persistence.
     /// Typical use: oscilloscope music, Lissajous figures, phase of stereo signals.
@@ -64,8 +117,7 @@ namespace Transfer
         static readonly String[] BRIGHTNESS  = { "0.1", "0.2", "0.5", "1", "2", "5", "10", "20", "50" };
         static readonly String[] ZOOM        = { "Auto", "1 x", "2 x", "5 x", "10 x", "20 x", "50 x", "100 x", "200 x", "500 x", "1000 x" };
 
-        AudioInput  mi_Audio = new AudioInput();
-        String      ms_Device;
+        IXYStream   mi_Stream;
         int         ms32_Rate;
         double[]    md_Factor;   // full scale --> Volt (1.0 if not calibrated)
         bool        mb_Volt;
@@ -91,22 +143,24 @@ namespace Transfer
         XYLiveView  mi_View;
 
         /// <summary>
-        /// d_FactorLeft/Right = Volt per full scale or 1.0 if b_Volt = false
+        /// b_Volt = the samples are in Volt after multiplication with the factors
+        /// d_FactorLeft/Right = Volt per full scale (calibrated audio input) or 1.0
         /// </summary>
-        public FormLiveXY(String s_Device, int s32_Rate, bool b_Volt, double d_FactorLeft, double d_FactorRight)
+        public FormLiveXY(IXYStream i_Stream, bool b_Volt, double d_FactorLeft, double d_FactorRight)
         {
-            ms_Device   = s_Device;
-            ms32_Rate   = s32_Rate;
+            mi_Stream   = i_Stream;
+            ms32_Rate   = i_Stream.SampleRate;
             mb_Volt     = b_Volt;
             md_Factor   = new double[] { d_FactorLeft, d_FactorRight };
 
-            // up to 0.5 seconds per frame, more is skipped
-            mf_Left  = new float[s32_Rate / 2];
-            mf_Right = new float[s32_Rate / 2];
-            mf_X     = new float[s32_Rate / 2];
-            mf_Y     = new float[s32_Rate / 2];
+            // up to 0.5 seconds per frame (at most 1 M samples), more is skipped
+            int s32_Buffer = Math.Max(1024, Math.Min(ms32_Rate / 2, 1 << 20));
+            mf_Left  = new float[s32_Buffer];
+            mf_Right = new float[s32_Buffer];
+            mf_X     = new float[s32_Buffer];
+            mf_Y     = new float[s32_Buffer];
 
-            Text          = "Live X/Y  —  Audio: " + s_Device + (b_Volt ? "  (calibrated)" : "");
+            Text          = "Live X/Y  —  " + i_Stream.Name;
             Icon          = Utils.FormMain != null ? Utils.FormMain.Icon : null;
             BackColor     = Color.DimGray;
             ForeColor     = Color.White;
@@ -138,7 +192,10 @@ namespace Transfer
             mi_CheckSwap.Margin   = new Padding(10, 4, 0, 0);
             i_Bar.Controls.Add(mi_CheckSwap);
 
-            AddButton(i_Bar, "Snapshot 1 s", 12).Click += new EventHandler(OnSnapshot);
+            i_Stream.AddControls(i_Bar);
+
+            if (i_Stream.CanSnapshot)
+                AddButton(i_Bar, "Snapshot 1 s", 12).Click += new EventHandler(OnSnapshot);
             AddButton(i_Bar, "Export Image", 4).Click  += new EventHandler(OnExportImage);
 
             LinkLabel i_Help = new LinkLabel();
@@ -225,7 +282,7 @@ namespace Transfer
         {
             try
             {
-                mi_Audio.StartStream(ms_Device, ms32_Rate);
+                mi_Stream.StartStream();
             }
             catch (Exception Ex)
             {
@@ -251,7 +308,7 @@ namespace Transfer
         void StopStream()
         {
             mi_Timer.Stop();
-            mi_Audio.Stop();
+            mi_Stream.StopStream();
             mb_Running = false;
             mi_BtnStart.Text      = "Start";
             mi_BtnStart.BackColor = Color.PaleGreen;
@@ -280,7 +337,7 @@ namespace Transfer
             bool b_Skipped;
             try
             {
-                s32_Count = mi_Audio.ReadStream(mf_Left, mf_Right, out b_Skipped);
+                s32_Count = mi_Stream.ReadStream(mf_Left, mf_Right, out b_Skipped);
             }
             catch (Exception Ex)
             {
@@ -311,7 +368,7 @@ namespace Transfer
             double d_Tau = PersistenceSec;
             double d_Bright = double.Parse(mi_ComboBright.Text, CultureInfo.InvariantCulture);
             mi_View.Decay(Math.Exp(-d_Dt / d_Tau));
-            mi_View.AddSamples(mf_X, mf_Y, s32_Count, d_Bright / (ms32_Rate * d_Tau));
+            mi_View.AddSamples(mf_X, mf_Y, s32_Count, d_Bright / (mi_Stream.SamplesPerSecond * d_Tau));
             mi_View.Render();
 
             ms32_Frames ++;
@@ -375,8 +432,10 @@ namespace Transfer
 
             String s_Info = String.Format(CultureInfo.InvariantCulture, "{0} Hz   {1:0} fps   Peak X: {2}   Peak Y: {3}   1 div = {4}",
                                           ms32_Rate, ms32_Frames / d_Sec, s_PeakX, s_PeakY, mi_View.FormatDiv());
-            if (mi_Audio.SkippedSamples > 0)
-                s_Info += String.Format(CultureInfo.InvariantCulture, "   Skipped: {0:0.00} s", (double)mi_Audio.SkippedSamples / ms32_Rate);
+            if (mi_Stream.SkippedSamples > 0)
+                s_Info += String.Format(CultureInfo.InvariantCulture, "   Skipped: {0:0.00} s", (double)mi_Stream.SkippedSamples / ms32_Rate);
+            if (mi_Stream.StatusInfo != null)
+                s_Info += "   " + mi_Stream.StatusInfo;
 
             bool b_Clip = !mb_Volt && (mf_PeakX >= 0.999f || mf_PeakY >= 0.999f);
             if (b_Clip)
@@ -400,7 +459,7 @@ namespace Transfer
             if (Utils.FormMain.HasUnsavedChanges())
                 return;
 
-            Capture i_Capture = mi_Audio.GetLastSamples(ms32_Rate);
+            Capture i_Capture = mi_Stream.GetLastSamples(ms32_Rate);
             if (i_Capture == null)
             {
                 PrintInfo("Nothing has been recorded yet.", Color.FromArgb(0xFF, 0xA0, 0x80));

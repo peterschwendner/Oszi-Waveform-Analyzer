@@ -363,7 +363,8 @@ namespace Transfer
             public String        Name     { get { return ms_Name; } }
             public String[]      Channels { get { return new String[] { "CH1", "CH2" }; } }
             public Fourier.eUnit Unit     { get { return Fourier.eUnit.Volt; } }
-            public String        StepInfo { get { return null; } }
+            public String        StepInfo  { get { return null; } }
+            public double        BlockTime { get { return double.NaN; } }
 
             public void    AddControls(FlowLayoutPanel i_Bar) {}
             public void    Start() {}

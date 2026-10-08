@@ -164,6 +164,7 @@ namespace OsziWaveformAnalyzer
             public List<Channel> mi_Channels     = new List<Channel>();
             public int[]         ms32_Separators = new int[0]; // Sample positions where to draw a red vertical line (used for OWON Frames)
             public bool          mb_Dirty;          // the user has modified channels after loading the capture for the first time (unsaved changes).
+            public bool          mb_FullScale;      // the analog values are relative to full scale (WAV file, audio input), not Volt. Not stored in OSZI files.
             // -------------------------------
             // The following are assigned in CalcAnalogMinMax()
             public int           ms32_AnalogCount;  // count of channels with analog data 

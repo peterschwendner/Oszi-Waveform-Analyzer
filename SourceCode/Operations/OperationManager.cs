@@ -151,6 +151,8 @@ namespace Operations
             // ---------- Analysis windows (not modal) ------------
             mi_Operations.Add(typeof(SpectrumFFT));
             mi_Operations.Add(typeof(XYPlot));
+            mi_Operations.Add(typeof(PlayWaterfall));
+            mi_Operations.Add(typeof(PlayLiveXY));
 
             // ---------- Decoder Operations ------------
             mi_Operations.Add(typeof(DecodeUART));

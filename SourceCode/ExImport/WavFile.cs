@@ -154,6 +154,7 @@ namespace ExImport
 
             Capture i_Capture = new Capture();
             i_Capture.ms_Path         = s_Path;
+            i_Capture.mb_FullScale    = true;
             i_Capture.ms32_Samples    = s32_Samples;
             i_Capture.ms64_SampleDist = (Int64)Math.Round((double)Utils.PICOS_PER_SECOND / s32_Rate);
             i_Capture.ms32_AnalogRes  = Math.Max(Utils.MIN_ANAL_RES, Math.Min(Utils.MAX_ANAL_RES, b_Float ? 16 : s32_Bits));

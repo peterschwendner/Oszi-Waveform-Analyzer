@@ -207,6 +207,11 @@ namespace Transfer
             get { return new String[] { "Left", "Right" }; }
         }
 
+        public double BlockTime
+        {
+            get { return double.NaN; } // live
+        }
+
         public Fourier.eUnit Unit
         {
             get { return mb_Calibrated ? Fourier.eUnit.Volt : Fourier.eUnit.FullScale; }
@@ -496,6 +501,7 @@ namespace Transfer
                     i_Capture.mi_Channels.Add(i_Channel);
                 }
             }
+            i_Capture.mb_FullScale    = true;
             i_Capture.ms32_Samples    = s32_Count;
             i_Capture.ms64_SampleDist = (Int64)Math.Round((double)Utils.PICOS_PER_SECOND / ms32_Rate);
             i_Capture.ms32_AnalogRes  = Utils.MAX_ANAL_RES;
@@ -562,6 +568,7 @@ namespace Transfer
             }
 
             Capture i_Capture = new Capture();
+            i_Capture.mb_FullScale    = true; // FormAudio converts into Volt if calibrated
             i_Capture.ms32_Samples    = s32_Samples;
             i_Capture.ms64_SampleDist = (Int64)Math.Round((double)Utils.PICOS_PER_SECOND / s32_Rate);
             i_Capture.ms32_AnalogRes  = Utils.MAX_ANAL_RES; // 24 bit, but the display uses at most 16 bit

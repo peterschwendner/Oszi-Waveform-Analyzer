@@ -345,6 +345,7 @@ namespace Transfer
                         i_Channel.mf_Analog[S] *= f_Factor;
 
                     s_Levels += " = " + SpectrumFFT.FormatVolt(f_Peak * f_Factor) + "p";
+                    i_Capture.mb_FullScale = false;
                 }
                 else if (b_Volt)
                 {
@@ -386,7 +387,8 @@ namespace Transfer
             if (UseVolt && !b_Volt)
                 PrintStatus("Live X/Y uses full scale, because Volt requires the calibration of both channels.", Color.FromArgb(0xFF, 0xD0, 0x80));
 
-            using (FormLiveXY i_LiveXY = new FormLiveXY(mi_ComboDevice.Text, int.Parse(mi_ComboRate.Text), b_Volt,
+            AudioXYStream i_Stream = new AudioXYStream(mi_ComboDevice.Text, int.Parse(mi_ComboRate.Text), b_Volt);
+            using (FormLiveXY i_LiveXY = new FormLiveXY(i_Stream, b_Volt,
                                                         b_Volt ? AudioInput.FullScaleVolt(d_Left)  : 1.0,
                                                         b_Volt ? AudioInput.FullScaleVolt(d_Right) : 1.0))
             {

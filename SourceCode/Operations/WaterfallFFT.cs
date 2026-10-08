@@ -63,6 +63,7 @@ namespace Operations
         String[]      Channels { get; } // "CH1", "CH2" or "Left", "Right"
         Fourier.eUnit Unit     { get; }
         String        StepInfo { get; } // additional information for the status bar or null
+        double        BlockTime { get; } // time of the last acquired block in seconds from the start (a file), NaN = now (live)
 
         // Additional settings in the toolbar (e.g. device and sample rate). They are disabled while the loop is running.
         void AddControls(FlowLayoutPanel i_Bar);
@@ -90,6 +91,8 @@ namespace Operations
     /// </summary>
     public class WaterfallFFT : Form
     {
+        DateTime mi_StartTime; // for IWaterfallSource.BlockTime
+
         class Row
         {
             public DateTime mi_Time;
@@ -126,6 +129,15 @@ namespace Operations
             mi_Source = i_Source;
             me_Unit   = i_Source.Unit;
             CreateControls();
+        }
+
+        /// <summary>
+        /// s32_Index = 0 based index in IWaterfallSource.Channels
+        /// </summary>
+        public void SelectChannel(int s32_Index)
+        {
+            if (s32_Index >= 0 && s32_Index < mi_ComboChannel.Items.Count)
+                mi_ComboChannel.SelectedIndex = s32_Index;
         }
 
         bool ShowDb
@@ -374,6 +386,8 @@ namespace Operations
             {
                 mi_Source.Start();
                 Text = "Waterfall FFT  —  " + mi_Source.Name;
+                if (mi_Rows.Count == 0)
+                    mi_StartTime = DateTime.Now;
 
                 while (!mb_Cancel)
                 {
@@ -437,6 +451,13 @@ namespace Operations
             else if (mb_Cancel)
             {
                 PrintInfo("Stopped after " + s32_Steps + " steps. " + mi_Rows.Count + " spectra can be exported.", Color.White);
+            }
+            else // the source has ended (end of a file)
+            {
+                String s_Info = "Finished after " + s32_Steps + " steps. " + mi_Rows.Count + " spectra can be exported.";
+                if (mi_Source.StepInfo != null)
+                    s_Info += "   " + mi_Source.StepInfo;
+                PrintInfo(s_Info, Color.LightGreen);
             }
 
             if (mb_CloseAfterLoop)
@@ -502,6 +523,8 @@ namespace Operations
 
             Row i_Row = new Row();
             i_Row.mi_Time = DateTime.Now;
+            if (!double.IsNaN(mi_Source.BlockTime))
+                i_Row.mi_Time = mi_StartTime.AddSeconds(mi_Source.BlockTime); // the time in the file
             i_Row.mf_Amp  = new float[d_Amp.Length];
             for (int k=0; k<d_Amp.Length; k++)
                 i_Row.mf_Amp[k] = (float)d_Amp[k];

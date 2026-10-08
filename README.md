@@ -50,6 +50,8 @@ audio interface or sound card (e.g. Focusrite Scarlett 2i2, MOTU M4) over the Wi
   Simulated phosphor with persistence, bright turning points (slow beam), auto zoom, snapshot of the last second into the main window.
   Ideal for oscilloscope music (e.g. with the loopback input of a MOTU M4).
 - **Waterfall FFT...**: live waterfall. Device, sample rate (44.1 ... 192 kHz) and samples per spectrum (2048 ... 65536) are selectable, left or right channel.
+- **Play a WAV file or capture**: right-click on an analog channel --> *Waterfall FFT (play)* or *Live X/Y (play)* plays the capture in the main window
+  (e.g. an imported WAV file with oscilloscope music) in real time, slower, faster or (waterfall) as fast as possible, with loop.
 - Gapless recording in a background thread as 32 bit float (full 24 bit resolution); levels in dBFS. If the display is too slow, old blocks are skipped.
 - **Calibration dBFS → dBV** per device and channel: measure a sine wave with known voltage (flat top FFT, exact to 0.01 dB) or enter the value.
   With *Volt (calibrated)* the recording is in Volt and the Waterfall FFT shows dBV. Valid for the gain setting used during the calibration.

@@ -131,6 +131,7 @@
     </Compile>
     <Compile Include="Operations\DeleteSamples.cs" />
     <Compile Include="Operations\MoreDecoders.cs" />
+    <Compile Include="Operations\CaptureStream.cs" />
     <Compile Include="Operations\SpectrumFFT.cs">
       <SubType>Form</SubType>
     </Compile>
