@@ -12,7 +12,7 @@ Files added in this fork include:
 - `Compiled/Images/XYPlot.png`
 
 These are screenshots generated from this project.
-`WaterfallFFT.png` and `LiveXY.png` show synthetic test signals, `WaterfallAudio.png` is an image export
+`FftSpectrum.png`, `XYPlot.png`, `WaterfallFFT.png` and `LiveXY.png` show synthetic test signals (the demo files in `Compiled/Samples`, see `Compiled/Samples/README.md`), `WaterfallAudio.png` is an image export
 of the Waterfall FFT from a measurement with a real HMO1522 (only the spectrum is shown, no audio data is included).
 
 Inherited assets retain their original copyright and licensing status. Their inclusion here does not assert ownership beyond rights granted by the upstream project or the relevant copyright holder. Assets whose provenance or redistribution rights cannot be established should be replaced or removed.

@@ -158,6 +158,9 @@
 <p>
 <div>Oszi Waveform Analyzer comes with several pre-installed demo files that you should open one by one to discover all features.</div>
 <div>These files are real-world oscilloscope captures that can show you how to use this program.</div>
+<div>The demo files for the analysis windows are generated test signals:
+     <a href="Samples/FFT%20Spectrum%20Square%2010%20kHz.oszi">FFT Spectrum Square 10 kHz.oszi</a>, <a href="Samples/X-Y%20Plot%20Sine%2045%20Degree.oszi">X-Y Plot Sine 45 Degree.oszi</a>, <a href="Samples/X-Y%20Plot%20Square%201%20kHz.oszi">X-Y Plot Square 1 kHz.oszi</a>,
+     <a href="Samples/Waterfall%20FFT%20Steps%2010-155%20kHz.oszi">Waterfall FFT Steps 10-155 kHz.oszi</a> and <a href="Samples/Live%20X-Y%20Lissajous%203-2.oszi">Live X-Y Lissajous 3-2.oszi</a>.</div>
 
 <a name="Menu"></a>
 <h1>Keyboard, Mouse and Menu</h1>
@@ -296,7 +299,8 @@
 </table>
 <div>Right-click on the analog signal of a channel and select <b>FFT Spectrum</b> to see which frequencies the signal contains.</div>
 <div>The spectrum opens in a separate window. It is not modal, so you can open multiple spectra and continue working in the main window.</div>
-<div>The screenshot shows a 10 kHz square wave with its odd harmonics at 30, 50, 70 and 90 kHz.</div>
+<div>The screenshot shows the demo file <b><a href="Samples/FFT%20Spectrum%20Square%2010%20kHz.oszi">FFT Spectrum Square 10 kHz.oszi</a></b>: a 10 kHz square wave (&plusmn;1 V, 1 MSa/s, 6000 samples)</div>
+<div>with its odd harmonics at 30, 50, 70 and 90 kHz (Log frequency checked).</div>
 <p>
 <table class="DataTable">
 <tr><th>Setting</th><th>Meaning</th></tr>
@@ -358,7 +362,7 @@
 <p>
 <div>The status bar shows the peak-to-peak voltages and the <b>phase</b> between the channels, calculated from their correlation.</div>
 <div>The phase is only correct if both signals have the <b>same frequency</b>. It is always between 0° and 180°: +45° and -45° show the same value.</div>
-<div>The screenshot shows two sine waves with a phase shift of 45°.</div>
+<div>The screenshot shows the demo file <b><a href="Samples/X-Y%20Plot%20Sine%2045%20Degree.oszi">X-Y Plot Sine 45 Degree.oszi</a></b>: two 1 kHz sine waves (X = 0.8 V, Y = 1 V) with a phase shift of 45°.</div>
 <p>
 <div>The demo file <b>X-Y Plot Square 1 kHz.oszi</b> contains the channels X and Y which draw a <b>square</b> in the X/Y Plot (phase 90°).</div>
 <div>Its channels are trapezoid waves, so they are also a good test for the <a href="#FFT">FFT Spectrum</a>:</div>
@@ -804,7 +808,9 @@
 <div>The upper part shows the latest spectrum with its 5 strongest peaks.</div>
 <div>Below, each row is one spectrum, the newest at the top. The color shows the level in dBV (see the color bar at the right).</div>
 <div>The time axis at the left shows how many seconds ago a spectrum was acquired.</div>
-<div>The screenshot shows a test signal whose frequency rises from 10 kHz to 155 kHz and a constant weak 50 kHz tone.</div>
+<div>The screenshot shows the demo file <b><a href="Samples/Waterfall%20FFT%20Steps%2010-155%20kHz.oszi">Waterfall FFT Steps 10-155 kHz.oszi</a></b>: 30 blocks of 8192 samples at 500 kSa/s whose frequency rises</div>
+<div>in steps of 5 kHz from 10 kHz to 155 kHz, plus a constant weak 50 kHz tone. It behaves like 30 acquisitions of an oscilloscope.</div>
+<div>Right-click on CH1, select <a href="#PlayCapture">Waterfall FFT (play)</a>, Samples = 8192, Speed = Max, Colors = 60 dB, then click Start.</div>
 <p>
 <table class="DataTable">
 <tr><th>Setting</th><th>Meaning</th></tr>
@@ -915,12 +921,14 @@
 <h3>Live X/Y with an Audio Interface</h3>
 
 <table class="TblImage">
-    <tr><td><img src="Images/LiveXY.png" alt="Oszi Waveform Analyzer - Live X/Y" width="380" height="380"></td></tr>
+    <tr><td><img src="Images/LiveXY.png" alt="Oszi Waveform Analyzer - Live X/Y" width="380" height="370"></td></tr>
     <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/LiveXY.png')">Show Full Size</span></td></tr>
 </table>
 <div>Click <b>Live X/Y...</b> in the window <a href="#AudioInput">Audio Input</a>. The left channel moves the beam horizontally (X), the right channel vertically (Y),</div>
 <div>like an analog oscilloscope in XY mode. This is ideal for oscilloscope music, Lissajous figures and the phase of stereo signals.</div>
-<div>The screenshot shows a Lissajous figure with the frequency ratio 3:2.</div>
+<div>The screenshot shows the demo file <b><a href="Samples/Live%20X-Y%20Lissajous%203-2.oszi">Live X-Y Lissajous 3-2.oszi</a></b> played with <a href="#PlayCapture">Live X/Y (play)</a>:</div>
+<div>a Lissajous figure with the frequency ratio 3:2 (X = 300 Hz, Y = 200 Hz, 48 kSa/s). The file contains exactly 0.1 seconds, so it loops seamlessly.</div>
+<div>With <b>Sound</b> checked you hear both tones.</div>
 <p>
 <div>The display simulates the phosphor of a cathode ray tube: the beam leaves a trace which fades with the selected persistence.</div>
 <div>A fast moving beam is dimmer than a slow one, so the turning points of a figure are brighter, exactly like on an analog oscilloscope.</div>

@@ -5,6 +5,9 @@ The files in this directory are waveform or protocol captures used to demonstrat
 ## Added in this fork
 
 - `X-Y Plot Square 1 kHz.oszi` — generated for the X/Y Plot and FFT demonstration in 2026 by Peter Schwendner.
+- `FFT Spectrum Square 10 kHz.oszi`, `X-Y Plot Sine 45 Degree.oszi`, `Waterfall FFT Steps 10-155 kHz.oszi` and `Live X-Y Lissajous 3-2.oszi` —
+  synthetic test signals generated in 2026 for the screenshots of the manual (FFT Spectrum, X/Y Plot, Waterfall FFT, Live X/Y).
+  The screenshots `Compiled/Images/FftSpectrum.png`, `XYPlot.png`, `WaterfallFFT.png` and `LiveXY.png` were made from these files.
 
 ## Inherited samples
 
