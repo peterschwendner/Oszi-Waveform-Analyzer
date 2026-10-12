@@ -39,6 +39,7 @@ NAMING CONVENTIONS which allow to see the type of a variable immediately without
 using System;
 using System.IO;
 using System.Drawing;
+using System.Globalization;
 using System.Text;
 using System.Windows.Forms;
 
@@ -56,6 +57,9 @@ namespace ExImport
     ///
     /// Supported: PCM 8, 16, 24, 32 bit integer, IEEE float 32 and 64 bit, WAVE_FORMAT_EXTENSIBLE.
     /// Not supported: compressed formats (ADPCM, MP3,...), RF64 files larger than 4 GB.
+    ///
+    /// Files longer than MAX_SAMPLES: the user selects a section (start and duration) in FormWavSection.
+    /// Only this section is read from the file.
     /// </summary>
     public static class WavFile
     {
@@ -63,8 +67,9 @@ namespace ExImport
         const int FORMAT_FLOAT      = 0x0003;
         const int FORMAT_EXTENSIBLE = 0xFFFE;
 
-        // Limit the memory usage: 24 M samples = 2 minutes of a stereo file with 192 kHz = 192 MB
-        const int MAX_SAMPLES = 24 * 1000 * 1000;
+        // Limit the memory usage: 24 M samples = 2 minutes of a stereo file with 192 kHz = 192 MB.
+        // This is also the size the program is designed for (memory of the Rigol DS1000Z).
+        public const int MAX_SAMPLES = 24 * 1000 * 1000;
 
         /// <summary>
         /// Throws on error. Returns null if the user has aborted.
@@ -145,9 +150,24 @@ namespace ExImport
             if (s32_Channels < 1 || s32_Rate < 1 || s32_Align != s32_Channels * s32_Bytes)
                 throw new Exception("The WAV file has an invalid format header.");
 
-            long s64_Frames = s64_Len / s32_Align;
-            bool b_Truncated = s64_Frames > MAX_SAMPLES;
+            long s64_Frames  = s64_Len / s32_Align;
+            long s64_Start   = 0;
             int  s32_Samples = (int)Math.Min(s64_Frames, MAX_SAMPLES);
+
+            // A long file: the user selects the section to be loaded
+            if (s64_Frames > MAX_SAMPLES)
+            {
+                using (FormWavSection i_Form = new FormWavSection(Path.GetFileName(s_Path), s64_Frames, s32_Rate, s32_Channels))
+                {
+                    if (i_Form.ShowDialog(Utils.FormMain) != DialogResult.OK)
+                        return null; // aborted
+
+                    s64_Start   = i_Form.StartFrame;
+                    s32_Samples = i_Form.FrameCount;
+                }
+                // Skip the frames before the section (the stream is at the begin of the data chunk)
+                i_Reader.BaseStream.Position += s64_Start * s32_Align;
+            }
 
             if (s32_Samples < Utils.MIN_VALID_SAMPLES)
                 throw new Exception("The WAV file contains only " + s32_Samples + " samples.");
@@ -221,15 +241,48 @@ namespace ExImport
                 }
             }
 
-            if (b_Truncated)
+            if (s64_Frames > MAX_SAMPLES)
             {
-                MessageBox.Show(Utils.FormMain, String.Format("The WAV file has {0:N0} samples per channel ({1:F1} seconds).\n"
-                                + "Only the first {2:N0} samples ({3:F1} seconds) have been loaded.\n"
-                                + "Cut the file with an audio editor to load another part.",
-                                s64_Frames, (double)s64_Frames / s32_Rate, s32_Samples, (double)s32_Samples / s32_Rate),
-                                "WAV Import", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Utils.FormMain.PrintStatus(String.Format("Loaded the section {0} ... {1} of {2} (total {3})", FormatTime((double)s64_Start / s32_Rate),
+                                           FormatTime((double)(s64_Start + s32_Samples) / s32_Rate), Path.GetFileName(s_Path),
+                                           FormatTime((double)s64_Frames / s32_Rate)), Color.Green);
             }
             return i_Capture;
+        }
+
+        /// <summary>
+        /// 200.5 --> "3:20.5", 3723 --> "1:02:03.0"
+        /// </summary>
+        public static String FormatTime(double d_Seconds)
+        {
+            int    s32_Hours = (int)(d_Seconds / 3600);
+            int    s32_Min   = (int)(d_Seconds / 60) % 60;
+            double d_Sec     = d_Seconds - s32_Hours * 3600 - (int)(d_Seconds / 60) % 60 * 60;
+            String s_Sec     = d_Sec.ToString("00.0", CultureInfo.InvariantCulture);
+            if (s_Sec == "60.0") s_Sec = "59.9"; // rounding
+            if (s32_Hours > 0)
+                return String.Format("{0}:{1:00}:{2}", s32_Hours, s32_Min, s_Sec);
+            return String.Format("{0}:{1}", s32_Min, s_Sec);
+        }
+
+        /// <summary>
+        /// "3:20.5" or "1:02:03" or "200.5" or "200,5" --> seconds. returns -1 if invalid.
+        /// </summary>
+        public static double ParseTime(String s_Text)
+        {
+            String[] s_Parts = s_Text.Trim().Replace(',', '.').Split(':');
+            if (s_Parts.Length > 3)
+                return -1;
+
+            double d_Seconds = 0;
+            foreach (String s_Part in s_Parts)
+            {
+                double d_Value;
+                if (!double.TryParse(s_Part, NumberStyles.Float, CultureInfo.InvariantCulture, out d_Value) || d_Value < 0)
+                    return -1;
+                d_Seconds = d_Seconds * 60 + d_Value;
+            }
+            return d_Seconds;
         }
 
         static String GetChannelName(int s32_Chan, int s32_Channels)
