@@ -166,6 +166,8 @@ namespace Transfer
         bool         mb_Abort;
         String       ms_Progress;
         int          ms32_Divisions;          // horizontal divisions of the screen (HMO: 12), 0 = not yet queried
+        String       ms_Warnings;             // displayed after the transfer
+        bool         mb_MinMaxWarned;         // the min/max warning is displayed only once
 
         public OsziModel Model
         {
@@ -184,7 +186,7 @@ namespace Transfer
 
         public String TransferWarnings
         {
-            get { return null; }
+            get { return ms_Warnings; }
         }
 
         /// <summary>
@@ -453,7 +455,8 @@ namespace Transfer
         /// </summary>
         Capture TransferChannels(bool b_Memory, int s32_OnlyChannel)
         {
-            mb_Abort = false;
+            mb_Abort    = false;
+            ms_Warnings = null;
 
             CheckDigitalMode();
 
@@ -618,16 +621,28 @@ namespace Transfer
             mi_Scpi.SendOpcCommand(String.Format(":TRACe:SOURce CH{0};:TRACe:FORMat BYTE;:TRACe:POINts {1}",
                                                  s32_Chan, b_Memory ? "MAX" : "DEF"));
 
-            // In envelope or peak detect mode each point consists of a minimum and a maximum value
+            // :TRACe:TYPE? = MINMAX --> each point consists of a minimum and a maximum value (2 bytes per point).
+            // The HM2008 (firmware 05.506) sends the screen data (POINts DEF) ALWAYS as MINMAX, also in Refresh mode
+            // without peak detect: each of the 1000 display columns is a min/max pair. Then the mean of each pair is used.
+            // In Envelope mode or with peak detect the pairs are the real envelope: a mean value would be misleading.
+            bool b_MinMax = false;
             try
             {
-                if (mi_Scpi.SendStringCommand(":TRACe:TYPE?").ToUpper().StartsWith("MINM"))
-                    throw new ArgumentException("Envelope and peak detect waveforms (Min/Max) cannot be transferred.\n"
-                                              + "Select the acquisition mode 'Refresh' and turn off peak detect.");
+                b_MinMax = mi_Scpi.SendStringCommand(":TRACe:TYPE?").ToUpper().StartsWith("MINM");
             }
             catch (TimeoutException)
             {
                 DiscardInput(); // command not supported by this firmware
+            }
+
+            if (b_MinMax)
+            {
+                if (QueryOptional(":ACQuire:TYPE?").StartsWith("ENV"))
+                    throw new ArgumentException("Envelope waveforms (Min/Max) cannot be transferred.\n"
+                                              + "Select the acquisition mode 'Refresh'.");
+                if (QueryOptional(":ACQuire:PEAKdetect?").StartsWith("AUTO"))
+                    throw new ArgumentException("Peak detect waveforms (Min/Max) cannot be transferred.\n"
+                                              + "Turn off peak detect (Acquire menu).");
             }
 
             Byte[] u8_Data = mi_Scpi.SendBlockCommand(":TRACe:DATA?", MAX_BLOCK_SIZE, DATA_TIMEOUT);
@@ -644,10 +659,32 @@ namespace Transfer
             double d_IncX  = mi_Scpi.SendDoubleCommand(":TRACe:XINCrement?");
 
             // U = (Data - YREFerence) * YINCrement + YORigin
-            float[] f_Analog = new float[u8_Data.Length];
-            for (int S=0; S<u8_Data.Length; S++)
+            float[] f_Analog;
+            if (b_MinMax)
             {
-                f_Analog[S] = (float)((u8_Data[S] - d_RefY) * d_IncY + d_OrigY);
+                // min/max pairs: XINCrement is the distance of the pairs
+                f_Analog = new float[u8_Data.Length / 2];
+                for (int S=0; S<f_Analog.Length; S++)
+                {
+                    double d_Mean = (u8_Data[2 * S] + u8_Data[2 * S + 1]) / 2.0;
+                    f_Analog[S] = (float)((d_Mean - d_RefY) * d_IncY + d_OrigY);
+                }
+
+                if (!mb_MinMaxWarned)
+                {
+                    mb_MinMaxWarned = true;
+                    ms_Warnings = String.Format("The oscilloscope sends the visible screen as {0} min/max pairs (one pair per display column).\n"
+                                              + "The mean value of each pair has been used.\n"
+                                              + "For the full resolution select 'Transfer Entire Memory' (stop the oscilloscope first).", f_Analog.Length);
+                }
+            }
+            else
+            {
+                f_Analog = new float[u8_Data.Length];
+                for (int S=0; S<u8_Data.Length; S++)
+                {
+                    f_Analog[S] = (float)((u8_Data[S] - d_RefY) * d_IncY + d_OrigY);
+                }
             }
 
             RxChannel i_RxChan = new RxChannel();
@@ -655,6 +692,22 @@ namespace Transfer
             i_RxChan.mf_Analog     = f_Analog;
             i_RxChan.md_SampleDist = ToDecimal(d_IncX);
             return i_RxChan;
+        }
+
+        /// <summary>
+        /// returns the response in upper case or "" if the command is not supported
+        /// </summary>
+        String QueryOptional(String s_Query)
+        {
+            try
+            {
+                return mi_Scpi.SendStringCommand(s_Query).Trim().ToUpper();
+            }
+            catch (TimeoutException)
+            {
+                DiscardInput();
+                return "";
+            }
         }
 
         // ===============================================================================================

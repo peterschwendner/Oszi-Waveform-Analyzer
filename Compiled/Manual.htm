@@ -738,7 +738,7 @@
 <table class="DataTable">
 <tr><th>Serie</th><th>Default Port Settings</th><th>Protocol</th><th>Tested</th></tr>
 <tr><td>HMO1522, HMO1002, HMO1202, HMO2022 (HMO Compact)</td><td>115200 8N1 RTS</td><td>SCPI :CHANnel:DATA, floats in Volt, logic pod</td><td class="Green">Real HMO1522</td></tr>
-<tr><td>HM2008, HM1508, HM1008 (CombiScope)</td><td>115200 8N2 RTS</td><td>SCPI :TRACe, 8 bit values</td><td class="Red">Simulation only</td></tr>
+<tr><td>HM2008, HM1508, HM1008 (CombiScope)</td><td>115200 8N2 RTS</td><td>SCPI :TRACe, 8 bit values</td><td class="Green">Real HM2008</td></tr>
 <tr><td>HM507</td><td>115200 8N2 RTS</td><td>Hameg command set (not SCPI): ASCII commands, binary responses</td><td class="Green">Real HM507</td></tr>
 </table>
 <p>
@@ -768,8 +768,12 @@
 <div><b><u>CombiScopes HM2008, HM1508, HM1008</u>:</b></div>
 <ul>
     <li><div>The oscilloscope must be in <b>digital mode</b> (DSO). In analog mode there is no data to transfer.</div>
-    <li><div>Envelope and peak detect waveforms cannot be transferred. Use the acquisition mode Refresh.</div>
-    <li><div>Transfer Entire Memory is only possible in STOP mode.</div>
+    <li><div><b>Transfer Visible Screen</b>: the HM2008 sends the screen as 1000 min/max pairs (one pair per display column),</div>
+        <div>also in Refresh mode. The mean value of each pair is used: 1000 samples, e.g. 1 MSa/s at 100 µs/div. This takes less than 1 second.</div>
+    <li><div><b>Transfer Entire Memory</b>: up to 2 million samples per channel (e.g. 2 GSa/s at 100 µs/div with one channel).</div>
+        <div>Over the USB port of the HO720 this takes approx 40 seconds. Only possible in STOP mode.</div>
+    <li><div>Envelope and peak detect waveforms cannot be transferred. Use the acquisition mode Refresh and turn off peak detect.</div>
+    <li><div>The HO720 interface can be connected over RS232 or USB (virtual COM port, see above).</div>
 </ul>
 <div><b><u>HM507</u>:</b></div>
 <ul>

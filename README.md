@@ -28,7 +28,7 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 | Serie | Default port settings | Protocol | Tested |
 |---|---|---|---|
 | HMO1522, HMO1002, HMO1202, HMO2022 (HMO Compact) | 115200 8N1 RTS | SCPI `:CHANnel:DATA` (floats in Volt), logic pod | Real HMO1522 |
-| HM2008, HM1508, HM1008 (CombiScope) | 115200 8N2 RTS | SCPI `:TRACe` (8 bit values) | Simulation only |
+| HM2008, HM1508, HM1008 (CombiScope) | 115200 8N2 RTS | SCPI `:TRACe` (8 bit values) | Real HM2008 |
 | HM507 | 115200 8N2 RTS | Hameg command set (not SCPI): ASCII commands, binary responses | Real HM507 |
 
 - New connection mode **COM** in the Transfer window for RS232 ports, USB to RS232 adapters and the USB virtual COM port of the Hameg HO720 / HO730 interfaces.
@@ -36,7 +36,8 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 - Port settings like `19200 8N2 RTS` (baudrate, databits, parity, stopbits, handshake), stored separately for each oscilloscope serie.
 - HMO1522 and HM507 are tested with real oscilloscopes: transfer over RS232 (HMO1522 also over the USB port of the HO720), X/Y, FFT and Waterfall FFT.
 - The HM507 interface (cable, N-8-2 RTS/CTS, baudrate detection with SPACE CR) is described in the chapter *RS232 Interface - Remote Control*, pages 42-43 of the [HM507 manual](https://docs.rs-online.com/af71/0900766b80296cd0.pdf). The command list itself is not part of the manual; Hameg delivered it on the CD of the oscilloscope.
-- The HM2008 support was written from the Hameg SCPI programming manual and tested against a protocol simulation, but not yet with real hardware. Feedback is welcome.
+- HM2008 tested with a real oscilloscope (firmware 05.506) over the USB port of the HO720: transfer of the screen (1000 points, < 1 s),
+  of the entire memory (2 M points, approx 40 s) and the Waterfall FFT. The HM2008 sends the screen as min/max pairs; their mean values are used.
 - **Waterfall FFT**: a loop acquires one channel again and again (Run, wait one sweep, Stop, transfer), calculates the spectrum and adds it as a new row to a color waterfall until you click *Cancel*. The waterfall can be exported as PNG image and the collected spectra as CSV matrix (one line per spectrum, one column per frequency).
 
 ### Audio interface / sound card
