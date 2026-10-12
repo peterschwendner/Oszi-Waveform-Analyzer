@@ -38,6 +38,7 @@ This fork of [Elmue/Oszi-Waveform-Analyzer](https://github.com/Elmue/Oszi-Wavefo
 - The HM507 interface (cable, N-8-2 RTS/CTS, baudrate detection with SPACE CR) is described in the chapter *RS232 Interface - Remote Control*, pages 42-43 of the [HM507 manual](https://docs.rs-online.com/af71/0900766b80296cd0.pdf). The command list itself is not part of the manual; Hameg delivered it on the CD of the oscilloscope.
 - HM2008 tested with a real oscilloscope (firmware 05.506) over the USB port of the HO720: transfer of the screen (1000 points, < 1 s),
   of the entire memory (2 M points, approx 40 s) and the Waterfall FFT. The HM2008 sends the screen as min/max pairs; their mean values are used.
+  The manual shows the waterfall of the HM2008 calibrator (1 kHz square wave): its odd harmonics agree with the theory within 1 dB.
 - **Waterfall FFT**: a loop acquires one channel again and again (Run, wait one sweep, Stop, transfer), calculates the spectrum and adds it as a new row to a color waterfall until you click *Cancel*. The waterfall can be exported as PNG image and the collected spectra as CSV matrix (one line per spectrum, one column per frequency).
 
 ### Audio interface / sound card

@@ -880,6 +880,29 @@
     <li><div>The 8 bit A/D converter has a dynamic range of approx 48 dB. Select <b>Colors</b> = 60 dB.</div>
     <li><div>With trigger mode NORM and without a trigger event the memory is not updated and the same spectrum is added again. Use AUTO trigger.</div>
 </ul>
+<div><b><u>HM2008</u>:</b> (tested with a real HM2008)</div>
+<ul>
+    <li><div>Each step: Run, wait for one sweep, Stop, wait until the acquisition is complete, transfer the visible screen of the channel.</div>
+    <li><div>The screen consists of 1000 points (min/max pairs, their mean values are used): sample rate = 100 / (Time/Div), resolution = 1 / (10 × Time/Div).</div>
+    <li><div>The oscilloscope must be in digital mode (DSO).</div>
+</ul>
+<table class="TblImage">
+    <tr><td><img src="Images/WaterfallHM2008.png" alt="Oszi Waveform Analyzer - Waterfall FFT of the HM2008 calibrator" width="500" height="322"></td></tr>
+    <tr><td class="Center"><span class="Link" onClick="ShowFullSize(this, 'Images/WaterfallHM2008.png')">Show Full Size</span></td></tr>
+</table>
+<div>The calibrator signal of a HM2008 (1 kHz square wave, measured with a 10:1 probe and the probe setting 1:1, therefore 20 mVpp),</div>
+<div>200 µs/div (1000 samples at 500 kSa/s, resolution 500 Hz), 20 steps of 0.5 seconds over the USB port of the HO720.</div>
+<div>The odd harmonics of the square wave are visible as vertical lines. Their levels agree with the theory (amplitude of the harmonic n = 1/n):</div>
+<p>
+<table class="DataTable">
+<tr><th>Harmonic</th><th>Frequency</th><th>Measured</th><th>Theory</th></tr>
+<tr><td>1</td><td>1.009 kHz</td><td>-41.0 dBV</td><td>-40.9 dBV</td></tr>
+<tr><td>3</td><td>2.966 kHz</td><td>-50.7 dBV</td><td>-50.5 dBV</td></tr>
+<tr><td>5</td><td>4.974 kHz</td><td>-55.3 dBV</td><td>-54.9 dBV</td></tr>
+<tr><td>7</td><td>6.978 kHz</td><td>-58.6 dBV</td><td>-57.8 dBV</td></tr>
+<tr><td>9</td><td>8.976 kHz</td><td>-61.1 dBV</td><td>-60.0 dBV</td></tr>
+</table>
+<div>The higher harmonics are slightly weaker than in theory because of the finite rise time of the calibrator.</div>
 
 <a name="AudioInput"></a>
 <h3>Audio Interface / Sound Card</h3>
