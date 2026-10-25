@@ -40,6 +40,7 @@ using System;
 using System.IO;
 using System.Drawing;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
@@ -58,8 +59,8 @@ namespace ExImport
     /// Supported: PCM 8, 16, 24, 32 bit integer, IEEE float 32 and 64 bit, WAVE_FORMAT_EXTENSIBLE.
     /// Not supported: compressed formats (ADPCM, MP3,...), RF64 files larger than 4 GB.
     ///
-    /// Files longer than MAX_SAMPLES: the user selects a section (start and duration) in FormWavSection.
-    /// Only this section is read from the file.
+    /// Files that do not fit into the free memory of the PC (see MaxFrames): the user selects a section
+    /// (start and duration) in FormWavSection. Only this section is read from the file.
     /// </summary>
     public static class WavFile
     {
@@ -67,9 +68,56 @@ namespace ExImport
         const int FORMAT_FLOAT      = 0x0003;
         const int FORMAT_EXTENSIBLE = 0xFFFE;
 
-        // Limit the memory usage: 24 M samples = 2 minutes of a stereo file with 192 kHz = 192 MB.
-        // This is also the size the program is designed for (memory of the Rigol DS1000Z).
-        public const int MAX_SAMPLES = 24 * 1000 * 1000;
+        // Used if the available memory cannot be determined (e.g. Mono on Linux): 24 M samples per channel.
+        const int FALLBACK_FRAMES = 24 * 1000 * 1000;
+
+        // The loaded samples are copied by the FFT and other operations --> use only a part of the free memory.
+        const double MEMORY_FRACTION = 0.4;
+        const long   MAX_BYTES_32BIT = 600L * 1024 * 1024; // the address space of a 32 bit process is limited
+        const int    MAX_ARRAY_LEN   = 0x1F000000;         // a float[] must stay below 2 GB (.NET 4.0): 520 M samples
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct MEMORYSTATUSEX
+        {
+            public uint  dwLength;
+            public uint  dwMemoryLoad;
+            public ulong ullTotalPhys;
+            public ulong ullAvailPhys;
+            public ulong ullTotalPageFile;
+            public ulong ullAvailPageFile;
+            public ulong ullTotalVirtual;
+            public ulong ullAvailVirtual;
+            public ulong ullAvailExtendedVirtual;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX r_Status);
+
+        /// <summary>
+        /// The maximum number of samples per channel that can be loaded. Only limited by the free memory of the PC.
+        /// </summary>
+        public static int MaxFrames(int s32_Channels)
+        {
+            long s64_Bytes;
+            try
+            {
+                MEMORYSTATUSEX r_Status = new MEMORYSTATUSEX();
+                r_Status.dwLength = (uint)Marshal.SizeOf(typeof(MEMORYSTATUSEX));
+                if (!GlobalMemoryStatusEx(ref r_Status))
+                    return FALLBACK_FRAMES;
+
+                s64_Bytes = (long)(r_Status.ullAvailPhys * MEMORY_FRACTION);
+                if (IntPtr.Size == 4)
+                    s64_Bytes = Math.Min(s64_Bytes, MAX_BYTES_32BIT);
+            }
+            catch // not Windows
+            {
+                return FALLBACK_FRAMES;
+            }
+
+            long s64_Frames = s64_Bytes / (sizeof(float) * Math.Max(1, s32_Channels));
+            return (int)Math.Max(FALLBACK_FRAMES / 4, Math.Min(s64_Frames, MAX_ARRAY_LEN));
+        }
 
         /// <summary>
         /// Throws on error. Returns null if the user has aborted.
@@ -152,12 +200,13 @@ namespace ExImport
 
             long s64_Frames  = s64_Len / s32_Align;
             long s64_Start   = 0;
-            int  s32_Samples = (int)Math.Min(s64_Frames, MAX_SAMPLES);
+            int  s32_MaxFrames = MaxFrames(s32_Channels);
+            int  s32_Samples   = (int)Math.Min(s64_Frames, s32_MaxFrames);
 
-            // A long file: the user selects the section to be loaded
-            if (s64_Frames > MAX_SAMPLES)
+            // A file that does not fit into the free memory: the user selects the section to be loaded
+            if (s64_Frames > s32_MaxFrames)
             {
-                using (FormWavSection i_Form = new FormWavSection(Path.GetFileName(s_Path), s64_Frames, s32_Rate, s32_Channels))
+                using (FormWavSection i_Form = new FormWavSection(Path.GetFileName(s_Path), s64_Frames, s32_Rate, s32_Channels, s32_MaxFrames))
                 {
                     if (i_Form.ShowDialog(Utils.FormMain) != DialogResult.OK)
                         return null; // aborted
@@ -241,7 +290,7 @@ namespace ExImport
                 }
             }
 
-            if (s64_Frames > MAX_SAMPLES)
+            if (s64_Frames > s32_MaxFrames)
             {
                 Utils.FormMain.PrintStatus(String.Format("Loaded the section {0} ... {1} of {2} (total {3})", FormatTime((double)s64_Start / s32_Rate),
                                            FormatTime((double)(s64_Start + s32_Samples) / s32_Rate), Path.GetFileName(s_Path),

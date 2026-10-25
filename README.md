@@ -79,8 +79,8 @@ Uncompressed WAV files (PCM 8/16/24/32 bit, float 32/64 bit) can be imported wit
 or from `Compiled/Samples` (WAV files there are ignored by git, because test files like oscilloscope music are copyrighted).
 Each audio channel becomes an analog channel (full scale = 1.0). This is useful to test the FFT and to display
 oscilloscope music (stereo: Left = X, Right = Y) with the X/Y Plot.
-At most 24 M samples per channel are loaded (8:20 minutes at 48 kHz). For longer files a window asks for the section
-to load (start and duration, or Beginning / Middle / End); only this section is read from the file.
+The size is only limited by the free memory of the PC (about 40 % of it is used). If the file does not fit,
+a window asks for the section to load (start and duration, or Beginning / Middle / End); only this section is read from the file.
 
 ### Open... and Save as...
 

@@ -46,13 +46,14 @@ using Utils             = OsziWaveformAnalyzer.Utils;
 namespace ExImport
 {
     /// <summary>
-    /// A WAV file is longer than WavFile.MAX_SAMPLES: the user selects the section to be loaded (start and duration).
+    /// A WAV file does not fit into the free memory (WavFile.MaxFrames): the user selects the section to be loaded (start and duration).
     /// </summary>
     public class FormWavSection : Form
     {
         long     ms64_Frames;     // total samples per channel in the file
         int      ms32_Rate;
-        double   md_MaxSeconds;   // the longest section that can be loaded
+        int      ms32_MaxFrames;  // the most samples per channel that fit into the free memory
+        double  md_MaxSeconds;   // the longest section that can be loaded
         TextBox  mi_TextStart;
         TextBox  mi_TextDuration;
         Label    mi_LblSection;
@@ -64,11 +65,12 @@ namespace ExImport
         public long StartFrame { get; private set; }
         public int  FrameCount { get; private set; }
 
-        public FormWavSection(String s_FileName, long s64_Frames, int s32_Rate, int s32_Channels)
+        public FormWavSection(String s_FileName, long s64_Frames, int s32_Rate, int s32_Channels, int s32_MaxFrames)
         {
             ms64_Frames   = s64_Frames;
             ms32_Rate     = s32_Rate;
-            md_MaxSeconds = (double)Math.Min(WavFile.MAX_SAMPLES, s64_Frames) / s32_Rate;
+            ms32_MaxFrames = s32_MaxFrames;
+            md_MaxSeconds = (double)Math.Min(s32_MaxFrames, s64_Frames) / s32_Rate;
 
             Text            = "WAV Import  —  Select a Section";
             Icon            = Utils.FormMain != null ? Utils.FormMain.Icon : null;
@@ -86,7 +88,7 @@ namespace ExImport
             i_Info.Size     = new Size(496, 62);
             i_Info.Text     = String.Format(CultureInfo.InvariantCulture,
                                             "{0}\nLength: {1}   ({2:N0} samples per channel, {3} Hz, {4} channels)\n"
-                                          + "The file is too long to be loaded entirely. At most {5} can be loaded.\nSelect the section:",
+                                          + "The file is too long for the free memory of this PC. At most {5} can be loaded.\nSelect the section:",
                                             s_FileName, WavFile.FormatTime((double)s64_Frames / s32_Rate), s64_Frames, s32_Rate, s32_Channels,
                                             WavFile.FormatTime(md_MaxSeconds));
             Controls.Add(i_Info);
@@ -195,7 +197,7 @@ namespace ExImport
 
             long s64_Count = (long)Math.Round(d_Duration * ms32_Rate);
             s64_Count = Math.Min(s64_Count, ms64_Frames - s64_Start); // until the end of the file
-            if (s64_Count > WavFile.MAX_SAMPLES)
+            if (s64_Count > ms32_MaxFrames)
                 return "The duration is longer than " + WavFile.FormatTime(md_MaxSeconds);
             if (s64_Count < Utils.MIN_VALID_SAMPLES)
                 return "The section is too short";
